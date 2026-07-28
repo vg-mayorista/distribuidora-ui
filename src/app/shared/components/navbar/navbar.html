@@ -18,6 +18,9 @@
         <a class="nav-link" routerLink="/distribuidor/categorias" routerLinkActive="nav-link--active">Categorías</a>
       </li>
       <li *ngIf="user.role === 'ROLE_DISTRIBUTOR'">
+        <a class="nav-link" routerLink="/distribuidor/metodos-entrega" routerLinkActive="nav-link--active">Métodos de entrega</a>
+      </li>
+      <li *ngIf="user.role === 'ROLE_DISTRIBUTOR'">
         <a class="nav-link" routerLink="/distribuidor/reportes" routerLinkActive="nav-link--active">Reportes</a>
       </li>
       <li *ngIf="user.role === 'ROLE_CUSTOMER'">
@@ -27,16 +30,10 @@
         <a class="nav-link" routerLink="/cliente/mis-pedidos" routerLinkActive="nav-link--active">Mis pedidos</a>
       </li>
       <li *ngIf="user.role === 'ROLE_ADMIN'">
-        <a class="nav-link" routerLink="/admin/stock" routerLinkActive="nav-link--active">Stock</a>
-      </li>
-      <li *ngIf="user.role === 'ROLE_ADMIN'">
-        <a class="nav-link" routerLink="/admin/categorias" routerLinkActive="nav-link--active">Categorías</a>
-      </li>
-      <li *ngIf="user.role === 'ROLE_ADMIN'">
-        <a class="nav-link" routerLink="/admin/ordenes" routerLinkActive="nav-link--active">Órdenes</a>
-      </li>
-      <li *ngIf="user.role === 'ROLE_ADMIN'">
         <a class="nav-link" routerLink="/admin/usuarios" routerLinkActive="nav-link--active">Usuarios</a>
+      </li>
+      <li *ngIf="user.role === 'ROLE_ADMIN'">
+        <a class="nav-link" routerLink="/admin/reportes" routerLinkActive="nav-link--active">Reportes IT</a>
       </li>
     </ng-container>
     <ng-template #guestNav>
