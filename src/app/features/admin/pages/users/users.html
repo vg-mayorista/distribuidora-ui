@@ -65,7 +65,8 @@
           </td>
           <td style="vertical-align: middle;">
             <div class="actions-cell">
-              <button class="btn-icon"
+              <button *ngIf="customer.role !== 'ROLE_ADMIN'; else protectedAdmin"
+                      class="btn-icon"
                       type="button"
                       (click)="openConfirmModal(customer)"
                       [attr.aria-label]="customer.active ? 'Desactivar usuario' : 'Activar usuario'"
@@ -79,6 +80,11 @@
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
               </button>
+              <ng-template #protectedAdmin>
+                <span class="text-muted" title="El usuario Administrador no se puede desactivar para evitar bloqueos del sistema." style="cursor: not-allowed; opacity: 0.6; display: inline-flex; align-items: center; gap: 0.25rem;">
+                  🔒 Protegido
+                </span>
+              </ng-template>
             </div>
           </td>
         </tr>
