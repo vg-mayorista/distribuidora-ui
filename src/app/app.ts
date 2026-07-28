@@ -8,5 +8,5 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.css'
 })
 export class App {
-  protected readonly title = signal('g2-ui');
+  protected readonly title = signal('distribuidora-ui');
 }
