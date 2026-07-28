@@ -1,6 +1,8 @@
-# G2Ui
+# VG Mayorista (Frontend UI)
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.2.
+Plataforma frontend web para la distribución mayorista de alimentos y consumo masivo de VG Mayorista, desarrollada en Angular 22.
+
+Permite la navegación del catálogo de productos, carrito de compras, gestión de pedidos por clientes y distribuidores, así como la administración de usuarios, stock y métricas.
 
 ## Development server
 
