@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './shared/components/main-layout/main-layout';
 import { HomeComponent } from './features/landing/pages/home/home';
-import { AdminDashboard } from './features/admin/pages/dashboard/dashboard';
 import { StockComponent } from './features/admin/pages/stock/stock';
 import { CategoriesComponent } from './features/admin/pages/categories/categories';
 import { OrdersComponent } from './features/admin/pages/orders/orders';
@@ -64,16 +63,15 @@ export const routes: Routes = [
           { path: 'reportes', component: DueñoReportesComponent },
         ],
       },
-    ],
-  },
-  {
-    path: 'admin',
-    component: AdminDashboard,
-    canActivate: [adminGuard],
-    children: [
-      { path: '', redirectTo: 'usuarios', pathMatch: 'full' },
-      { path: 'usuarios', component: AdminUsersComponent },
-      { path: 'reportes', component: AdminReportesComponent },
+      {
+        path: 'admin',
+        canActivate: [adminGuard],
+        children: [
+          { path: '', redirectTo: 'usuarios', pathMatch: 'full' },
+          { path: 'usuarios', component: AdminUsersComponent },
+          { path: 'reportes', component: AdminReportesComponent },
+        ],
+      },
     ],
   },
   { path: '**', component: NotFoundComponent },
