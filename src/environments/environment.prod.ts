@@ -14,8 +14,8 @@ export const environment = {
   production: true,
   development: false,
 
-  // Mismo origen: el proxy inverso (nginx, traefik, etc.) enruta /api al backend.
-  backendUrl: '',
+  // Backend de producción en Render
+  backendUrl: 'https://distribuidora-ms.onrender.com',
 
   frontendUrl: '',
 };
