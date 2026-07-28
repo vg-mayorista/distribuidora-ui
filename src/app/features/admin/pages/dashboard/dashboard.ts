@@ -18,32 +18,59 @@ export class AdminDashboard implements OnInit {
   
   sidebarOpen = signal(false);
   currentUser: UserSession | null = null;
-  
+  menuOpen = false;
+
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
   }
-  
+
+  toggleUserMenu(): void {
+    this.menuOpen = !this.menuOpen;
+  }
+
   toggleSidebar(): void {
     this.sidebarOpen.update(open => !open);
   }
-  
+
   closeSidebar(): void {
     this.sidebarOpen.set(false);
   }
-  
+
   closeSidebarOnMobile(): void {
     if (window.innerWidth < 768) {
       this.closeSidebar();
     }
   }
-  
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.menuOpen = false;
+  }
+
   @HostListener('document:keydown.escape')
   onEscapeKey(): void {
+    this.menuOpen = false;
     if (this.sidebarOpen()) {
       this.closeSidebar();
     }
   }
-  
+
+  initials(user: UserSession | null): string {
+    if (!user) return 'U';
+    const first = user.firstName ? user.firstName.charAt(0) : '';
+    const last = user.lastName ? user.lastName.charAt(0) : '';
+    return (first + last).toUpperCase() || 'U';
+  }
+
+  roleLabel(role: string): string {
+    switch (role) {
+      case 'ROLE_ADMIN': return 'Administrador IT';
+      case 'ROLE_DISTRIBUTOR': return 'Distribuidor';
+      case 'ROLE_CUSTOMER': return 'Cliente';
+      default: return role;
+    }
+  }
+
   onLogout(): void {
     this.authService.logout().subscribe(() => {
       this.router.navigate(['/']);
