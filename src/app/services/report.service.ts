@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_BASE } from '../core/tokens/api-base.token';
-import { VolumeAndTicket, TopProduct, TopCustomer, LowStock } from '../models/report.model';
+import { VolumeAndTicket, TopProduct, TopCustomer, LowStock, SystemMetrics } from '../models/report.model';
 
 export interface ReportFilters {
   from?: string;
@@ -17,6 +17,10 @@ export class ReportService {
 
   constructor(private http: HttpClient) {
     this.apiUrl = inject(API_BASE) + '/api/admin/reports';
+  }
+
+  systemMetrics(): Observable<SystemMetrics> {
+    return this.http.get<SystemMetrics>(`${this.apiUrl}/system-metrics`);
   }
 
   volume(filters: ReportFilters = {}): Observable<VolumeAndTicket> {

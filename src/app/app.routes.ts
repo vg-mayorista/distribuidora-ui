@@ -23,6 +23,7 @@ import { PedidoDetalleClienteComponent } from './features/cliente/pages/pedido-d
 import { DistribuidorDashboardComponent } from './features/distribuidor/pages/dashboard/dashboard';
 import { DistribuidorPedidosComponent } from './features/distribuidor/pages/pedidos/pedidos';
 import { DistribuidorPedidoDetalleComponent } from './features/distribuidor/pages/pedido-detalle/pedido-detalle';
+import { DueñoReportesComponent } from './features/distribuidor/pages/reportes/reportes';
 import { NotFoundComponent } from './features/not-found/not-found';
 import { UnderConstructionComponent } from './features/under-construction/under-construction';
 
@@ -59,7 +60,7 @@ export const routes: Routes = [
           { path: 'pedidos/:id', component: DistribuidorPedidoDetalleComponent },
           { path: 'stock', component: StockComponent },
           { path: 'categorias', component: CategoriesComponent },
-          { path: 'reportes', component: AdminReportesComponent },
+          { path: 'reportes', component: DueñoReportesComponent },
         ],
       },
     ],

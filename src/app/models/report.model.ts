@@ -31,3 +31,18 @@ export interface LowStock {
   unitsPerPack: number;
   price: number;
 }
+
+export interface SystemMetrics {
+  totalUsers: number;
+  activeUsers: number;
+  customerCount: number;
+  distributorCount: number;
+  adminCount: number;
+  totalProducts: number;
+  activeProducts: number;
+  totalOrders: number;
+  activeDeliveryMethods: number;
+  systemStatus: string;
+  databaseEngine: string;
+  rateLimiterProtection: string;
+}
