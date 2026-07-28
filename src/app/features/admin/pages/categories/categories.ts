@@ -8,13 +8,15 @@ import { Category } from '../../../../models/category.model';
 import { Product } from '../../../../models/product.model';
 import { ModalComponent } from '../../../../shared/components/modal/modal';
 import { ButtonComponent } from '../../../../shared/ui/button/button';
+import { BadgeComponent } from '../../../../shared/ui/badge/badge';
+import { EmptyStateComponent } from '../../../../shared/ui/empty-state/empty-state';
 import { FilterDropdownComponent, FilterGroup } from '../../../../shared/components/filter-dropdown/filter-dropdown';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination';
 
 @Component({
   selector: 'app-categories',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent, FilterDropdownComponent, PaginationComponent, ButtonComponent],
+  imports: [CommonModule, FormsModule, ModalComponent, FilterDropdownComponent, PaginationComponent, ButtonComponent, BadgeComponent, EmptyStateComponent],
   templateUrl: './categories.html',
   styleUrl: './categories.css',
 })

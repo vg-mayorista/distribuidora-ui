@@ -31,13 +31,7 @@
              aria-label="Buscar categorías">
     </div>
     
-    <button class="btn btn-primary" type="button" (click)="openModal()">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <line x1="12" y1="5" x2="12" y2="19"/>
-        <line x1="5" y1="12" x2="19" y2="12"/>
-      </svg>
-      Nueva categoría
-    </button>
+    <app-button variant="primary" (onClick)="openModal()">+ Nueva categoría</app-button>
   </div>
 </div>
 
@@ -70,16 +64,10 @@
         <tr *ngFor="let cat of paginatedCategories()" [class.row-inactive]="!cat.active">
           <td class="font-semibold">{{ cat.name }}</td>
           <td class="text-center">
-            <span class="badge badge--neutral">
-              Productos: {{ getProductCount(cat.id) }}
-            </span>
+            <app-badge variant="neutral">Productos: {{ getProductCount(cat.id) }}</app-badge>
           </td>
           <td class="text-center">
-            <span class="badge"
-                  [class.badge--active]="cat.active"
-                  [class.badge--inactive]="!cat.active">
-              {{ cat.active ? 'Activa' : 'Inactiva' }}
-            </span>
+            <app-badge [variant]="cat.active ? 'active' : 'inactive'">{{ cat.active ? 'Activa' : 'Inactiva' }}</app-badge>
           </td>
           <td class="col-hide-sm created-date">{{ cat.createdAt | date:'dd/MM/yyyy' }}</td>
           <td style="vertical-align: middle;">
@@ -129,12 +117,10 @@
         <!-- Empty state -->
         <tr *ngIf="paginatedCategories().length === 0">
           <td colspan="5">
-            <div class="empty-state">
-              <p class="empty-state-title">No hay categorías</p>
-              <p class="empty-state-text">
-                {{ categories().length === 0 ? 'Comienza agregando tu primera categoría' : 'Sin resultados para este filtro.' }}
-              </p>
-            </div>
+            <app-empty-state
+              title="No hay categorías"
+              [message]="categories().length === 0 ? 'Comenzá agregando tu primera categoría.' : 'Sin resultados para este filtro.'">
+            </app-empty-state>
           </td>
         </tr>
       </tbody>

@@ -6,12 +6,13 @@ import { OrderService } from '../../../../services/order.service';
 import { Order, OrderStatus, ORDER_STATUS_LABELS, ORDER_STATUS_VARIANTS } from '../../../../models/order.model';
 import { ModalComponent } from '../../../../shared/components/modal/modal';
 import { BadgeComponent } from '../../../../shared/ui/badge/badge';
+import { ButtonComponent } from '../../../../shared/ui/button/button';
 import { EmptyStateComponent } from '../../../../shared/ui/empty-state/empty-state';
 
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule, ModalComponent, BadgeComponent, EmptyStateComponent],
+  imports: [CommonModule, FormsModule, ModalComponent, BadgeComponent, ButtonComponent, EmptyStateComponent],
   templateUrl: './orders.html',
   styleUrl: './orders.css',
 })

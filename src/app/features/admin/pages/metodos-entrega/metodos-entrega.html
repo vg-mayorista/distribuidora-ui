@@ -1,33 +1,42 @@
-<section class="me-page">
-  <header class="me-header">
-    <div>
-      <h1 class="me-title">Métodos de entrega</h1>
-      <p class="me-subtitle">Configurá las opciones de envío/retiro que se ofrecen al cliente.</p>
+<div class="admin-page-container">
+  <div class="page-header">
+    <div class="page-header-text">
+      <h1 class="page-header-title">Métodos de entrega</h1>
+      <p class="page-header-subtitle">Configurá las opciones de envío y retiro que se ofrecen al cliente.</p>
     </div>
-    <app-button variant="primary" (onClick)="openCreate()">+ Nuevo método</app-button>
-  </header>
+    <div class="page-header-actions">
+      <div class="stock-search">
+        <svg class="stock-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text"
+               class="stock-search-input"
+               placeholder="Buscar por nombre…"
+               [ngModel]="filter()"
+               (ngModelChange)="filter.set($event)"
+               aria-label="Buscar métodos de entrega">
+      </div>
 
-  <section class="me-toolbar">
-    <div class="search-input-wrapper">
-      <input type="text" class="form-input"
-             placeholder="Buscar por nombre…"
-             [ngModel]="filter()"
-             (ngModelChange)="filter.set($event)">
+      <label class="toggle-inactive">
+        <input type="checkbox" [checked]="showInactive()" (change)="toggleShowInactive()">
+        <span>Mostrar inactivos</span>
+      </label>
+
+      <app-button variant="primary" (onClick)="openCreate()">+ Nuevo método</app-button>
     </div>
-    <label class="toggle">
-      <input type="checkbox" [checked]="showInactive()" (change)="toggleShowInactive()">
-      Mostrar inactivos
-    </label>
-  </section>
+  </div>
 
   <div *ngIf="loading()" class="loading-state">
     <div class="spinner"></div>
-    <p>Cargando métodos…</p>
+    <p class="text-muted" style="margin-top: var(--space-md);">Cargando métodos…</p>
   </div>
 
-  <div *ngIf="error() && !loading()" class="error-state">{{ error() }}</div>
+  <div *ngIf="error() && !loading()" class="card" style="padding: var(--space-lg); border-color: var(--status-inactive-bg);">
+    <p style="color: var(--status-inactive-text); margin: 0;">{{ error() }}</p>
+  </div>
 
-  <div *ngIf="!loading() && !error() && filtered().length === 0" class="empty-wrapper">
+  <div *ngIf="!loading() && !error() && filtered().length === 0" class="card" style="padding: var(--space-xl);">
     <app-empty-state
       title="Sin métodos de entrega"
       message="Creá el primer método (ej: Retiro en local, Envío a domicilio).">
@@ -35,6 +44,7 @@
   </div>
 
   <div *ngIf="!loading() && !error() && filtered().length > 0" class="data-table-wrapper">
+    <div class="table-responsive">
     <table class="data-table">
       <thead>
         <tr>
@@ -70,6 +80,7 @@
       </tbody>
     </table>
   </div>
+</div>
 
   <app-modal [open]="showCreate()" title="Nuevo método de entrega" size="md" (close)="closeCreate()">
     <form (ngSubmit)="submitCreate()" class="me-form">
@@ -137,4 +148,4 @@
       </div>
     </form>
   </app-modal>
-</section>
+</div>
