@@ -1,28 +1,47 @@
 /* Users Admin - Uses global styles from styles.css */
-/* Component-specific overrides only */
 
-/* Filter tabs */
-.filter-tabs {
-  display: flex;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-lg);
-}
-
-/* Modal form spacing */
-.form-group {
+/* Toast Banner */
+.toast-banner {
+  background: var(--green-50);
+  border: 1px solid var(--green-100);
+  color: var(--green-900);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
   margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
 }
 
-/* Responsive */
-@media (max-width: 767.98px) {
-  .filter-tabs {
-    flex-wrap: wrap;
+/* Modal Form Layout */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+
+.form-group {
+  margin-bottom: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group--full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 575.98px) {
+  .form-grid {
+    grid-template-columns: 1fr;
   }
-  
-  .filter-tab {
-    padding: var(--space-xs) var(--space-md);
-    font-size: var(--font-size-sm);
-  }
+}
+
+/* User Search Input Wrapper */
+.user-search-wrapper {
+  position: relative;
+  flex: 0 1 280px;
 }
 
 /* Column widths - fixed pixel sizes for data, flexible for primary text */

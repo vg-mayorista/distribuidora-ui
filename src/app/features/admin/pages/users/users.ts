@@ -190,8 +190,27 @@ export class AdminUsersComponent implements OnInit {
     this.customerToToggle = null;
   }
 
+  // Toast notification
+  toastMessage = signal<string | null>(null);
+  copiedPassword = signal(false);
+
+  showToast(message: string): void {
+    this.toastMessage.set(message);
+    setTimeout(() => this.toastMessage.set(null), 3500);
+  }
+
+  copyPasswordToClipboard(): void {
+    if (!this.newUser.password) return;
+    navigator.clipboard.writeText(this.newUser.password);
+    this.copiedPassword.set(true);
+    setTimeout(() => this.copiedPassword.set(false), 2000);
+  }
+
   confirmToggle(): void {
     if (!this.customerToToggle?.id) return;
+
+    const actionText = this.customerToToggle.active ? 'desactivada' : 'activada';
+    const userName = `${this.customerToToggle.firstName} ${this.customerToToggle.lastName}`;
 
     this.toggling.set(true);
     this.customerService.toggleActive(this.customerToToggle.id).subscribe({
@@ -202,6 +221,7 @@ export class AdminUsersComponent implements OnInit {
         this.toggling.set(false);
         this.showConfirmModal.set(false);
         this.customerToToggle = null;
+        this.showToast(`Cuenta de ${userName} ${actionText} con éxito.`);
         this.cdr.detectChanges();
       },
       error: () => {
@@ -216,6 +236,7 @@ export class AdminUsersComponent implements OnInit {
 
   openCreateModal(): void {
     this.createError.set(null);
+    this.copiedPassword.set(false);
     this.newUser = this.emptyCreateRequest();
     this.showCreateModal.set(true);
   }
@@ -246,10 +267,13 @@ export class AdminUsersComponent implements OnInit {
     this.createSaving.set(true);
     this.createError.set(null);
 
+    const createdName = `${this.newUser.firstName} ${this.newUser.lastName}`;
+
     this.customerService.createUser(this.newUser).subscribe({
       next: () => {
         this.createSaving.set(false);
         this.showCreateModal.set(false);
+        this.showToast(`Usuario ${createdName} creado con éxito.`);
         this.loadCustomers();
       },
       error: (err) => {
