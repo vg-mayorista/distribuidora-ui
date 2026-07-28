@@ -1,0 +1,40 @@
+<div class="filter-dropdown">
+  <!-- Trigger Button -->
+  <button 
+    type="button"
+    class="filter-trigger"
+    [class.filter-trigger--active]="selectedCount > 0"
+    (click)="toggle()"
+    [attr.aria-expanded]="isOpen()"
+    aria-haspopup="true">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+    </svg>
+    <span>{{ selectedCount > 0 ? selectedCount + ' filtros' : activeLabel() }}</span>
+    <svg *ngIf="selectedCount > 0" 
+         class="filter-clear" 
+         width="14" height="14" 
+         viewBox="0 0 24 24" 
+         fill="none" 
+         stroke="currentColor" 
+         stroke-width="2"
+         (click)="clearAll(); $event.stopPropagation()"
+         aria-label="Limpiar filtros">
+      <line x1="18" y1="6" x2="6" y2="18"/>
+      <line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  </button>
+
+  <!-- Dropdown Menu -->
+  <div class="filter-menu" *ngIf="isOpen()" role="menu">
+    <div class="filter-group" *ngFor="let group of groups(); let gi = index">
+      <p class="filter-group-label">{{ group.label }}</p>
+      <label class="filter-option" *ngFor="let opt of group.options">
+        <input type="checkbox"
+               [checked]="isSelected(gi, opt.value)"
+               (change)="toggleOption(gi, opt.value)">
+        <span>{{ opt.label }}</span>
+      </label>
+    </div>
+  </div>
+</div>

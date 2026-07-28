@@ -1,0 +1,100 @@
+.auth-page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  position: relative;
+}
+
+.auth-back {
+  position: absolute;
+  top: var(--space-md);
+  left: var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+}
+.auth-back:hover { color: var(--color-text); text-decoration: none; }
+
+.auth-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: var(--space-xl) var(--space-lg);
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 4px 12px rgba(60, 60, 60, 0.08);
+}
+
+.auth-brand {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-strong);
+  text-align: center;
+  margin: 0 0 0.5rem;
+  letter-spacing: 0.02em;
+}
+.auth-brand .accent { color: var(--orange-base); }
+.auth-subtitle {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  margin: 0 0 var(--space-xl);
+}
+
+.auth-error {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-xs);
+  margin-bottom: var(--space-md);
+  text-align: center;
+}
+
+.password-wrapper { position: relative; }
+.password-wrapper .form-input { padding-right: 4.5rem; }
+.toggle-password {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: 0.375rem var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+.toggle-password:hover { color: var(--color-text); background: var(--color-surface-alt); }
+
+/* Override del autofill de Chrome (que pone fondo celeste) */
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-bg) inset;
+  -webkit-text-fill-color: var(--color-text);
+  caret-color: var(--color-text);
+  transition: background-color 5000s ease-in-out 0s;
+}
+.form-input:-webkit-autofill {
+  border-color: var(--color-border);
+}
+.form-input:-webkit-autofill:focus {
+  border-color: var(--orange-base);
+}
+
+.auth-footer {
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin: var(--space-lg) 0 0;
+}
+.auth-footer a { color: var(--orange-base); font-weight: var(--font-weight-semibold); }
+.auth-footer a:hover { color: var(--orange-600); }

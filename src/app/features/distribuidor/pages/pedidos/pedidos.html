@@ -1,0 +1,102 @@
+<section class="dp-page">
+  <header class="dp-header">
+    <div>
+      <h1 class="dp-title">Pedidos recibidos</h1>
+      <p class="dp-subtitle">
+        {{ orders().length }} pedido{{ orders().length === 1 ? '' : 's' }} encontrado{{ orders().length === 1 ? '' : 's' }}
+      </p>
+    </div>
+    <div class="dp-actions">
+      <button class="btn btn-secondary" type="button" (click)="clearFilters()" *ngIf="hasActiveFilters()">
+        Limpiar filtros
+      </button>
+    </div>
+  </header>
+
+  <section class="dp-filters">
+    <div class="filter-row">
+      <div class="search-input-wrapper">
+        <input type="text" class="form-input"
+               placeholder="Buscar por #ID o nombre…"
+               [ngModel]="searchTerm()"
+               (ngModelChange)="searchTerm.set($event)"
+               (keyup.enter)="load()">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Estado</label>
+        <div class="status-chips">
+          <button *ngFor="let s of statusOptions"
+                  type="button"
+                  class="chip"
+                  [class.chip--active]="isStatusActive(s.key)"
+                  (click)="toggleStatus(s.key)">
+            {{ s.label }}
+          </button>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="delivery-date">Día de reparto</label>
+        <input id="delivery-date" type="date" class="form-input"
+               [ngModel]="deliveryDate()"
+               (ngModelChange)="deliveryDate.set($event); load()">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="customer">Cliente</label>
+        <select id="customer" class="form-input"
+                [ngModel]="customerId()"
+                (ngModelChange)="customerId.set($event); load()">
+          <option value="">Todos</option>
+          <option *ngFor="let c of customers()" [value]="c.id">
+            {{ c.firstName }} {{ c.lastName }}
+          </option>
+        </select>
+      </div>
+      <app-button variant="primary" (onClick)="load()">Aplicar</app-button>
+    </div>
+  </section>
+
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Cargando pedidos…</p>
+  </div>
+
+  <div *ngIf="error() && !loading()" class="error-state">{{ error() }}</div>
+
+  <div *ngIf="!loading() && !error() && orders().length === 0" class="empty-wrapper">
+    <app-empty-state title="Sin pedidos" message="No hay pedidos que coincidan con los filtros.">
+    </app-empty-state>
+  </div>
+
+  <div *ngIf="!loading() && !error() && orders().length > 0" class="data-table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="col-dist-order-num">#Pedido</th>
+          <th class="col-dist-order-customer">Cliente</th>
+          <th class="col-dist-order-items">Items</th>
+          <th class="col-hide-sm col-dist-order-delivery">Entrega</th>
+          <th class="col-hide-sm col-dist-order-date">Día</th>
+          <th class="col-dist-order-status">Estado</th>
+          <th class="text-right col-dist-order-total">Total</th>
+          <th class="text-right col-dist-order-action">Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let o of orders(); trackBy: trackById" (click)="view(o)" class="row-clickable">
+          <td class="font-mono">#{{ shortId(o.id) }}</td>
+          <td>{{ o.customerName ?? '—' }}</td>
+          <td>{{ o.itemCount ?? o.items.length }}</td>
+          <td class="col-hide-sm">{{ o.deliveryMethodName ?? '—' }}</td>
+          <td class="col-hide-sm">{{ formatDate(o.deliveryDate) }}</td>
+          <td>
+            <app-badge [variant]="statusVariant(o.status)">{{ statusLabel(o.status) }}</app-badge>
+          </td>
+          <td class="text-right font-semibold">${{ formatPrice(o.total) }}</td>
+          <td class="text-right">
+            <button class="btn btn-secondary btn-sm" (click)="view(o); $event.stopPropagation()">Ver</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>

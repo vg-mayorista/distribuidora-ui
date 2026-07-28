@@ -1,0 +1,65 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-header-title">Dashboard</h1>
+      <p class="page-header-subtitle">Vista general de pedidos y entregas.</p>
+    </div>
+  </header>
+
+  <div class="kpi-grid">
+    <a routerLink="/distribuidor/pedidos" class="kpi-card">
+      <span class="kpi-label">Pendientes</span>
+      <span class="kpi-value">{{ pendingCount() }}</span>
+      <span class="kpi-hint">por preparar</span>
+    </a>
+    <a routerLink="/distribuidor/pedidos" class="kpi-card">
+      <span class="kpi-label">Armados</span>
+      <span class="kpi-value">{{ armadoCount() }}</span>
+      <span class="kpi-hint">listos para enviar</span>
+    </a>
+    <a routerLink="/distribuidor/pedidos" class="kpi-card">
+      <span class="kpi-label">Enviados</span>
+      <span class="kpi-value">{{ enviadoCount() }}</span>
+      <span class="kpi-hint">en reparto</span>
+    </a>
+    <a routerLink="/distribuidor/pedidos" class="kpi-card">
+      <span class="kpi-label">Entregas hoy</span>
+      <span class="kpi-value">{{ todayDeliveryCount() }}</span>
+      <span class="kpi-hint">para hoy</span>
+    </a>
+  </div>
+
+  <section class="dashboard-card">
+    <header class="dashboard-card-header">
+      <h2 class="card-title">Últimos pedidos pendientes</h2>
+      <a routerLink="/distribuidor/pedidos" class="see-all-link">Ver todos →</a>
+    </header>
+
+    <div *ngIf="recentPending().length === 0" class="empty-inline">
+      No hay pedidos pendientes. Buen trabajo 🎉
+    </div>
+
+    <div *ngIf="recentPending().length > 0" class="data-table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="col-dash-order">Pedido</th>
+            <th class="col-dash-customer">Cliente</th>
+            <th class="col-dash-delivery">Entrega</th>
+            <th class="col-dash-date">Día</th>
+            <th class="text-right col-dash-total">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let o of recentPending()" [routerLink]="['/distribuidor/pedidos', o.id]" class="row-clickable">
+            <td class="text-mono">#{{ shortId(o.id) }}</td>
+            <td>{{ o.customerName }}</td>
+            <td>{{ o.deliveryMethodName }}</td>
+            <td>{{ formatDate(o.deliveryDate) }}</td>
+            <td class="text-right font-semibold">${{ formatPrice(o.total) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>

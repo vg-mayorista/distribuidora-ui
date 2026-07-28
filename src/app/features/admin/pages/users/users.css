@@ -1,0 +1,34 @@
+/* Users Admin - Uses global styles from styles.css */
+/* Component-specific overrides only */
+
+/* Filter tabs */
+.filter-tabs {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+/* Modal form spacing */
+.form-group {
+  margin-bottom: var(--space-md);
+}
+
+/* Responsive */
+@media (max-width: 767.98px) {
+  .filter-tabs {
+    flex-wrap: wrap;
+  }
+  
+  .filter-tab {
+    padding: var(--space-xs) var(--space-md);
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* Column widths - fixed pixel sizes for data, flexible for primary text */
+.col-user-name { width: auto; }
+.col-user-email { width: auto; }
+.col-user-role { width: 140px; min-width: 140px; max-width: 140px; }
+.col-user-date { width: 120px; min-width: 120px; max-width: 120px; }
+.col-user-status { width: 95px; min-width: 95px; max-width: 95px; }
+.col-user-actions { width: 100px; min-width: 100px; max-width: 100px; }

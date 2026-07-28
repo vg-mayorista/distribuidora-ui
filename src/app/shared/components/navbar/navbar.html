@@ -1,0 +1,72 @@
+<nav class="navbar-public">
+  <a routerLink="/" class="brand">
+    <span class="accent">VG</span> <span>Mayorista</span>
+  </a>
+
+  <ul class="nav-links">
+    <ng-container *ngIf="(currentUser$ | async) as user; else guestNav">
+      <li *ngIf="user.role === 'ROLE_DISTRIBUTOR'">
+        <a class="nav-link" routerLink="/distribuidor" routerLinkActive="nav-link--active" [routerLinkActiveOptions]="{exact: true}">Dashboard</a>
+      </li>
+      <li *ngIf="user.role === 'ROLE_DISTRIBUTOR'">
+        <a class="nav-link" routerLink="/distribuidor/pedidos" routerLinkActive="nav-link--active">Pedidos</a>
+      </li>
+      <li *ngIf="user.role === 'ROLE_DISTRIBUTOR'">
+        <a class="nav-link" routerLink="/distribuidor/stock" routerLinkActive="nav-link--active">Stock</a>
+      </li>
+      <li *ngIf="user.role === 'ROLE_DISTRIBUTOR'">
+        <a class="nav-link" routerLink="/distribuidor/categorias" routerLinkActive="nav-link--active">Categorías</a>
+      </li>
+      <li *ngIf="user.role === 'ROLE_CUSTOMER'">
+        <a class="nav-link" routerLink="/cliente/catalogo" routerLinkActive="nav-link--active">Catálogo</a>
+      </li>
+      <li *ngIf="user.role === 'ROLE_CUSTOMER'">
+        <a class="nav-link" routerLink="/cliente/mis-pedidos" routerLinkActive="nav-link--active">Mis pedidos</a>
+      </li>
+      <li *ngIf="user.role === 'ROLE_ADMIN'">
+        <a class="nav-link" routerLink="/admin/stock" routerLinkActive="nav-link--active">Stock</a>
+      </li>
+      <li *ngIf="user.role === 'ROLE_ADMIN'">
+        <a class="nav-link" routerLink="/admin/categorias" routerLinkActive="nav-link--active">Categorías</a>
+      </li>
+      <li *ngIf="user.role === 'ROLE_ADMIN'">
+        <a class="nav-link" routerLink="/admin/ordenes" routerLinkActive="nav-link--active">Órdenes</a>
+      </li>
+      <li *ngIf="user.role === 'ROLE_ADMIN'">
+        <a class="nav-link" routerLink="/admin/usuarios" routerLinkActive="nav-link--active">Usuarios</a>
+      </li>
+    </ng-container>
+    <ng-template #guestNav>
+      <!-- Sin links públicos: el catálogo requiere login -->
+    </ng-template>
+  </ul>
+
+  <div class="nav-actions">
+    <ng-container *ngIf="(currentUser$ | async) as user; else guestActions">
+      <div class="user-menu">
+        <button class="user-avatar-btn" type="button" (click)="$event.stopPropagation(); toggleUserMenu()">
+          <span class="user-avatar">{{ initials(user) }}</span>
+          <span class="user-name">{{ user.firstName }}</span>
+          <span class="caret">▾</span>
+        </button>
+
+        <div class="user-dropdown" *ngIf="menuOpen" (click)="$event.stopPropagation()">
+          <div class="user-dropdown-header">
+            <span class="user-name">{{ user.firstName }} {{ user.lastName }}</span>
+            <span class="user-email">{{ user.email }}</span>
+            <span class="user-role-badge"
+                  [class.role-admin]="user.role === 'ROLE_ADMIN'">
+              {{ roleLabel(user.role) }}
+            </span>
+          </div>
+          <button class="dropdown-item logout-item" type="button" (click)="onLogout()">Cerrar sesión</button>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-template #guestActions>
+      <a routerLink="/login" class="btn btn-ghost">Iniciar sesión</a>
+      <a routerLink="/register" class="btn btn-primary">Crear cuenta</a>
+    </ng-template>
+  </div>
+</nav>

@@ -1,0 +1,224 @@
+<div class="admin-page-container">
+<div class="page-header">
+  <div class="page-header-text">
+    <h1 class="page-header-title">Usuarios</h1>
+    <p class="page-header-subtitle">Administración de usuarios del sistema</p>
+  </div>
+  <div class="page-header-actions">
+    <app-filter-dropdown
+      [groups]="filterGroups()"
+      [activeLabel]="'Filtrar'"
+      (filterChange)="onFilterChange($event)">
+    </app-filter-dropdown>
+
+    <div class="stock-search">
+      <svg class="stock-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text"
+             class="stock-search-input"
+             placeholder="Buscar por nombre o email…"
+             [ngModel]="searchTerm()"
+             (ngModelChange)="searchTerm.set($event); onSearch()"
+             (keyup.enter)="onSearch()"
+             aria-label="Buscar usuarios">
+    </div>
+
+    <app-button variant="primary" (onClick)="openCreateModal()">+ Nuevo usuario</app-button>
+  </div>
+</div>
+
+<div *ngIf="loading" class="loading-state">
+  <div class="spinner"></div>
+  <p class="text-muted" style="margin-top: var(--space-md);">Cargando usuarios…</p>
+</div>
+
+<div *ngIf="error" class="card" style="padding: var(--space-lg); border-color: var(--status-inactive-bg);">
+  <p style="color: var(--status-inactive-text); margin: 0;">{{ error }}</p>
+</div>
+
+<div *ngIf="!loading && !error" class="data-table-wrapper">
+
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="col-user-name">Nombre</th>
+          <th class="col-hide-sm col-user-email">Email</th>
+          <th class="text-center col-user-role">Rol</th>
+          <th class="col-hide-sm text-center col-user-date">Registrado</th>
+          <th class="text-center col-user-status">Estado</th>
+          <th class="text-right col-user-actions">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let customer of paginatedCustomers()" [class.row-inactive]="!customer.active">
+          <td class="font-semibold">{{ customer.firstName }} {{ customer.lastName }}</td>
+          <td class="col-hide-sm text-muted">{{ customer.email }}</td>
+          <td class="text-center">
+            <app-badge [variant]="roleVariant(customer.role)">{{ roleLabel(customer.role) }}</app-badge>
+          </td>
+          <td class="col-hide-sm text-center text-muted">{{ customer.createdAt | date:'dd/MM/yyyy' }}</td>
+          <td class="text-center">
+            <app-badge [variant]="customer.active ? 'active' : 'inactive'">{{ customer.active ? 'Activo' : 'Inactivo' }}</app-badge>
+          </td>
+          <td style="vertical-align: middle;">
+            <div class="actions-cell">
+              <button class="btn-icon"
+                      type="button"
+                      (click)="openConfirmModal(customer)"
+                      [attr.aria-label]="customer.active ? 'Desactivar usuario' : 'Activar usuario'"
+                      [title]="customer.active ? 'Desactivar' : 'Activar'">
+                <svg *ngIf="customer.active" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 6h18"/>
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                </svg>
+                <svg *ngIf="!customer.active" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <tr *ngIf="filteredCustomers().length === 0">
+          <td colspan="6">
+            <app-empty-state
+              title="No hay usuarios"
+              [message]="customers().length === 0 ? 'Aún no hay usuarios registrados.' : 'Sin resultados para este filtro.'">
+            </app-empty-state>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <nav class="pagination-wrapper" aria-label="Paginación" *ngIf="totalElements() > 0">
+    <div class="pagination-left">
+      <p class="pagination-info">{{ totalElements() }} usuarios en total</p>
+      <div class="page-size-selector">
+        <label for="pageSize">Por página:</label>
+        <select id="pageSize"
+                class="form-select form-select--sm"
+                [value]="pageSize()"
+                (change)="onPageSizeChange(+$any($event.target).value)">
+          <option [value]="6">6</option>
+          <option [value]="12">12</option>
+          <option [value]="20">20</option>
+          <option [value]="50">50</option>
+        </select>
+      </div>
+    </div>
+    <app-pagination
+      *ngIf="totalPages() > 1"
+      [total]="totalElements()"
+      [currentPage]="currentPage()"
+      [pageSize]="pageSize()"
+      (pageChange)="onPageChange($event)">
+    </app-pagination>
+  </nav>
+</div>
+
+<app-modal
+  [open]="showCreateModal()"
+  title="Crear usuario"
+  size="md"
+  (close)="closeCreateModal()">
+
+  <div *ngIf="createError()" class="form-error" style="margin-bottom: var(--space-md);">
+    {{ createError() }}
+  </div>
+
+  <form (ngSubmit)="submitCreate()">
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label form-label-required" for="create-firstName">Nombre</label>
+        <input type="text"
+               id="create-firstName"
+               class="form-input"
+               [(ngModel)]="newUser.firstName"
+               name="firstName"
+               required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label form-label-required" for="create-lastName">Apellido</label>
+        <input type="text"
+               id="create-lastName"
+               class="form-input"
+               [(ngModel)]="newUser.lastName"
+               name="lastName"
+               required>
+      </div>
+
+      <div class="form-group form-group--full">
+        <label class="form-label form-label-required" for="create-email">Email</label>
+        <input type="email"
+               id="create-email"
+               class="form-input"
+               [(ngModel)]="newUser.email"
+               name="email"
+               required>
+      </div>
+
+      <div class="form-group form-group--full">
+        <label class="form-label form-label-required" for="create-password">Contraseña temporal</label>
+        <div style="display: flex; gap: var(--space-sm);">
+          <input type="text"
+                 id="create-password"
+                 class="form-input"
+                 [(ngModel)]="newUser.password"
+                 name="password"
+                 minlength="6"
+                 required>
+          <app-button variant="secondary" type="button" (onClick)="useGeneratedPassword()">Generar</app-button>
+        </div>
+        <small class="form-hint">Compartila con el usuario por WhatsApp. Él podrá cambiarla después.</small>
+      </div>
+
+      <div class="form-group form-group--full">
+        <label class="form-label" for="create-role">Rol</label>
+        <select id="create-role"
+                class="form-select"
+                [(ngModel)]="newUser.role"
+                name="role">
+          <option value="ROLE_DISTRIBUTOR">Distribuidor</option>
+          <option value="ROLE_CUSTOMER">Cliente</option>
+        </select>
+      </div>
+    </div>
+
+    <div modal-footer style="display: flex; justify-content: flex-end; gap: var(--space-sm); margin-top: var(--space-lg);">
+      <app-button variant="secondary" (onClick)="closeCreateModal()" [disabled]="createSaving()">Cancelar</app-button>
+      <app-button variant="primary" type="submit" [loading]="createSaving()" [disabled]="createSaving()">Crear usuario</app-button>
+    </div>
+  </form>
+</app-modal>
+
+<app-modal
+  [open]="showConfirmModal()"
+  [title]="customerToToggle?.active ? 'Desactivar usuario' : 'Activar usuario'"
+  size="sm"
+  (close)="closeConfirmModal()">
+
+  <p style="margin: 0; color: var(--text-primary);">
+    <ng-container *ngIf="customerToToggle?.active">
+      ¿Desactivar al usuario <strong>{{ customerToToggle?.firstName }} {{ customerToToggle?.lastName }}</strong>?
+      No podrá iniciar sesión hasta que sea reactivado.
+    </ng-container>
+    <ng-container *ngIf="!customerToToggle?.active">
+      ¿Activar al usuario <strong>{{ customerToToggle?.firstName }} {{ customerToToggle?.lastName }}</strong>?
+      Podrá iniciar sesión nuevamente.
+    </ng-container>
+  </p>
+
+  <div modal-footer style="display: flex; justify-content: flex-end; gap: var(--space-sm); margin-top: var(--space-lg);">
+    <app-button variant="secondary" (onClick)="closeConfirmModal()" [disabled]="toggling()">Cancelar</app-button>
+    <app-button variant="primary" (onClick)="confirmToggle()" [loading]="toggling()" [disabled]="toggling()">
+      {{ customerToToggle?.active ? 'Sí, desactivar' : 'Sí, activar' }}
+    </app-button>
+  </div>
+</app-modal>
+</div>

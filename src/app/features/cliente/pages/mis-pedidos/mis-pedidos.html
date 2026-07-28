@@ -1,0 +1,75 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-header-title">Mis pedidos</h1>
+      <p class="page-header-subtitle">Historial de pedidos cargados al distribuidor.</p>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button *ngFor="let t of tabs"
+            type="button"
+            class="tab"
+            [class]="tabClass(t.key)"
+            [class.tab--active]="activeTab() === t.key"
+            (click)="activeTab.set(t.key)">
+      <span class="tab-label">{{ t.label }}</span>
+      <span *ngIf="t.key !== 'ALL'" class="tab-badge" [class]="badgeClass(t.key)">{{ countByStatus(t.key) }}</span>
+    </button>
+  </div>
+
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Cargando pedidos…</p>
+  </div>
+
+  <div *ngIf="error() && !loading()" class="error-state">{{ error() }}</div>
+
+  <div *ngIf="!loading() && !error() && orders().length === 0" class="empty-wrapper">
+    <app-empty-state
+      icon="📦"
+      title="Todavía no tenés pedidos"
+      message="Cuando confirmes un pedido desde el carrito, aparecerá acá.">
+      <app-button variant="primary" (onClick)="goToCatalog()">Ver catálogo</app-button>
+    </app-empty-state>
+  </div>
+
+  <div *ngIf="!loading() && !error() && orders().length > 0" class="orders-list">
+    <article *ngFor="let o of filteredOrders(); trackBy: trackById" class="order-card" (click)="view(o)" role="button" tabindex="0">
+      <header class="order-card-header">
+        <div class="order-card-id">
+          <span class="order-card-label">Pedido</span>
+          <span class="order-card-number">#{{ shortId(o.id) }}</span>
+        </div>
+        <app-badge [variant]="statusVariant(o.status)">{{ statusLabel(o.status) }}</app-badge>
+      </header>
+      <div class="order-card-body">
+        <div class="order-card-meta">
+          <div>
+            <span class="meta-label">Creado</span>
+            <span class="meta-value">{{ formatDate(o.createdAt) }}</span>
+          </div>
+          <div *ngIf="o.deliveryDate">
+            <span class="meta-label">Entrega</span>
+            <span class="meta-value">{{ formatDate(o.deliveryDate) }}</span>
+          </div>
+          <div>
+            <span class="meta-label">Método</span>
+            <span class="meta-value">{{ o.deliveryMethodName ?? '—' }}</span>
+          </div>
+        </div>
+        <div class="order-card-summary">
+          <span class="meta-label">{{ o.itemCount ?? o.items.length }} ítems</span>
+          <span class="order-card-total">${{ formatPrice(o.total) }}</span>
+        </div>
+      </div>
+    </article>
+
+    <div *ngIf="filteredOrders().length === 0" class="empty-wrapper">
+      <app-empty-state
+        title="Sin pedidos en este estado"
+        message="Cuando haya un pedido en este estado, va a aparecer acá.">
+      </app-empty-state>
+    </div>
+  </div>
+</section>

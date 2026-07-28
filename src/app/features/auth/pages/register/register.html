@@ -1,0 +1,79 @@
+<div class="auth-page">
+  <a class="back-arrow" routerLink="/">&#8592;</a>
+
+  <div class="auth-card">
+    <h2 class="auth-title">¡Bienvenido!</h2>
+
+    <div *ngIf="errorMsg" class="auth-error">{{ errorMsg }}</div>
+
+    <form (ngSubmit)="onSubmit()">
+      <div class="input-row">
+        <div class="input-group">
+          <input
+            type="text"
+            name="firstName"
+            [(ngModel)]="formData.firstName"
+            placeholder="Nombre"
+            class="auth-input"
+            autocomplete="given-name"
+            required
+          />
+        </div>
+
+        <div class="input-group">
+          <input
+            type="text"
+            name="lastName"
+            [(ngModel)]="formData.lastName"
+            placeholder="Apellido"
+            class="auth-input"
+            autocomplete="family-name"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="input-group">
+        <input
+          type="email"
+          name="email"
+          [(ngModel)]="formData.email"
+          placeholder="Email"
+          class="auth-input"
+          autocomplete="email"
+          required
+        />
+      </div>
+
+      <div class="input-group input-password">
+        <input
+          [type]="showPassword ? 'text' : 'password'"
+          name="password"
+          [(ngModel)]="formData.password"
+          placeholder="Password"
+          class="auth-input"
+          autocomplete="new-password"
+          required
+        />
+        <button type="button" class="toggle-password" (click)="togglePassword()">
+          {{ showPassword ? '🙈' : '👁️' }}
+        </button>
+      </div>
+
+
+      <label class="terms-label">
+        <input type="checkbox" name="acceptTerms" [(ngModel)]="acceptTerms" />
+        Acepto los términos y condiciones
+      </label>
+
+      <button type="submit" class="btn-auth" [disabled]="loading">
+        {{ loading ? 'Registrando...' : 'Registrarse' }}
+      </button>
+    </form>
+
+    <p class="auth-redirect">
+      ¿Ya tienes cuenta?
+      <a class="auth-link" routerLink="/login">Inicia Sesión</a>
+    </p>
+  </div>
+</div>

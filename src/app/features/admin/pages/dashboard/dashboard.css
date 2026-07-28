@@ -1,0 +1,122 @@
+/* Admin Dashboard / Shell Layout
+   Uses global design tokens from styles.css
+   Includes component-specific overrides
+*/
+
+/* Full viewport admin shell */
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-body);
+  background-image: 
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 20px,
+      rgba(34, 197, 94, 0.03) 20px,
+      rgba(34, 197, 94, 0.03) 21px
+    );
+}
+
+/* ── Sidebar ── */
+.admin-sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  background-color: var(--bg-surface);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 100;
+  transition: transform var(--transition-normal);
+}
+
+.admin-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  backdrop-filter: blur(2px);
+}
+
+/* ── Topbar ── */
+.admin-topbar {
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-width);
+  right: 0;
+  height: var(--topbar-height);
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-lg);
+  z-index: 99;
+  transition: left var(--transition-normal);
+}
+
+/* ── Main Content ── */
+.admin-main {
+  margin-left: var(--sidebar-width);
+  margin-top: var(--topbar-height);
+  padding: var(--space-lg) var(--space-2xl);
+  flex: 1;
+  min-height: calc(100vh - var(--topbar-height));
+  transition: transform var(--transition-normal);
+  max-width: calc(100vw - var(--sidebar-width) - var(--space-2xl) * 2);
+}
+
+/* ── Responsive: Tablet ── */
+@media (max-width: 991.98px) {
+  .admin-sidebar {
+    width: var(--sidebar-width-md);
+  }
+  .admin-topbar {
+    left: var(--sidebar-width-md);
+  }
+  .admin-main {
+    margin-left: var(--sidebar-width-md);
+  }
+}
+
+/* ── Responsive: Mobile ── */
+@media (max-width: 767.98px) {
+  .admin-sidebar {
+    transform: translateX(-100%);
+    width: var(--sidebar-width);
+    box-shadow: var(--shadow-lg);
+  }
+  .admin-sidebar--open {
+    transform: translateX(0);
+  }
+  .admin-sidebar-backdrop {
+    display: block;
+  }
+  .admin-topbar {
+    left: 0;
+  }
+  .admin-main {
+    margin-left: 0;
+    padding: var(--space-lg);
+  }
+  .topbar-hamburger {
+    display: flex !important;
+  }
+  .topbar-center {
+    display: none !important;
+  }
+  .sidebar-brand-role {
+    display: none;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .admin-main {
+    padding: var(--space-md);
+  }
+}

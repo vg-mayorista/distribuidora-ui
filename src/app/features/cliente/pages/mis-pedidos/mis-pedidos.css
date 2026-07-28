@@ -1,0 +1,154 @@
+.page {
+  padding: var(--space-md) var(--space-lg);
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* Tabs: el border-bottom del tab activo va en NARANJA, no verde.
+   El verde queda reservado para estado del sistema (éxito/stock). */
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+.tab:hover { color: var(--color-text); }
+.tab--active {
+  color: var(--orange-700);
+  border-bottom-color: var(--orange-base);
+}
+
+/* Badges de conteo: solo naranja/verde/rojo para estados semánticos,
+   neutral para los estados intermedios (ARMADO, ENVIADO, ALL). */
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 0 0.375rem;
+  height: 18px;
+  font-size: 0.6875rem;
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-surface-alt);
+  color: var(--neutral-800);
+  border-radius: var(--radius-full);
+}
+.tab-badge--pending { background: var(--orange-50); color: var(--orange-900); }
+.tab-badge--success { background: var(--green-50); color: var(--green-900); }
+.tab-badge--cancelled { background: var(--red-50); color: var(--red-500); }
+.tab-badge--neutral { background: var(--color-surface-alt); color: var(--neutral-800); }
+
+.orders-list { display: flex; flex-direction: column; gap: var(--space-sm); }
+
+.order-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md) var(--space-lg);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+.order-card:hover {
+  border-color: var(--orange-base);
+  box-shadow: 0 4px 12px rgba(60, 60, 60, 0.08);
+  transform: translateY(-2px);
+}
+
+.order-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+.order-card-id { display: flex; align-items: baseline; gap: var(--space-xs); }
+.order-card-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: var(--font-weight-semibold);
+}
+.order-card-number {
+  font-family: ui-monospace, monospace;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-strong);
+}
+
+.order-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+.order-card-meta {
+  display: flex;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+}
+.order-card-meta > div { display: flex; flex-direction: column; }
+.meta-label {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: var(--font-weight-semibold);
+}
+.meta-value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-strong);
+  font-weight: var(--font-weight-medium);
+}
+.order-card-summary { display: flex; flex-direction: column; align-items: flex-end; }
+.order-card-total {
+  font-family: var(--font-body);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.empty-wrapper {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.loading-state, .error-state {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--color-text-muted);
+}
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--orange-base);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 0.5rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

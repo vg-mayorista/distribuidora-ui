@@ -1,0 +1,162 @@
+<section class="dp-page" *ngIf="order() as o">
+  <a routerLink="/distribuidor/pedidos" class="dp-back">← Pedidos</a>
+
+  <header class="dp-header">
+    <div class="dp-title-row">
+      <h1 class="dp-title">Pedido #{{ shortId(o.id) }}</h1>
+      <app-badge [variant]="statusVariant(o.status)">{{ statusLabel(o.status) }}</app-badge>
+    </div>
+    <p class="dp-subtitle">{{ o.customerName }} · creado {{ formatDateTime(o.createdAt) }}</p>
+  </header>
+
+  <div class="dp-grid">
+    <div class="dp-main">
+      <section class="card-section">
+        <h2 class="section-title">Productos</h2>
+        <ul class="items-list">
+          <li *ngFor="let item of o.items" class="item-row">
+            <img *ngIf="item.productImageUrl" [src]="item.productImageUrl" [alt]="item.productName" class="item-img"/>
+            <div *ngIf="!item.productImageUrl" class="item-placeholder">📦</div>
+            <div class="item-body">
+              <span class="item-name">{{ item.productName }}</span>
+              <span class="item-meta" *ngIf="item.unitsPerPackAtOrder > 1">
+                {{ item.packsRequested }} pack{{ item.packsRequested === 1 ? '' : 's' }} × {{ item.unitsPerPackAtOrder }} u. = <strong>{{ item.quantity }}</strong> unidades físicas
+              </span>
+              <span class="item-meta" *ngIf="item.unitsPerPackAtOrder <= 1">{{ item.quantity }} unidades</span>
+            </div>
+            <div class="item-price">
+              <span class="item-price-each">${{ formatPrice(item.unitPrice) }} c/u</span>
+              <span class="item-price-total">${{ formatPrice(item.subtotal) }}</span>
+            </div>
+          </li>
+        </ul>
+        <div class="totals">
+          <div class="totals-row"><span>Subtotal</span><span>${{ formatPrice(o.subtotal) }}</span></div>
+          <div *ngIf="o.deliveryCost > 0" class="totals-row"><span>Envío</span><span>${{ formatPrice(o.deliveryCost) }}</span></div>
+          <div *ngIf="o.deliveryCost === 0" class="totals-row"><span>Envío</span><span class="free">Gratis</span></div>
+          <div class="totals-row totals-row--total"><span>Total</span><span>${{ formatPrice(o.total) }}</span></div>
+        </div>
+      </section>
+
+      <section *ngIf="o.notes" class="card-section">
+        <h2 class="section-title">Notas del pedido</h2>
+        <p class="notes-text">{{ o.notes }}</p>
+      </section>
+    </div>
+
+    <aside class="dp-side">
+      <section class="card-section">
+        <h2 class="section-title">Cliente</h2>
+        <p class="info-line"><strong>Nombre:</strong> {{ o.customerName }}</p>
+        <p *ngIf="o.customerEmail" class="info-line"><strong>Email:</strong> {{ o.customerEmail }}</p>
+      </section>
+
+      <section class="card-section">
+        <h2 class="section-title">Entrega</h2>
+        <p class="info-line"><strong>Método:</strong> {{ o.deliveryMethodName ?? '—' }}</p>
+        <p *ngIf="o.deliveryDate" class="info-line"><strong>Fecha:</strong> {{ formatDate(o.deliveryDate) }}</p>
+        <p *ngIf="o.deliveryAddress" class="info-line"><strong>Dirección:</strong> {{ o.deliveryAddress }}</p>
+        <p *ngIf="o.deliveryPhone" class="info-line"><strong>Teléfono:</strong> {{ o.deliveryPhone }}</p>
+
+        <!-- Info para Retiro en Local -->
+        <div *ngIf="isRetiro(o)" class="side-notice-box">
+          <p class="side-notice-text">
+            Este pedido es retiro en local, no requiere fecha de envío.
+          </p>
+        </div>
+
+        <!-- Lógica para Envío a Domicilio -->
+        <ng-container *ngIf="!isRetiro(o)">
+          <!-- Info para estado PENDIENTE -->
+          <div *ngIf="o.status === 'PENDIENTE'" class="side-notice-box">
+            <p class="side-notice-text">
+              La fecha de entrega se asigna una vez que el pedido está armado.
+            </p>
+          </div>
+
+          <!-- Asignación para ARMADO -->
+          <div class="date-assign-box" *ngIf="o.status === 'ARMADO'">
+            <label class="date-assign-label" for="assign-date">Asignar día de reparto</label>
+            <div class="date-assign-row">
+              <input id="assign-date" type="date" class="form-input date-assign-input"
+                     [ngModel]="tempDeliveryDate()"
+                     (ngModelChange)="tempDeliveryDate.set($event)">
+              <app-button variant="primary" (onClick)="saveDeliveryDate()" [loading]="savingDate()" [disabled]="savingDate()">
+                Guardar
+              </app-button>
+            </div>
+            <div *ngIf="saveDateError()" class="form-error" style="margin-top: 0.5rem; font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+              {{ saveDateError() }}
+            </div>
+            <div *ngIf="saveDateSuccess()" class="date-assign-success">
+              ✓ Fecha guardada correctamente
+            </div>
+          </div>
+        </ng-container>
+      </section>
+
+      <section class="card-section" *ngIf="nextOptions().length > 0">
+        <h2 class="section-title">Cambiar estado</h2>
+        <p class="muted">Actualizá el estado del pedido a medida que lo prepares.</p>
+
+        <div class="action-stack">
+          <app-button *ngIf="nextOptions().includes('ARMADO')" variant="primary" (onClick)="transitionTo('ARMADO')" [loading]="transitioning()" [disabled]="transitioning()" [block]="true">
+            📦 Marcar como armado
+          </app-button>
+
+          <app-button *ngIf="nextOptions().includes('ENVIADO')" variant="primary" (onClick)="transitionTo('ENVIADO')" [loading]="transitioning()" [disabled]="transitioning()" [block]="true">
+            🚚 Marcar como enviado
+          </app-button>
+
+          <app-button *ngIf="nextOptions().includes('ENTREGADO')" variant="primary" (onClick)="transitionTo('ENTREGADO')" [loading]="transitioning()" [disabled]="transitioning()" [block]="true">
+            ✓ Marcar como entregado
+          </app-button>
+        </div>
+
+        <div *ngIf="o.status !== 'ENTREGADO' && o.status !== 'CANCELADO'" class="action-stack" style="margin-top: var(--space-xs);">
+          <app-button variant="danger" (onClick)="transitionTo('CANCELADO')" [disabled]="transitioning()" [block]="true">
+            ✕ Cancelar pedido
+          </app-button>
+        </div>
+
+        <div *ngIf="transitionError()" class="form-error">{{ transitionError() }}</div>
+      </section>
+
+      <section class="card-section" *ngIf="o.status === 'ENTREGADO' || o.status === 'CANCELADO'">
+        <h2 class="section-title">Pedido {{ statusLabel(o.status).toLowerCase() }}</h2>
+        <p class="muted">Este pedido está en estado terminal y no se puede modificar.</p>
+      </section>
+    </aside>
+  </div>
+
+  <app-modal [open]="showCancelModal()" title="Cancelar pedido" size="md" (close)="closeCancelModal()">
+    <div class="cancel-warning-box">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="warning-icon">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      <div>
+        <strong>¿Cancelar el pedido #{{ shortId(o.id) }}?</strong>
+        <p class="warning-msg">El stock reservado se liberará automáticamente y esta acción no se puede deshacer.</p>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top: var(--space-md);">
+      <label class="form-label" for="cancel-notes">Motivo (opcional)</label>
+      <textarea id="cancel-notes" class="form-input" rows="2"
+                placeholder="Ej: cliente pidió suspender, falta de stock, etc."
+                [ngModel]="transitionNotes()"
+                (ngModelChange)="transitionNotes.set($event)"></textarea>
+    </div>
+    <div modal-footer class="modal-footer-row">
+      <app-button variant="secondary" (onClick)="closeCancelModal()" [disabled]="transitioning()">Volver</app-button>
+      <app-button variant="danger" (onClick)="confirmCancel()" [loading]="transitioning()" [disabled]="transitioning()">Sí, cancelar</app-button>
+    </div>
+  </app-modal>
+</section>
+
+<div *ngIf="loading()" class="loading-state"><div class="spinner"></div></div>
+<div *ngIf="error() && !loading()" class="error-state">
+  <p>{{ error() }}</p>
+  <a routerLink="/distribuidor/pedidos">Volver</a>
+</div>

@@ -1,0 +1,116 @@
+<section class="confirmar-page">
+  <header class="confirmar-header">
+    <h1 class="confirmar-title">Confirmar pedido</h1>
+    <p class="confirmar-subtitle">Elegí cómo querés recibirlo y confirmá.</p>
+  </header>
+
+  <!-- Banner de modificación de pedido -->
+  <div *ngIf="cartStore.editingOrderId()" class="editing-banner">
+    <span class="editing-banner-title">
+      <span>✏️</span>
+      <span>Modificando pedido #{{ shortEditingOrderId() }}</span>
+    </span>
+    <button type="button" class="btn btn-secondary btn-sm editing-banner-btn" (click)="cancelModification()">
+      Crear como pedido nuevo
+    </button>
+  </div>
+
+  <div class="confirmar-grid">
+    <div class="confirmar-main">
+      <section class="card-section">
+        <h2 class="section-title">1. Método de entrega</h2>
+        <div class="methods-grid">
+          <button *ngFor="let m of deliveryMethods(); trackBy: trackById"
+                  type="button"
+                  class="method-card"
+                  [class.method-card--selected]="selectedDeliveryMethodId() === m.id"
+                  (click)="selectDeliveryMethod(m)">
+            <div class="method-info">
+              <span class="method-name">{{ m.name }}</span>
+              <span *ngIf="m.description" class="method-desc">{{ m.description }}</span>
+            </div>
+            <span *ngIf="m.cost > 0" class="method-price">+${{ formatPrice(m.cost) }}</span>
+            <span *ngIf="m.cost === 0" class="method-price method-price--free">Gratis</span>
+          </button>
+        </div>
+      </section>
+
+      <section *ngIf="requiresAddress" class="card-section">
+        <h2 class="section-title">
+          2. Datos de entrega
+          <span *ngIf="hasSavedAddress()" class="prefilled-badge">Dirección precargada</span>
+        </h2>
+        <div class="form-grid">
+          <div class="form-group form-group--full">
+            <label class="form-label form-label-required" for="address">Dirección</label>
+            <input id="address" type="text" class="form-input"
+                   [ngModel]="deliveryAddress()"
+                   (ngModelChange)="deliveryAddress.set($event)"
+                   placeholder="Ej: Av. Santa Fe 1234">
+          </div>
+          <div class="form-group">
+            <label class="form-label form-label-required" for="phone">Teléfono</label>
+            <input id="phone" type="tel" class="form-input"
+                   [ngModel]="deliveryPhone()"
+                   (ngModelChange)="deliveryPhone.set($event)"
+                   (blur)="onPhoneBlur()"
+                   placeholder="Ej: +54 9 370 451-6054">
+          </div>
+        </div>
+        <div class="delivery-notice-info">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-svg-icon" style="color: var(--neutral-800);">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Tu pedido se entrega dentro de las próximas 24-48 hs hábiles.
+        </div>
+      </section>
+
+      <section class="card-section">
+        <h2 class="section-title">{{ requiresAddress ? '3' : '2' }}. Notas (opcional)</h2>
+        <div class="form-group">
+          <textarea class="form-input" rows="3"
+                    placeholder="Algo que el distribuidor deba saber sobre tu pedido…"
+                    [ngModel]="notes()"
+                    (ngModelChange)="notes.set($event)"></textarea>
+        </div>
+      </section>
+    </div>
+
+    <aside class="confirmar-summary">
+      <h2 class="summary-title">Tu pedido</h2>
+      <ul class="summary-list">
+        <li *ngFor="let line of lines(); trackBy: trackByProduct" class="summary-item">
+          <div class="summary-item-text">
+            <span class="summary-item-name">{{ line.product.name }}</span>
+            <span class="summary-item-qty">×{{ line.packs }} {{ line.product.unitsPerPack > 1 ? 'packs' : 'u.' }}</span>
+          </div>
+          <span class="summary-item-price">${{ formatPrice(line.packs * line.product.price) }}</span>
+        </li>
+      </ul>
+      <div class="summary-totals">
+        <div class="summary-row"><span>Subtotal</span><span>${{ formatPrice(subtotal()) }}</span></div>
+        <div *ngIf="selectedDeliveryMethod() as dm" class="summary-row">
+          <span>Envío</span>
+          <span *ngIf="dm.cost === 0" class="summary-value--free">Gratis</span>
+          <span *ngIf="dm.cost > 0">${{ formatPrice(dm.cost) }}</span>
+        </div>
+        <div class="summary-row summary-row--total">
+          <span>Total</span><span>${{ formatPrice(computeTotal()) }}</span>
+        </div>
+      </div>
+      <div *ngIf="error()" class="form-error">{{ error() }}</div>
+      <div class="summary-actions">
+        <app-button variant="primary" size="md" (onClick)="submit()" [block]="true"
+                    [loading]="loading()" [disabled]="!canSubmit || loading()">
+          Confirmar pedido
+        </app-button>
+        <div *ngIf="validationErrorMessage" class="validation-error-msg">
+          {{ validationErrorMessage }}
+        </div>
+        <app-button variant="ghost" size="md" (onClick)="cancel()" [block]="true">
+          ← Volver al carrito
+        </app-button>
+      </div>
+    </aside>
+  </div>
+</section>

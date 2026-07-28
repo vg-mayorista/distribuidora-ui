@@ -1,0 +1,47 @@
+<!-- Controls only (no nav wrapper) -->
+<div class="pagination-controls" *ngIf="totalPages() > 0">
+  
+  <!-- Page numbers -->
+  <ul class="pagination" role="list">
+    <!-- Previous -->
+    <li>
+      <button type="button" 
+              class="pagination-btn"
+              [disabled]="!showPrev()"
+              (click)="prevPage()"
+              aria-label="Página anterior">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+    </li>
+    
+    <!-- Page numbers -->
+    <li *ngFor="let page of pageNumbers()">
+      <button type="button"
+              class="pagination-btn"
+              [class.pagination-btn--active]="page === currentPage()"
+              [disabled]="page === '...'"
+              (click)="goToPage(page)"
+              [attr.aria-current]="page === currentPage() ? 'page' : null"
+              [attr.aria-label]="page === '...' ? 'Más páginas' : 'Página ' + page">
+        <ng-container *ngIf="page !== '...'">{{ page }}</ng-container>
+        <ng-container *ngIf="page === '...'">…</ng-container>
+      </button>
+    </li>
+    
+    <!-- Next -->
+    <li>
+      <button type="button" 
+              class="pagination-btn"
+              [disabled]="!showNext()"
+              (click)="nextPage()"
+              aria-label="Página siguiente">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+    </li>
+  </ul>
+  
+</div>

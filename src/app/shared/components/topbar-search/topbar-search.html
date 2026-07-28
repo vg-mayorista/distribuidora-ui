@@ -1,0 +1,65 @@
+<div class="topbar-search-wrapper">
+  <div class="topbar-search">
+    <svg class="topbar-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <circle cx="11" cy="11" r="8"/>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input type="text"
+           class="topbar-search-input"
+           placeholder="Buscar o @comando…"
+           [ngModel]="searchTerm()"
+           (ngModelChange)="searchTerm.set($event); onSearch()"
+           (keydown)="onKeydown($event)"
+           aria-label="Buscar">
+    <button *ngIf="searchTerm()"
+            class="topbar-search-clear"
+            type="button"
+            (click)="clear()"
+            aria-label="Limpiar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="topbar-search-dropdown" *ngIf="isOpen()">
+    <div *ngIf="loading()" class="search-loading">
+      <div class="search-spinner"></div>
+      <span>Buscando…</span>
+    </div>
+
+    <div *ngIf="showNoResults" class="search-no-results">
+      No se encontraron resultados
+    </div>
+
+    <ng-container *ngIf="!loading() && hasResults">
+      <button *ngFor="let item of results(); let i = index; trackBy: trackByIndex"
+              class="search-result"
+              [class.search-result--selected]="selectedIndex() === i"
+              (click)="selectResult(item)"
+              type="button">
+        <span class="search-result-icon">
+          <svg *ngIf="item.type === 'command'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/>
+            <line x1="12" y1="22" x2="12" y2="15.5"/>
+            <polyline points="22 8.5 12 15.5 2 8.5"/>
+          </svg>
+          <svg *ngIf="item.type === 'product'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+        </span>
+        <span class="search-result-content">
+          <span class="search-result-label">{{ item.label }}</span>
+          <span class="search-result-sublabel" *ngIf="item.sublabel">{{ item.sublabel }}</span>
+        </span>
+      </button>
+    </ng-container>
+
+    <div class="search-hint">
+      Escribe <code>@stock</code> <code>@categorias</code> para navegar
+    </div>
+  </div>
+</div>

@@ -1,0 +1,152 @@
+<div class="admin-page-container">
+<div class="page-header">
+  <div class="page-header-text">
+    <h1 class="page-header-title">Pedidos</h1>
+    <p class="page-header-subtitle">
+      Vista global de pedidos de todos los clientes
+      <span *ngIf="totalElements() > 0">({{ totalElements() }} en total)</span>
+    </p>
+  </div>
+  <div class="page-header-actions">
+    <div class="stock-search">
+      <svg class="stock-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text"
+             class="stock-search-input"
+             placeholder="Buscar por ID o cliente…"
+             [ngModel]="searchTerm()"
+             (ngModelChange)="searchTerm.set($event); onSearch()"
+             aria-label="Buscar pedidos">
+    </div>
+  </div>
+</div>
+
+<div *ngIf="loading" class="loading-state">
+  <div class="spinner"></div>
+  <p class="text-muted" style="margin-top: var(--space-md);">Cargando pedidos…</p>
+</div>
+
+<div *ngIf="error && !loading" class="card" style="padding: var(--space-lg); border-color: var(--status-inactive-bg);">
+  <p style="color: var(--status-inactive-text); margin: 0;">{{ error }}</p>
+</div>
+
+<div *ngIf="!loading && !error" class="data-table-wrapper">
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="col-order-num">N° Pedido</th>
+          <th class="col-order-customer">Cliente</th>
+          <th class="col-hide-sm col-order-items">Items</th>
+          <th class="col-hide-sm col-order-delivery">Entrega</th>
+          <th class="col-hide-sm col-order-date">Día</th>
+          <th class="col-order-status">Estado</th>
+          <th class="text-right col-order-total">Total</th>
+          <th class="text-right col-order-action">Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of paginatedOrders(); trackBy: trackById" [class.row-inactive]="order.status === 'CANCELADO'">
+          <td class="font-semibold">#{{ shortId(order.id) }}</td>
+          <td>{{ order.customerName ?? '—' }}</td>
+          <td class="col-hide-sm">{{ order.itemCount ?? order.items.length }}</td>
+          <td class="col-hide-sm text-muted">{{ order.deliveryMethodName ?? '—' }}</td>
+          <td class="col-hide-sm text-muted">{{ formatDate(order.deliveryDate) }}</td>
+          <td>
+            <app-badge [variant]="statusVariant(order.status)">{{ statusLabel(order.status) }}</app-badge>
+          </td>
+          <td class="text-right font-semibold">${{ formatPrice(order.total) }}</td>
+          <td>
+            <button class="btn btn-secondary btn-sm" type="button" (click)="openViewModal(order)">Ver</button>
+          </td>
+        </tr>
+
+        <tr *ngIf="paginatedOrders().length === 0">
+          <td colspan="8">
+            <app-empty-state
+              title="Sin pedidos"
+              message="Cuando haya pedidos en el sistema, aparecerán acá.">
+            </app-empty-state>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<app-modal
+  *ngIf="selectedOrder() as o"
+  [open]="!!selectedOrder()"
+  [title]="'Pedido #' + shortId(o.id ?? '')"
+  size="lg"
+  (close)="closeViewModal()">
+
+  <div class="detail-grid">
+    <div class="detail-card">
+      <p class="detail-label">Cliente</p>
+      <p class="detail-value">{{ o.customerName ?? '—' }}</p>
+      <p *ngIf="o.customerEmail" class="detail-sub">{{ o.customerEmail }}</p>
+    </div>
+    <div class="detail-card">
+      <p class="detail-label">Estado</p>
+      <p class="detail-value">
+        <app-badge [variant]="statusVariant(o.status)">{{ statusLabel(o.status) }}</app-badge>
+      </p>
+      <p class="detail-sub">Creado {{ formatDate(o.createdAt) }}</p>
+    </div>
+    <div class="detail-card">
+      <p class="detail-label">Entrega</p>
+      <p class="detail-value">{{ o.deliveryMethodName ?? '—' }}</p>
+      <p *ngIf="o.deliveryDate" class="detail-sub">Fecha: {{ formatDate(o.deliveryDate) }}</p>
+    </div>
+    <div *ngIf="o.deliveryAddress" class="detail-card">
+      <p class="detail-label">Dirección</p>
+      <p class="detail-value">{{ o.deliveryAddress }}</p>
+      <p *ngIf="o.deliveryPhone" class="detail-sub">{{ o.deliveryPhone }}</p>
+    </div>
+  </div>
+
+  <h4 class="items-title">Productos</h4>
+  <div class="items-table-wrapper">
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th class="text-right">Cantidad</th>
+          <th class="text-right">Precio unit.</th>
+          <th class="text-right">Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of o.items">
+          <td>{{ item.productName }}</td>
+          <td class="text-right">
+            {{ item.quantity }}
+            <span *ngIf="item.unitsPerPackAtOrder > 1" class="text-muted">({{ item.packsRequested }} packs × {{ item.unitsPerPackAtOrder }})</span>
+          </td>
+          <td class="text-right">${{ formatPrice(item.unitPrice) }}</td>
+          <td class="text-right">${{ formatPrice(item.subtotal) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="totals-section">
+    <div class="totals-row"><span>Subtotal</span><span>${{ formatPrice(o.subtotal) }}</span></div>
+    <div *ngIf="o.deliveryCost > 0" class="totals-row"><span>Envío</span><span>${{ formatPrice(o.deliveryCost) }}</span></div>
+    <div *ngIf="o.deliveryCost === 0" class="totals-row"><span>Envío</span><span class="free">Gratis</span></div>
+    <div class="totals-row total"><span>Total</span><span>${{ formatPrice(o.total) }}</span></div>
+  </div>
+
+  <div *ngIf="o.notes" class="notes-section">
+    <h4 class="items-title">Notas</h4>
+    <p class="notes-text">{{ o.notes }}</p>
+  </div>
+
+  <div modal-footer style="display: flex; justify-content: flex-end; gap: var(--space-sm); margin-top: var(--space-lg);">
+    <button type="button" class="btn btn-secondary" (click)="closeViewModal()">Cerrar</button>
+  </div>
+</app-modal>
+</div>

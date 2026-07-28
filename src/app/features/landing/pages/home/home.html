@@ -1,0 +1,106 @@
+<!-- HERO -->
+<section class="home-hero">
+  <div class="home-hero-inner">
+    <p class="home-hero-eyebrow">Plataforma de pedidos mayoristas</p>
+    <h1 class="home-hero-title">
+      Tu pedido mayorista,<br>
+      <span class="accent">armado en minutos.</span>
+    </h1>
+    <p class="home-hero-subtitle">
+      Hacé tu pedido en minutos, sin llamadas ni planillas.<br>Tu distribuidor lo ve de inmediato.
+    </p>
+
+    <ng-container *ngIf="(currentUser$ | async) as user; else guestCta">
+      <div class="home-hero-cta">
+        <a *ngIf="user.role === 'ROLE_CUSTOMER'" routerLink="/cliente/catalogo" class="btn btn-primary btn-lg">
+          Ir al catálogo
+        </a>
+        <a *ngIf="user.role === 'ROLE_DISTRIBUTOR'" routerLink="/distribuidor" class="btn btn-primary btn-lg">
+          Ver pedidos
+        </a>
+        <a *ngIf="user.role === 'ROLE_ADMIN'" routerLink="/admin" class="btn btn-primary btn-lg">
+          Ir al administrador
+        </a>
+        <span class="home-hero-greet">Sesión iniciada como <strong>{{ user.firstName }}</strong></span>
+      </div>
+    </ng-container>
+    <ng-template #guestCta>
+      <div class="home-hero-cta">
+        <a routerLink="/cliente/catalogo" class="btn btn-primary btn-lg">
+          Ver catálogo
+        </a>
+        <a routerLink="/login" class="btn btn-secondary btn-lg">
+          Iniciar sesión
+        </a>
+      </div>
+    </ng-template>
+
+    <ul class="home-hero-trust">
+      <li><span class="trust-num">+50</span> comercios activos</li>
+      <li><span class="trust-num">0</span> hojas de Excel</li>
+    </ul>
+  </div>
+</section>
+
+<!-- FEATURED PRODUCTS -->
+<section class="home-section home-section--featured" *ngIf="featured().length > 0">
+  <h2 class="home-section-title">Productos destacados</h2>
+  <p class="home-section-subtitle">Los productos más pedidos por comercios como el tuyo.</p>
+
+  <div class="product-grid">
+    <article *ngFor="let p of featured()" class="product-card">
+      <div class="product-card-media">
+        <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name" src="assets/placeholder.png"/>
+        <div *ngIf="!p.imageUrl" class="product-card-placeholder">📦</div>
+      </div>
+      <div class="product-card-body">
+        <h3 class="product-card-name">{{ p.name }}</h3>
+        <p class="product-card-pack">Bulto de {{ p.unitsPerPack }} uds.</p>
+        <div class="product-card-price-row">
+          <span class="product-card-price">${{ formatPrice(p.price) }}</span>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <div class="home-section-cta">
+    <a routerLink="/cliente/catalogo" class="btn btn-primary">Ver catálogo</a>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="home-section">
+  <h2 class="home-section-title">Cómo funciona</h2>
+  <p class="home-section-subtitle">Tres pasos. Sin sorpresas, sin llamadas de coordinación.</p>
+
+  <div class="home-features">
+    <div class="home-feature">
+      <div class="home-feature-icon">1</div>
+      <h3>Elegís los productos</h3>
+      <p>Indicás las cantidades y confirmás. Listo.</p>
+    </div>
+    <div class="home-feature">
+      <div class="home-feature-icon">2</div>
+      <h3>Se prepara solo</h3>
+      <p>El distribuidor lo ve de inmediato y te notifica el estado.</p>
+    </div>
+    <div class="home-feature">
+      <div class="home-feature-icon">3</div>
+      <h3>Lo retirás o lo recibís</h3>
+      <p>Retiro en local o envío a domicilio, según lo que te convenga.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA STRIP -->
+<section class="home-cta-strip">
+  <div class="home-cta-strip-inner">
+    <div>
+      <h3>Empezá hoy. Sin papel, sin llamadas.</h3>
+      <p>Tu catálogo, tus pedidos y tu historial, todo en un lugar.</p>
+    </div>
+    <a routerLink="/cliente/catalogo" class="btn btn-primary">Comenzar pedido</a>
+  </div>
+</section>
+
+

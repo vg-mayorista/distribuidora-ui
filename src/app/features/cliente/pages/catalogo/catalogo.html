@@ -1,0 +1,95 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-header-title">Catálogo</h1>
+      <p class="page-header-subtitle">
+        Elegí los productos y armá tu pedido.
+        <span *ngIf="filteredProducts().length > 0"> · {{ filteredProducts().length }} productos disponibles</span>
+      </p>
+    </div>
+    <div class="page-header-actions">
+      <div class="search-input-wrapper">
+        <input type="text" class="form-input"
+               placeholder="Buscar por nombre…"
+               [ngModel]="searchTerm()"
+               (ngModelChange)="searchTerm.set($event)">
+      </div>
+      <app-button variant="primary" (onClick)="viewCart()">Ver carrito</app-button>
+    </div>
+  </header>
+
+  <div class="category-filters" *ngIf="categories().length > 0 && !loading()">
+    <button type="button" class="filter-pill"
+            [class.filter-pill--active]="selectedCategoryId() === null"
+            (click)="selectedCategoryId.set(null)">
+      Todos
+    </button>
+    <button type="button" class="filter-pill"
+            *ngFor="let cat of categories()"
+            [class.filter-pill--active]="selectedCategoryId() === cat.id"
+            (click)="selectedCategoryId.set(cat.id || null)">
+      {{ cat.name }}
+    </button>
+  </div>
+
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p class="text-muted">Cargando catálogo…</p>
+  </div>
+
+  <div *ngIf="error() && !loading()" class="error-state">{{ error() }}</div>
+
+  <div *ngIf="!loading() && !error()" class="product-grid">
+    <article *ngFor="let p of filteredProducts(); trackBy: trackById"
+             class="product-card"
+             [class.product-card--out-of-stock]="p.stock <= 0"
+             [class.product-card--in-cart]="isInCart(p)">
+      <div class="product-card-media">
+        <app-badge *ngIf="isInCart(p)" variant="success" class="product-card-cart-badge">
+          En tu carrito
+        </app-badge>
+        <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name"/>
+        <div *ngIf="!p.imageUrl" class="product-card-placeholder" [attr.aria-label]="p.name">
+          {{ productEmoji(p.name) }}
+        </div>
+      </div>
+      <div class="product-card-body">
+        <h3 class="product-card-name">{{ p.name }}</h3>
+        <p *ngIf="p.description" class="product-card-desc">{{ p.description }}</p>
+        <p class="product-card-pack">{{ packLabel(p) }}</p>
+        <div class="product-card-price-row">
+          <span class="product-card-price">${{ formatPrice(p.price) }}</span>
+          <app-badge [variant]="p.stock <= 0 ? 'inactive' : p.stock < 20 ? 'warning' : 'active'">
+            <ng-container *ngIf="p.stock > 0">{{ p.stock }} unid.</ng-container>
+            <ng-container *ngIf="p.stock <= 0">Sin stock</ng-container>
+          </app-badge>
+        </div>
+      </div>
+      <div class="product-card-actions" *ngIf="p.stock > 0">
+        <div class="qty-control">
+          <button type="button" class="qty-btn" (click)="decPacks(p)" [disabled]="getPacks(p) <= 1" aria-label="Restar una unidad">−</button>
+          <span class="qty-value">{{ getPacks(p) }}</span>
+          <button type="button" class="qty-btn" (click)="incPacks(p)" aria-label="Sumar una unidad">+</button>
+        </div>
+        <small class="product-card-physical" *ngIf="p.unitsPerPack > 1">
+          = {{ physicalUnits(p) }} u. físicas
+        </small>
+        <small class="product-card-physical" *ngIf="p.unitsPerPack <= 1">
+          = {{ physicalUnits(p) }} u. física
+        </small>
+        <app-button variant="primary" size="sm" [block]="true" (onClick)="addToCart(p)">Agregar</app-button>
+      </div>
+      <div class="product-card-actions" *ngIf="p.stock <= 0">
+        <app-button variant="secondary" size="sm" [block]="true" [disabled]="true">Sin stock</app-button>
+      </div>
+    </article>
+
+    <div *ngIf="filteredProducts().length === 0 && searchTerm()" class="product-grid-empty">
+      <p>No se encontraron productos para "{{ searchTerm() }}".</p>
+    </div>
+
+    <div *ngIf="filteredProducts().length === 0 && !searchTerm()" class="product-grid-empty">
+      <p>No hay productos disponibles por ahora.</p>
+    </div>
+  </div>
+</section>

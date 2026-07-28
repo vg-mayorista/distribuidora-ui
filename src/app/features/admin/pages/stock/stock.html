@@ -1,0 +1,312 @@
+<div class="admin-page-container">
+<div class="page-header">
+  <div class="page-header-text">
+    <h1 class="page-header-title">Stock</h1>
+    <p class="page-header-subtitle">
+      Productos del catálogo
+      <span *ngIf="totalElements() > 0">({{ totalElements() }} en total)</span>
+    </p>
+  </div>
+  <div class="page-header-actions">
+    <app-filter-dropdown
+      [groups]="filterGroups()"
+      [activeLabel]="'Filtrar'"
+      (filterChange)="onFilterChange($event)">
+    </app-filter-dropdown>
+
+    <div class="stock-search">
+      <svg class="stock-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text"
+             class="stock-search-input"
+             placeholder="Buscar por nombre…"
+             [ngModel]="searchTerm()"
+             (ngModelChange)="searchTerm.set($event); onSearch()"
+             aria-label="Buscar productos">
+    </div>
+
+    <app-button variant="primary" (onClick)="openCreateModal()">+ Nuevo producto</app-button>
+  </div>
+</div>
+
+<div *ngIf="loading()" class="loading-state">
+  <div class="spinner"></div>
+  <p class="text-muted" style="margin-top: var(--space-md);">Cargando productos…</p>
+</div>
+
+<div *ngIf="error() && !loading()" class="card" style="padding: var(--space-lg); border-color: var(--status-inactive-bg);">
+  <p style="color: var(--status-inactive-text); margin: 0;">{{ error() }}</p>
+</div>
+
+<div *ngIf="!loading() && !error()" class="data-table-wrapper">
+
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="col-product">Producto</th>
+          <th class="col-hide-sm col-category">Categoría</th>
+          <th class="text-right col-price">Precio</th>
+          <th class="text-right col-stock">Stock</th>
+          <th class="col-hide-sm col-pack" title="Unidades por pack cerrado">Unidades/pack</th>
+          <th class="col-hide-sm col-status">Estado</th>
+          <th class="text-right col-actions">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of paginatedProducts(); trackBy: trackById" [class.row-inactive]="!p.active">
+          <td>
+            <div class="product-cell">
+              <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name" class="product-thumb"/>
+              <div *ngIf="!p.imageUrl" class="product-thumb product-thumb--placeholder">{{ productEmoji(p.name) }}</div>
+              <div class="product-cell-text">
+                <span class="product-name">{{ p.name }}</span>
+                <span *ngIf="p.description" class="text-muted product-desc">{{ p.description }}</span>
+              </div>
+            </div>
+          </td>
+          <td class="col-hide-sm text-muted">{{ categoryName(p.categoryId) }}</td>
+          <td class="text-right font-semibold">${{ formatPrice(p.price) }}</td>
+          <td class="text-right">
+            <span [class.text-danger]="p.stock === 0"
+                  [class.text-warning]="p.stock > 0 && p.stock < 10"
+                  [class.font-semibold]="p.stock < 10">
+              {{ p.stock }}
+            </span>
+          </td>
+          <td class="col-hide-sm text-muted">{{ p.unitsPerPack }}</td>
+          <td class="col-hide-sm">
+            <app-badge [variant]="p.active ? 'active' : 'inactive'">{{ p.active ? 'Activo' : 'Inactivo' }}</app-badge>
+          </td>
+          <td>
+            <div class="actions-cell">
+              <button class="btn-icon" type="button" (click)="openEditModal(p)" title="Editar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button *ngIf="p.active" class="btn-icon btn-icon--danger" type="button" (click)="openDeactivateModal(p)" title="Desactivar producto">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+              <button *ngIf="!p.active" class="btn-icon" type="button" (click)="reactivate(p)" title="Reactivar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <tr *ngIf="paginatedProducts().length === 0">
+          <td colspan="7">
+            <app-empty-state
+              title="No hay productos"
+              [message]="searchTerm() ? 'No se encontraron productos con ese criterio.' : 'Aún no hay productos cargados.'">
+            </app-empty-state>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <nav class="pagination-wrapper" aria-label="Paginación" *ngIf="totalElements() > 0">
+    <div class="pagination-left">
+      <p class="pagination-info">{{ totalElements() }} productos en total</p>
+      <div class="page-size-selector">
+        <label for="pageSize">Por página:</label>
+        <select id="pageSize"
+                class="form-select form-select--sm"
+                [value]="pageSize()"
+                (change)="onPageSizeChange(+$any($event.target).value)">
+          <option [value]="6">6</option>
+          <option [value]="12">12</option>
+          <option [value]="20">20</option>
+          <option [value]="50">50</option>
+        </select>
+      </div>
+    </div>
+    <app-pagination
+      *ngIf="totalPages() > 1"
+      [total]="totalElements()"
+      [currentPage]="currentPage()"
+      [pageSize]="pageSize()"
+      (pageChange)="onPageChange($event)">
+    </app-pagination>
+  </nav>
+</div>
+
+<app-modal *ngIf="createModalOpen()"
+  [open]="createModalOpen()"
+  title="Nuevo producto"
+  size="lg"
+  (close)="closeCreateModal()">
+
+  <form (ngSubmit)="submitCreate()" class="product-form">
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label form-label-required" for="np-name">Nombre</label>
+        <input id="np-name" type="text" class="form-input"
+          [class.is-invalid]="!newProduct().name.trim() && formError()"
+          [ngModel]="newProduct().name" (ngModelChange)="newProduct.update(p => ({...p, name: $event}))"
+          name="npName" required maxlength="100"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="np-category">Categoría</label>
+        <select id="np-category" class="form-input"
+          [ngModel]="newProduct().categoryId ?? ''"
+          (ngModelChange)="newProduct.update(p => ({...p, categoryId: $event || null}))"
+          name="npCategory">
+          <option value="">— Sin categoría —</option>
+          <option *ngFor="let c of categories()" [value]="c.id">{{ c.name }}</option>
+        </select>
+      </div>
+      <div class="form-group form-group--full">
+        <label class="form-label" for="np-description">Descripción</label>
+        <textarea id="np-description" class="form-input" rows="2" maxlength="500"
+          [ngModel]="newProduct().description"
+          (ngModelChange)="newProduct.update(p => ({...p, description: $event}))"
+          name="npDescription"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label form-label-required" for="np-price">Precio (por pack)</label>
+        <input id="np-price" type="number" min="0" step="0.01" class="form-input"
+          [class.is-invalid]="newProduct().price < 0 && formError()"
+          [ngModel]="newProduct().price"
+          (ngModelChange)="newProduct.update(p => ({...p, price: +$event}))"
+          name="npPrice" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label form-label-required" for="np-stock">Stock (unidades físicas)</label>
+        <input id="np-stock" type="number" min="0" step="1" class="form-input"
+          [class.is-invalid]="newProduct().stock < 0 && formError()"
+          [ngModel]="newProduct().stock"
+          (ngModelChange)="newProduct.update(p => ({...p, stock: +$event}))"
+          name="npStock" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label form-label-required" for="np-upp">Unidades por pack</label>
+        <input id="np-upp" type="number" min="1" step="1" class="form-input"
+          [class.is-invalid]="newProduct().unitsPerPack < 1 && formError()"
+          [ngModel]="newProduct().unitsPerPack"
+          (ngModelChange)="newProduct.update(p => ({...p, unitsPerPack: +$event}))"
+          name="npUpp" required/>
+        <small class="form-hint">Si es unitario, dejar en 1. Ej: yerba en caja de 12 → 12.</small>
+      </div>
+      <div class="form-group form-group--full">
+        <label class="form-label" for="np-image">URL de imagen</label>
+        <input id="np-image" type="url" class="form-input"
+          [ngModel]="newProduct().imageUrl"
+          (ngModelChange)="newProduct.update(p => ({...p, imageUrl: $event}))"
+          name="npImage" maxlength="500"/>
+      </div>
+    </div>
+
+    <div *ngIf="formError()" class="form-error">{{ formError() }}</div>
+
+    <div modal-footer class="modal-footer-row">
+      <app-button variant="secondary" (onClick)="closeCreateModal()" [disabled]="saving()">Cancelar</app-button>
+      <app-button variant="primary" type="submit" [loading]="saving()" [disabled]="saving()">Crear producto</app-button>
+    </div>
+  </form>
+</app-modal>
+
+<app-modal *ngIf="editModalOpen()"
+  [open]="editModalOpen()"
+  title="Editar producto"
+  size="lg"
+  (close)="closeEditModal()">
+
+  <form (ngSubmit)="submitEdit()" class="product-form">
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label form-label-required" for="ep-name">Nombre</label>
+        <input id="ep-name" type="text" class="form-input"
+          [class.is-invalid]="!editProduct().name.trim() && editFormError()"
+          [ngModel]="editProduct().name"
+          (ngModelChange)="editProduct.update(p => ({...p, name: $event}))"
+          name="epName" required maxlength="100"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="ep-category">Categoría</label>
+        <select id="ep-category" class="form-input"
+          [ngModel]="editProduct().categoryId ?? ''"
+          (ngModelChange)="editProduct.update(p => ({...p, categoryId: $event || null}))"
+          name="epCategory">
+          <option value="">— Sin categoría —</option>
+          <option *ngFor="let c of categories()" [value]="c.id">{{ c.name }}</option>
+        </select>
+      </div>
+      <div class="form-group form-group--full">
+        <label class="form-label" for="ep-description">Descripción</label>
+        <textarea id="ep-description" class="form-input" rows="2" maxlength="500"
+          [ngModel]="editProduct().description"
+          (ngModelChange)="editProduct.update(p => ({...p, description: $event}))"
+          name="epDescription"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label form-label-required" for="ep-price">Precio (por pack)</label>
+        <input id="ep-price" type="number" min="0" step="0.01" class="form-input"
+          [class.is-invalid]="editProduct().price < 0 && editFormError()"
+          [ngModel]="editProduct().price"
+          (ngModelChange)="editProduct.update(p => ({...p, price: +$event}))"
+          name="epPrice" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label form-label-required" for="ep-stock">Stock (unidades físicas)</label>
+        <input id="ep-stock" type="number" min="0" step="1" class="form-input"
+          [class.is-invalid]="editProduct().stock < 0 && editFormError()"
+          [ngModel]="editProduct().stock"
+          (ngModelChange)="editProduct.update(p => ({...p, stock: +$event}))"
+          name="epStock" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="ep-upp">Unidades por pack</label>
+        <input id="ep-upp" type="number" min="1" step="1" class="form-input"
+          [class.is-invalid]="editProduct().unitsPerPack < 1 && editFormError()"
+          [ngModel]="editProduct().unitsPerPack"
+          (ngModelChange)="editProduct.update(p => ({...p, unitsPerPack: +$event}))"
+          name="epUpp"/>
+      </div>
+      <div class="form-group form-group--full">
+        <label class="form-label" for="ep-image">URL de imagen</label>
+        <input id="ep-image" type="url" class="form-input"
+          [ngModel]="editProduct().imageUrl"
+          (ngModelChange)="editProduct.update(p => ({...p, imageUrl: $event}))"
+          name="epImage" maxlength="500"/>
+      </div>
+    </div>
+
+    <div *ngIf="editFormError()" class="form-error">{{ editFormError() }}</div>
+
+    <div modal-footer class="modal-footer-row">
+      <app-button variant="secondary" (onClick)="closeEditModal()" [disabled]="editSaving()">Cancelar</app-button>
+      <app-button variant="primary" type="submit" [loading]="editSaving()" [disabled]="editSaving()">Guardar cambios</app-button>
+    </div>
+  </form>
+</app-modal>
+
+<app-modal *ngIf="deactivateModalOpen()"
+  [open]="deactivateModalOpen()"
+  title="Desactivar producto"
+  size="md"
+  (close)="closeDeactivateModal()">
+
+  <div class="destructive-warning-box">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="warning-icon">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <div>
+      <strong>¿Desactivar {{ productToDeactivate()?.name }}?</strong>
+      <p class="warning-msg">El producto dejará de aparecer en el catálogo para los clientes, aunque se conservará todo su historial de pedidos.</p>
+    </div>
+  </div>
+
+  <div modal-footer class="modal-footer-row">
+    <app-button variant="secondary" (onClick)="closeDeactivateModal()" [disabled]="deactivating()">Cancelar</app-button>
+    <app-button variant="danger" (onClick)="confirmDeactivate()" [loading]="deactivating()" [disabled]="deactivating()">Desactivar</app-button>
+  </div>
+</app-modal>
+</div>

@@ -1,0 +1,93 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-header-title">Mi pedido</h1>
+      <p class="page-header-subtitle" *ngIf="hasItems()">
+        {{ count() }} {{ count() === 1 ? 'producto' : 'productos' }} ·
+        {{ physicalUnits() }} unidades físicas totales
+      </p>
+    </div>
+  </header>
+
+  <div *ngIf="isEmpty()" class="cart-empty-card">
+    <app-empty-state
+      icon="🛒"
+      title="Tu pedido está vacío"
+      message="Todavía no agregaste productos. Empezá por el catálogo.">
+      <app-button variant="primary" (onClick)="continue()">Ir al catálogo</app-button>
+    </app-empty-state>
+  </div>
+
+  <div *ngIf="!isEmpty()" class="cart-layout">
+    <div class="cart-list">
+      <!-- Banner de modificación de pedido -->
+      <div *ngIf="cartStore.editingOrderId()" class="editing-banner">
+        <span class="editing-banner-title">
+          <span>✏️</span>
+          <span>Modificando pedido #{{ shortEditingOrderId() }}</span>
+        </span>
+        <button type="button" class="btn btn-secondary btn-sm editing-banner-btn" (click)="cancelModification()">
+          Crear como pedido nuevo
+        </button>
+      </div>
+
+      <article *ngFor="let line of lines(); trackBy: trackByProduct" class="cart-line">
+        <img *ngIf="line.product.imageUrl" [src]="line.product.imageUrl" [alt]="line.product.name" class="cart-line-img"/>
+        <div *ngIf="!line.product.imageUrl" class="cart-line-placeholder">{{ productEmoji(line.product.name) }}</div>
+        <div class="cart-line-body">
+          <h3 class="cart-line-name">{{ line.product.name }}</h3>
+          <p class="cart-line-meta">
+            <span *ngIf="line.product.unitsPerPack > 1">Pack × {{ line.product.unitsPerPack }}</span>
+            <span *ngIf="line.product.unitsPerPack <= 1">Unitario</span>
+            · ${{ formatPrice(line.product.price) }} c/u
+          </p>
+          <p *ngIf="line.product.unitsPerPack > 1" class="cart-line-physical">
+            {{ line.packs }} pack{{ line.packs === 1 ? '' : 's' }} = <strong>{{ line.physicalUnits }}</strong> unidades
+          </p>
+        </div>
+        <div class="cart-line-actions">
+          <div class="qty-control">
+            <button type="button" class="qty-btn" (click)="dec(line)">−</button>
+            <input type="number" min="1"
+                   class="qty-input"
+                   [value]="line.packs"
+                   (change)="setPacks(line, $any($event.target).value)">
+            <button type="button" class="qty-btn" (click)="inc(line)">+</button>
+          </div>
+          <span class="cart-line-subtotal">${{ formatPrice(line.packs * line.product.price) }}</span>
+          <button type="button" class="btn-icon btn-icon--danger" (click)="remove(line)" title="Quitar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6"/><path d="M14 11v6"/>
+            </svg>
+          </button>
+        </div>
+      </article>
+
+      <div class="cart-actions-row">
+        <app-button variant="danger-outline" (onClick)="clearAll()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-svg-icon">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6"/><path d="M14 11v6"/>
+          </svg>
+          Vaciar pedido
+        </app-button>
+        <app-button variant="secondary" (onClick)="continue()">← Seguir comprando</app-button>
+      </div>
+    </div>
+
+    <aside class="cart-summary">
+      <h2 class="cart-summary-title">Resumen</h2>
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span class="summary-value">${{ formatPrice(subtotal()) }}</span>
+      </div>
+      <p class="summary-hint">El envío se calcula en el siguiente paso.</p>
+      <app-button variant="primary" size="md" (onClick)="goConfirm()" [block]="true">
+        Continuar →
+      </app-button>
+    </aside>
+  </div>
+</section>

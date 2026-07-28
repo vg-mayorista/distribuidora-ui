@@ -1,0 +1,62 @@
+.uc-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: 2rem;
+  text-align: center;
+  background-image:  radial-gradient(#3fd877 1.5px, transparent 1.5px), radial-gradient(#3fd877 1.5px, #FEF3C7 1.5px);
+  background-size: 20px 20px;
+  background-position: 0 0,10px 10px;
+}
+
+.uc-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 480px;
+}
+
+.uc-icon {
+  font-size: 4rem;
+  line-height: 1;
+}
+
+.uc-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0c0c0c;
+  margin: 0;
+}
+
+.uc-subtitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-green);
+  margin: 0;
+}
+
+.uc-text {
+  color: #333538;
+  font-size: 0.95rem;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.btn-home {
+  margin-top: 0.5rem;
+  padding: 0.65rem 1.75rem;
+  background-color: var(--color-green);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-home:hover {
+  background-color: #1b4332;
+}
