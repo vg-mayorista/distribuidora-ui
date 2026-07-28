@@ -59,6 +59,7 @@ export const routes: Routes = [
           { path: 'pedidos/:id', component: DistribuidorPedidoDetalleComponent },
           { path: 'stock', component: StockComponent },
           { path: 'categorias', component: CategoriesComponent },
+          { path: 'reportes', component: AdminReportesComponent },
         ],
       },
     ],

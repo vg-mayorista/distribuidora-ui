@@ -17,6 +17,9 @@
       <li *ngIf="user.role === 'ROLE_DISTRIBUTOR'">
         <a class="nav-link" routerLink="/distribuidor/categorias" routerLinkActive="nav-link--active">Categorías</a>
       </li>
+      <li *ngIf="user.role === 'ROLE_DISTRIBUTOR'">
+        <a class="nav-link" routerLink="/distribuidor/reportes" routerLinkActive="nav-link--active">Reportes</a>
+      </li>
       <li *ngIf="user.role === 'ROLE_CUSTOMER'">
         <a class="nav-link" routerLink="/cliente/catalogo" routerLinkActive="nav-link--active">Catálogo</a>
       </li>
