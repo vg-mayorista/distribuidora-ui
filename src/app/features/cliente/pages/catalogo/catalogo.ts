@@ -128,14 +128,14 @@ export class CatalogoComponent implements OnInit {
 
   maxPacksFor(product: Product): number {
     if (!product.id) return 0;
-    const stock = product.stock ?? 0;
-    if (stock <= 0) return 0;
-    // El producto trae stock en unidades físicas. Convertimos a packs según unitsPerPack.
-    const unitsPerPack = product.unitsPerPack && product.unitsPerPack > 0 ? product.unitsPerPack : 1;
-    const fromStock = Math.floor(stock / unitsPerPack);
-    // Si ya verificamos contra el backend (cache), cruzamos ambos límites para más seguridad.
+    if (this.isOutOfStock(product)) return 0;
     const fromBackend = this.maxPacksByProduct[product.id];
-    return fromBackend != null ? Math.min(fromStock, fromBackend) : fromStock;
+    if (typeof product.stock === 'number' && product.stock > 0) {
+      const unitsPerPack = product.unitsPerPack && product.unitsPerPack > 0 ? product.unitsPerPack : 1;
+      const fromStock = Math.floor(product.stock / unitsPerPack);
+      return fromBackend != null ? Math.min(fromStock, fromBackend) : fromStock;
+    }
+    return fromBackend != null ? fromBackend : MAX_PACKS_PER_LINE;
   }
 
   stockBadgeVariant(product: Product): 'active' | 'warning' | 'inactive' {

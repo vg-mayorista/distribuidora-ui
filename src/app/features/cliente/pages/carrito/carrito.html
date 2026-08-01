@@ -48,11 +48,11 @@
           <div class="qty-control">
             <button type="button" class="qty-btn" (click)="dec(line)" aria-label="Quitar un pack">−</button>
             <input type="number" min="1"
-                   [max]="maxUnitsOf(line)"
+                   [max]="line.maxAllowed"
                    class="qty-input"
-                   [value]="unitsOf(line)"
+                   [value]="line.packs"
                    (input)="onInputChange(line, $event)"
-                   (change)="setPacksFromUnits(line, $any($event.target).value)">
+                   (change)="setPacks(line, $any($event.target).value)">
             <button type="button" class="qty-btn" (click)="inc(line)" [disabled]="line.packs >= line.maxAllowed" aria-label="Sumar un pack">+</button>
           </div>
           <span class="cart-line-subtotal">${{ formatPrice(line.packs * line.product.price) }}</span>
