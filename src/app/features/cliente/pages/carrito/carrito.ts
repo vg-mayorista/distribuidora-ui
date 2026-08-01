@@ -39,6 +39,19 @@ export class CarritoComponent implements OnInit {
   ngOnInit(): void {
   }
 
+  /** Cantidad en unidades físicas (= packs × unitsPerPack). Es lo que muestra el input. */
+  unitsOf(line: CartLine): number {
+    const upp = line.product.unitsPerPack && line.product.unitsPerPack > 0 ? line.product.unitsPerPack : 1;
+    return line.packs * upp;
+  }
+
+  /** Tope del input en unidades (= maxAllowed packs × unitsPerPack). */
+  maxUnitsOf(line: CartLine): number {
+    const upp = line.product.unitsPerPack && line.product.unitsPerPack > 0 ? line.product.unitsPerPack : 1;
+    return (line.maxAllowed > 0 ? line.maxAllowed : Number.MAX_SAFE_INTEGER) * upp;
+  }
+
+  /** Cada click en +/- = 1 PACK (unidad mínima de venta) */
   inc(line: CartLine): void {
     this.cart.setPacks(line.product.id!, line.packs + 1);
   }
@@ -47,19 +60,23 @@ export class CarritoComponent implements OnInit {
     this.cart.setPacks(line.product.id!, line.packs - 1);
   }
 
-  setPacks(line: CartLine, value: any): void {
+  /**
+   * Cuando el usuario tipea un número en el input, ese número está en UNIDADES.
+   * Convertimos a packs dividiendo por unitsPerPack y enviamos al store.
+   */
+  setPacksFromUnits(line: CartLine, value: any): void {
     const n = Math.floor(Number(value));
     if (!Number.isFinite(n) || n <= 0) return;
-    this.cart.setPacks(line.product.id!, n);
+    const upp = line.product.unitsPerPack && line.product.unitsPerPack > 0 ? line.product.unitsPerPack : 1;
+    const packs = Math.ceil(n / upp);
+    this.cart.setPacks(line.product.id!, packs);
   }
 
   onInputChange(line: CartLine, event: Event): void {
-    // El CartStore ya clampó visualmente en setPacks. Acá forzamos re-sync del input
-    // por si el usuario tipeó un valor fuera de rango (que el navegador permite).
     const target = event.target as HTMLInputElement;
     const n = Math.floor(Number(target.value));
     if (!Number.isFinite(n) || n < 1) {
-      target.value = String(line.packs);
+      target.value = String(this.unitsOf(line));
     }
   }
 
