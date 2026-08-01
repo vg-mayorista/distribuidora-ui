@@ -13,23 +13,42 @@
                placeholder="Buscar por nombre…"
                [ngModel]="searchTerm()"
                (ngModelChange)="searchTerm.set($event)">
+        <button *ngIf="searchTerm()" type="button" class="search-clear-btn" (click)="clearSearch()" title="Limpiar búsqueda">✕</button>
       </div>
+
+      <div class="view-mode-toggle" role="radiogroup" aria-label="Modo de vista">
+        <button type="button" class="btn-toggle" [class.btn-toggle--active]="viewMode() === 'grid'" (click)="setViewMode('grid')" title="Vista Cuadrícula">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+        </button>
+        <button type="button" class="btn-toggle" [class.btn-toggle--active]="viewMode() === 'table'" (click)="setViewMode('table')" title="Vista Lista Compacta">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
       <app-button variant="primary" (onClick)="viewCart()">Ver carrito</app-button>
     </div>
   </header>
 
-  <div class="category-filters" *ngIf="categories().length > 0 && !loading()">
-    <button type="button" class="filter-pill"
-            [class.filter-pill--active]="selectedCategoryId() === null"
-            (click)="selectedCategoryId.set(null)">
-      Todos
-    </button>
-    <button type="button" class="filter-pill"
-            *ngFor="let cat of categories()"
-            [class.filter-pill--active]="selectedCategoryId() === cat.id"
-            (click)="selectedCategoryId.set(cat.id || null)">
-      {{ cat.name }}
-    </button>
+  <div class="category-filters-wrapper" *ngIf="categories().length > 0 && !loading()">
+    <div class="category-filters">
+      <button type="button" class="filter-pill"
+              [class.filter-pill--active]="selectedCategoryId() === null"
+              (click)="selectedCategoryId.set(null)">
+        Todos
+      </button>
+      <button type="button" class="filter-pill"
+              *ngFor="let cat of categories()"
+              [class.filter-pill--active]="selectedCategoryId() === cat.id"
+              (click)="selectedCategoryId.set(cat.id || null)">
+        {{ cat.name }}
+      </button>
+    </div>
   </div>
 
   <div *ngIf="loading()" class="loading-state">
@@ -39,64 +58,132 @@
 
   <div *ngIf="error() && !loading()" class="error-state">{{ error() }}</div>
 
-  <div *ngIf="!loading() && !error()" class="product-grid">
-    <article *ngFor="let p of filteredProducts(); trackBy: trackById"
-             class="product-card"
-             [class.product-card--out-of-stock]="isOutOfStock(p)"
-             [class.product-card--in-cart]="isInCart(p)">
-      <div class="product-card-media">
-        <app-badge *ngIf="isInCart(p)" variant="success" class="product-card-cart-badge">
-          En tu carrito
-        </app-badge>
-        <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name"/>
-        <div *ngIf="!p.imageUrl" class="product-card-placeholder" [attr.aria-label]="p.name">
-          {{ productEmoji(p.name) }}
-        </div>
-      </div>
-      <div class="product-card-body">
-        <h3 class="product-card-name">{{ p.name }}</h3>
-        <p *ngIf="p.description" class="product-card-desc">{{ p.description }}</p>
-        <p class="product-card-pack">{{ packLabel(p) }}</p>
-        <div class="product-card-price-row">
-          <span class="product-card-price">${{ formatPrice(p.price) }}</span>
-          <app-badge [variant]="stockBadgeVariant(p)">
-            {{ stockBadgeLabel(p) }}
+  <ng-container *ngIf="!loading() && !error()">
+    <!-- Grid View Mode -->
+    <div *ngIf="viewMode() === 'grid'" class="product-grid">
+      <article *ngFor="let p of filteredProducts(); trackBy: trackById"
+               class="product-card"
+               [class.product-card--out-of-stock]="isOutOfStock(p)"
+               [class.product-card--in-cart]="isInCart(p)">
+        <div class="product-card-media">
+          <app-badge *ngIf="isInCart(p)" variant="success" class="product-card-cart-badge">
+            En tu carrito
           </app-badge>
-        </div>
-      </div>
-      <div class="product-card-actions" *ngIf="!isOutOfStock(p)">
-        <ng-container *ngIf="maxPacksFor(p) > 0">
-          <div class="qty-control">
-            <button type="button" class="qty-btn" (click)="decPacks(p)" [disabled]="getPacks(p) <= 1" aria-label="Quitar un pack">−</button>
-            <div class="qty-display">
-              <span class="qty-value">{{ getPacks(p) }}</span>
-              <span class="qty-label">pack{{ getPacks(p) === 1 ? '' : 's' }}</span>
-            </div>
-            <button type="button" class="qty-btn" (click)="incPacks(p)" [disabled]="getPacks(p) >= maxPacksFor(p)" aria-label="Sumar un pack">+</button>
+          <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.name"/>
+          <div *ngIf="!p.imageUrl" class="product-card-placeholder" [attr.aria-label]="p.name">
+            {{ productEmoji(p.name) }}
           </div>
-          <small class="product-card-physical" *ngIf="p.unitsPerPack > 1">
-            = {{ physicalUnits(p) }} unidades físicas
-          </small>
-          <small class="product-card-physical" *ngIf="p.unitsPerPack <= 1">
-            = {{ physicalUnits(p) }} unidad
-          </small>
-          <app-button variant="primary" size="sm" [block]="true" (onClick)="addToCart(p)" [loading]="adding()[p.id!]">Agregar</app-button>
-        </ng-container>
-        <ng-container *ngIf="maxPacksFor(p) <= 0">
-          <app-button variant="secondary" size="sm" [block]="true" [disabled]="true">Stock máximo en carrito</app-button>
-        </ng-container>
-      </div>
-      <div class="product-card-actions" *ngIf="isOutOfStock(p)">
-        <app-button variant="secondary" size="sm" [block]="true" [disabled]="true">Sin stock</app-button>
-      </div>
-    </article>
+        </div>
+        <div class="product-card-body">
+          <h3 class="product-card-name">{{ p.name }}</h3>
+          <p *ngIf="p.description" class="product-card-desc">{{ p.description }}</p>
+          <p class="product-card-pack">{{ packLabel(p) }}</p>
+          <div class="product-card-price-row">
+            <span class="product-card-price">${{ formatPrice(p.price) }}</span>
+            <app-badge [variant]="stockBadgeVariant(p)">
+              {{ stockBadgeLabel(p) }}
+            </app-badge>
+          </div>
+        </div>
+        <div class="product-card-actions" *ngIf="!isOutOfStock(p)">
+          <ng-container *ngIf="maxPacksFor(p) > 0">
+            <div class="qty-control">
+              <button type="button" class="qty-btn" (click)="decPacks(p)" [disabled]="getPacks(p) <= 1" aria-label="Quitar un pack">−</button>
+              <div class="qty-display">
+                <span class="qty-value">{{ getPacks(p) }}</span>
+                <span class="qty-label">pack{{ getPacks(p) === 1 ? '' : 's' }}</span>
+              </div>
+              <button type="button" class="qty-btn" (click)="incPacks(p)" [disabled]="getPacks(p) >= maxPacksFor(p)" aria-label="Sumar un pack">+</button>
+            </div>
+            <small class="product-card-physical" *ngIf="p.unitsPerPack > 1">
+              = {{ physicalUnits(p) }} unidades físicas
+            </small>
+            <small class="product-card-physical" *ngIf="p.unitsPerPack <= 1">
+              = {{ physicalUnits(p) }} unidad
+            </small>
+            <app-button variant="primary" size="sm" [block]="true" (onClick)="addToCart(p)" [loading]="adding()[p.id!]">Agregar</app-button>
+          </ng-container>
+          <ng-container *ngIf="maxPacksFor(p) <= 0">
+            <app-button variant="secondary" size="sm" [block]="true" [disabled]="true">Stock máximo en carrito</app-button>
+          </ng-container>
+        </div>
+        <div class="product-card-actions" *ngIf="isOutOfStock(p)">
+          <app-button variant="secondary" size="sm" [block]="true" [disabled]="true">Sin stock</app-button>
+        </div>
+      </article>
+    </div>
 
+    <!-- Compact Table View Mode for B2B Ordering -->
+    <div *ngIf="viewMode() === 'table'" class="product-table-wrapper">
+      <table class="product-table">
+        <thead>
+          <tr>
+            <th class="col-product">Producto</th>
+            <th class="col-pack">Presentación</th>
+            <th class="col-price">Precio por Pack</th>
+            <th class="col-status">Estado</th>
+            <th class="col-qty">Cantidad</th>
+            <th class="col-action">Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of filteredProducts(); trackBy: trackById"
+              class="product-table-row"
+              [class.product-table-row--out-of-stock]="isOutOfStock(p)"
+              [class.product-table-row--in-cart]="isInCart(p)">
+            <td class="col-product">
+              <div class="table-product-info">
+                <span class="table-product-emoji">{{ productEmoji(p.name) }}</span>
+                <div>
+                  <strong class="table-product-name">{{ p.name }}</strong>
+                  <p *ngIf="p.description" class="table-product-desc">{{ p.description }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="col-pack">
+              <span class="table-pack-badge">{{ packLabel(p) }}</span>
+            </td>
+            <td class="col-price">
+              <strong class="table-price">${{ formatPrice(p.price) }}</strong>
+            </td>
+            <td class="col-status">
+              <app-badge [variant]="stockBadgeVariant(p)">
+                {{ stockBadgeLabel(p) }}
+              </app-badge>
+            </td>
+            <td class="col-qty">
+              <div *ngIf="!isOutOfStock(p) && maxPacksFor(p) > 0" class="qty-control qty-control--compact">
+                <button type="button" class="qty-btn" (click)="decPacks(p)" [disabled]="getPacks(p) <= 1" aria-label="Quitar un pack">−</button>
+                <div class="qty-display">
+                  <span class="qty-value">{{ getPacks(p) }}</span>
+                  <span class="qty-label">pack{{ getPacks(p) === 1 ? '' : 's' }}</span>
+                </div>
+                <button type="button" class="qty-btn" (click)="incPacks(p)" [disabled]="getPacks(p) >= maxPacksFor(p)" aria-label="Sumar un pack">+</button>
+              </div>
+              <span *ngIf="!isOutOfStock(p) && maxPacksFor(p) > 0" class="table-physical-hint">
+                = {{ physicalUnits(p) }} u.
+              </span>
+            </td>
+            <td class="col-action">
+              <ng-container *ngIf="!isOutOfStock(p)">
+                <app-button *ngIf="maxPacksFor(p) > 0" variant="primary" size="sm" (onClick)="addToCart(p)" [loading]="adding()[p.id!]">Agregar</app-button>
+                <app-button *ngIf="maxPacksFor(p) <= 0" variant="secondary" size="sm" [disabled]="true">En carrito</app-button>
+              </ng-container>
+              <app-button *ngIf="isOutOfStock(p)" variant="secondary" size="sm" [disabled]="true">Sin stock</app-button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty Search Results -->
     <div *ngIf="filteredProducts().length === 0 && searchTerm()" class="product-grid-empty">
       <p>No se encontraron productos para "{{ searchTerm() }}".</p>
+      <app-button variant="secondary" size="sm" (onClick)="clearSearch()">Limpiar filtro</app-button>
     </div>
 
     <div *ngIf="filteredProducts().length === 0 && !searchTerm()" class="product-grid-empty">
       <p>No hay productos disponibles por ahora.</p>
     </div>
-  </div>
+  </ng-container>
 </section>

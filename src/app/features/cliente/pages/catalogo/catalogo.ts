@@ -34,6 +34,15 @@ export class CatalogoComponent implements OnInit {
   categories = signal<Category[]>([]);
   selectedCategoryId = signal<string | null>(null);
   searchTerm = signal('');
+  viewMode = signal<'grid' | 'table'>('grid');
+
+  clearSearch(): void {
+    this.searchTerm.set('');
+  }
+
+  setViewMode(mode: 'grid' | 'table'): void {
+    this.viewMode.set(mode);
+  }
 
   filteredProducts = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
