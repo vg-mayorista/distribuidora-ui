@@ -78,9 +78,12 @@ export class CartStore {
       return;
     }
     this._lines.update(list =>
-      list.map(l => l.product.id === productId
-        ? { ...l, packs, physicalUnits: packs * (l.product.unitsPerPack || 1) }
-        : l));
+      list.map(l => {
+        if (l.product.id !== productId) return l;
+        const safeMax = l.maxAllowed > 0 ? l.maxAllowed : Number.MAX_SAFE_INTEGER;
+        const clamped = Math.min(Math.max(1, Math.floor(packs)), safeMax);
+        return { ...l, packs: clamped, physicalUnits: clamped * (l.product.unitsPerPack || 1) };
+      }));
     this.persist();
   }
 

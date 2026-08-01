@@ -40,8 +40,7 @@ export class CarritoComponent implements OnInit {
   }
 
   inc(line: CartLine): void {
-    const next = Math.min(line.packs + 1, line.maxAllowed);
-    this.cart.setPacks(line.product.id!, next);
+    this.cart.setPacks(line.product.id!, line.packs + 1);
   }
 
   dec(line: CartLine): void {
@@ -51,15 +50,16 @@ export class CarritoComponent implements OnInit {
   setPacks(line: CartLine, value: any): void {
     const n = Math.floor(Number(value));
     if (!Number.isFinite(n) || n <= 0) return;
-    const clamped = Math.min(n, line.maxAllowed);
-    this.cart.setPacks(line.product.id!, clamped);
+    this.cart.setPacks(line.product.id!, n);
   }
 
   onInputChange(line: CartLine, event: Event): void {
+    // El CartStore ya clampó visualmente en setPacks. Acá forzamos re-sync del input
+    // por si el usuario tipeó un valor fuera de rango (que el navegador permite).
     const target = event.target as HTMLInputElement;
     const n = Math.floor(Number(target.value));
-    if (Number.isFinite(n) && n > line.maxAllowed) {
-      target.value = String(line.maxAllowed);
+    if (!Number.isFinite(n) || n < 1) {
+      target.value = String(line.packs);
     }
   }
 
