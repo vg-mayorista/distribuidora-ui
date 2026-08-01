@@ -67,12 +67,29 @@ export class CatalogoComponent implements OnInit {
     this.error.set(null);
     this.productService.getProducts().subscribe({
       next: (data) => {
-        this.products.set(data.content.filter(p => p.active));
+        const activeProducts = data.content.filter(p => p.active);
+        this.products.set(activeProducts);
         this.loading.set(false);
-        for (const p of this.products()) {
+        for (const p of activeProducts) {
           if (p.id && !(p.id in this.quantities)) {
             this.quantities[p.id] = 1;
           }
+        }
+        const productIds = activeProducts.map(p => p.id).filter((id): id is string => !!id);
+        if (productIds.length > 0) {
+          this.cartService.checkStock(productIds).subscribe({
+            next: (stockMap) => {
+              for (const p of activeProducts) {
+                if (p.id && p.id in stockMap) {
+                  const physicalStock = Math.max(0, stockMap[p.id] ?? 0);
+                  const unitsPerPack = Math.max(p.unitsPerPack ?? 1, 1);
+                  this.maxPacksByProduct[p.id] = Math.floor(physicalStock / unitsPerPack);
+                }
+              }
+              this.cdr.detectChanges();
+            },
+            error: (err) => console.error('Error al consultar stock inicial:', err)
+          });
         }
       },
       error: () => {
@@ -92,7 +109,10 @@ export class CatalogoComponent implements OnInit {
   getPacks(product: Product): number {
     if (!product.id) return 1;
     if (this.isOutOfStock(product)) return 0;
-    return this.quantities[product.id] ?? 1;
+    const maxPacks = this.maxPacksFor(product);
+    if (maxPacks <= 0) return 0;
+    const current = this.quantities[product.id] ?? 1;
+    return Math.min(Math.max(1, current), maxPacks);
   }
 
   setPacks(product: Product, packs: number): void {
@@ -102,6 +122,11 @@ export class CatalogoComponent implements OnInit {
       return;
     }
     const maxPacks = this.maxPacksFor(product);
+    if (maxPacks <= 0) {
+      this.quantities[product.id] = 0;
+      this.cdr.detectChanges();
+      return;
+    }
     this.quantities[product.id] = Math.max(1, Math.min(packs, maxPacks));
     this.cdr.detectChanges();
   }
@@ -129,13 +154,22 @@ export class CatalogoComponent implements OnInit {
   maxPacksFor(product: Product): number {
     if (!product.id) return 0;
     if (this.isOutOfStock(product)) return 0;
-    const fromBackend = this.maxPacksByProduct[product.id];
+
+    let totalStockPacks = MAX_PACKS_PER_LINE;
+
     if (typeof product.stock === 'number' && product.stock > 0) {
       const unitsPerPack = product.unitsPerPack && product.unitsPerPack > 0 ? product.unitsPerPack : 1;
-      const fromStock = Math.floor(product.stock / unitsPerPack);
-      return fromBackend != null ? Math.min(fromStock, fromBackend) : fromStock;
+      totalStockPacks = Math.floor(product.stock / unitsPerPack);
     }
-    return fromBackend != null ? fromBackend : MAX_PACKS_PER_LINE;
+
+    if (this.maxPacksByProduct[product.id] != null) {
+      totalStockPacks = Math.min(totalStockPacks, this.maxPacksByProduct[product.id]);
+    }
+
+    const lineInCart = this.cart.lines().find(l => l.product.id === product.id);
+    const packsInCart = lineInCart ? lineInCart.packs : 0;
+
+    return Math.max(0, totalStockPacks - packsInCart);
   }
 
   stockBadgeVariant(product: Product): 'active' | 'warning' | 'inactive' {
@@ -153,7 +187,9 @@ export class CatalogoComponent implements OnInit {
   async addToCart(product: Product): Promise<void> {
     if (!product.id) return;
     if (this.isOutOfStock(product)) return;
-    const packs = this.getPacks(product);
+    const maxAvailable = this.maxPacksFor(product);
+    if (maxAvailable <= 0) return;
+    const packs = Math.min(this.getPacks(product), maxAvailable);
     if (packs <= 0) return;
 
     this.adding.update(s => ({ ...s, [product.id!]: true }));
@@ -161,14 +197,18 @@ export class CatalogoComponent implements OnInit {
       const stockMap = await firstValueFrom(this.cartService.checkStock([product.id]));
       const stock = Math.max(0, stockMap[product.id] ?? 0);
       const unitsPerPack = Math.max(product.unitsPerPack, 1);
-      const maxAllowed = Math.floor(stock / unitsPerPack);
-      this.maxPacksByProduct[product.id] = maxAllowed;
-      const capped = Math.min(packs, maxAllowed);
+      const maxAllowedTotal = Math.floor(stock / unitsPerPack);
+      this.maxPacksByProduct[product.id] = maxAllowedTotal;
+
+      const currentLine = this.cart.lines().find(l => l.product.id === product.id);
+      const alreadyInCart = currentLine ? currentLine.packs : 0;
+      const realMaxCanAdd = Math.max(0, maxAllowedTotal - alreadyInCart);
+      const capped = Math.min(packs, realMaxCanAdd);
       if (capped <= 0) {
-        this.error.set('No hay stock suficiente para este producto.');
+        this.error.set('No hay más stock disponible para este producto.');
         return;
       }
-      this.cart.add(product, capped, maxAllowed);
+      this.cart.add(product, capped, maxAllowedTotal);
       this.quantities[product.id] = 1;
     } catch {
       this.error.set('No se pudo agregar el producto al carrito.');

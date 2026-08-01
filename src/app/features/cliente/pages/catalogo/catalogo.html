@@ -65,21 +65,26 @@
         </div>
       </div>
       <div class="product-card-actions" *ngIf="!isOutOfStock(p)">
-        <div class="qty-control">
-          <button type="button" class="qty-btn" (click)="decPacks(p)" [disabled]="getPacks(p) <= 1" aria-label="Quitar un pack">−</button>
-          <div class="qty-display">
-            <span class="qty-value">{{ getPacks(p) }}</span>
-            <span class="qty-label">pack{{ getPacks(p) === 1 ? '' : 's' }}</span>
+        <ng-container *ngIf="maxPacksFor(p) > 0">
+          <div class="qty-control">
+            <button type="button" class="qty-btn" (click)="decPacks(p)" [disabled]="getPacks(p) <= 1" aria-label="Quitar un pack">−</button>
+            <div class="qty-display">
+              <span class="qty-value">{{ getPacks(p) }}</span>
+              <span class="qty-label">pack{{ getPacks(p) === 1 ? '' : 's' }}</span>
+            </div>
+            <button type="button" class="qty-btn" (click)="incPacks(p)" [disabled]="getPacks(p) >= maxPacksFor(p)" aria-label="Sumar un pack">+</button>
           </div>
-          <button type="button" class="qty-btn" (click)="incPacks(p)" aria-label="Sumar un pack">+</button>
-        </div>
-        <small class="product-card-physical" *ngIf="p.unitsPerPack > 1">
-          = {{ physicalUnits(p) }} unidades físicas
-        </small>
-        <small class="product-card-physical" *ngIf="p.unitsPerPack <= 1">
-          = {{ physicalUnits(p) }} unidad
-        </small>
-        <app-button variant="primary" size="sm" [block]="true" (onClick)="addToCart(p)" [loading]="adding()[p.id!]">Agregar</app-button>
+          <small class="product-card-physical" *ngIf="p.unitsPerPack > 1">
+            = {{ physicalUnits(p) }} unidades físicas
+          </small>
+          <small class="product-card-physical" *ngIf="p.unitsPerPack <= 1">
+            = {{ physicalUnits(p) }} unidad
+          </small>
+          <app-button variant="primary" size="sm" [block]="true" (onClick)="addToCart(p)" [loading]="adding()[p.id!]">Agregar</app-button>
+        </ng-container>
+        <ng-container *ngIf="maxPacksFor(p) <= 0">
+          <app-button variant="secondary" size="sm" [block]="true" [disabled]="true">Stock máximo en carrito</app-button>
+        </ng-container>
       </div>
       <div class="product-card-actions" *ngIf="isOutOfStock(p)">
         <app-button variant="secondary" size="sm" [block]="true" [disabled]="true">Sin stock</app-button>
