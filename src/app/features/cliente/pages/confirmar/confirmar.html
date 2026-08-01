@@ -98,7 +98,7 @@
           <span>Total</span><span>${{ formatPrice(computeTotal()) }}</span>
         </div>
       </div>
-      <div *ngIf="error()" class="form-error">{{ error() }}</div>
+      <div *ngIf="error()" class="form-error" style="white-space: pre-line;">{{ error() }}</div>
       <div class="summary-actions">
         <app-button variant="primary" size="md" (onClick)="submit()" [block]="true"
                     [loading]="loading()" [disabled]="!canSubmit || loading()">

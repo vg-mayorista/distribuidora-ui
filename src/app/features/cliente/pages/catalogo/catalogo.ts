@@ -4,12 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProductService } from '../../../../services/product.service';
 import { CategoryService } from '../../../../services/category.service';
+import { CartService } from '../../../../services/cart.service';
 import { CartStore } from '../../services/cart.store';
 import { ButtonComponent } from '../../../../shared/ui/button/button';
 import { BadgeComponent } from '../../../../shared/ui/badge/badge';
-import { Product } from '../../../../models/product.model';
+import { Product, StockStatus } from '../../../../models/product.model';
 import { Category } from '../../../../models/category.model';
 import { getProductEmoji } from '../../../../shared/utils/product-emoji';
+import { firstValueFrom } from 'rxjs';
+
+const MAX_PACKS_PER_LINE = 99;
 
 @Component({
   selector: 'app-catalogo',
@@ -21,6 +25,7 @@ import { getProductEmoji } from '../../../../shared/utils/product-emoji';
 export class CatalogoComponent implements OnInit {
   private productService = inject(ProductService);
   private categoryService = inject(CategoryService);
+  private cartService = inject(CartService);
   private cart = inject(CartStore);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
@@ -49,6 +54,8 @@ export class CatalogoComponent implements OnInit {
   loading = signal(false);
   error = signal<string | null>(null);
   quantities: Record<string, number> = {};
+  maxPacksByProduct: Record<string, number> = {};
+  adding = signal<Record<string, boolean>>({});
 
   ngOnInit(): void {
     this.loadProducts();
@@ -62,6 +69,11 @@ export class CatalogoComponent implements OnInit {
       next: (data) => {
         this.products.set(data.content.filter(p => p.active));
         this.loading.set(false);
+        for (const p of this.products()) {
+          if (p.id && !(p.id in this.quantities)) {
+            this.quantities[p.id] = 1;
+          }
+        }
       },
       error: () => {
         this.error.set('No se pudieron cargar los productos.');
@@ -79,18 +91,18 @@ export class CatalogoComponent implements OnInit {
 
   getPacks(product: Product): number {
     if (!product.id) return 1;
-    if (product.stock <= 0) return 0;
+    if (this.isOutOfStock(product)) return 0;
     return this.quantities[product.id] ?? 1;
   }
 
   setPacks(product: Product, packs: number): void {
     if (!product.id) return;
-    if (product.stock <= 0) {
+    if (this.isOutOfStock(product)) {
       this.quantities[product.id] = 0;
       return;
     }
-    const maxPacks = Math.floor(product.stock / Math.max(product.unitsPerPack, 1));
-    this.quantities[product.id] = Math.max(1, Math.min(packs, maxPacks || 1));
+    const maxPacks = this.maxPacksFor(product);
+    this.quantities[product.id] = Math.max(1, Math.min(packs, maxPacks));
     this.cdr.detectChanges();
   }
 
@@ -110,11 +122,54 @@ export class CatalogoComponent implements OnInit {
     return !!product.id && this.cart.lines().some(l => l.product.id === product.id);
   }
 
-  addToCart(product: Product): void {
+  isOutOfStock(product: Product): boolean {
+    return product.stockStatus === 'OUT_OF_STOCK';
+  }
+
+  maxPacksFor(product: Product): number {
+    if (!product.id) return MAX_PACKS_PER_LINE;
+    const known = this.maxPacksByProduct[product.id];
+    if (known != null) return Math.min(known, MAX_PACKS_PER_LINE);
+    return MAX_PACKS_PER_LINE;
+  }
+
+  stockBadgeVariant(product: Product): 'active' | 'warning' | 'inactive' {
+    if (product.stockStatus === 'OUT_OF_STOCK') return 'inactive';
+    if (product.stockStatus === 'LOW_STOCK') return 'warning';
+    return 'active';
+  }
+
+  stockBadgeLabel(product: Product): string {
+    if (product.stockStatus === 'OUT_OF_STOCK') return 'Sin stock';
+    if (product.stockStatus === 'LOW_STOCK') return 'Stock bajo';
+    return 'En stock';
+  }
+
+  async addToCart(product: Product): Promise<void> {
     if (!product.id) return;
+    if (this.isOutOfStock(product)) return;
     const packs = this.getPacks(product);
     if (packs <= 0) return;
-    this.cart.add(product, packs);
+
+    this.adding.update(s => ({ ...s, [product.id!]: true }));
+    try {
+      const stockMap = await firstValueFrom(this.cartService.checkStock([product.id]));
+      const stock = Math.max(0, stockMap[product.id] ?? 0);
+      const unitsPerPack = Math.max(product.unitsPerPack, 1);
+      const maxAllowed = Math.floor(stock / unitsPerPack);
+      this.maxPacksByProduct[product.id] = maxAllowed;
+      const capped = Math.min(packs, maxAllowed);
+      if (capped <= 0) {
+        this.error.set('No hay stock suficiente para este producto.');
+        return;
+      }
+      this.cart.add(product, capped, maxAllowed);
+      this.quantities[product.id] = 1;
+    } catch {
+      this.error.set('No se pudo agregar el producto al carrito.');
+    } finally {
+      this.adding.update(s => ({ ...s, [product.id!]: false }));
+    }
   }
 
   viewCart(): void {

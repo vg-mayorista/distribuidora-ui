@@ -173,7 +173,7 @@ export class ConfirmarComponent implements OnInit {
         },
         error: (err) => {
           this.loading.set(false);
-          this.error.set(err?.error?.detail || 'No se pudieron guardar los cambios del pedido.');
+          this.error.set(this.mapError(err, 'No se pudieron guardar los cambios del pedido.'));
         }
       });
     } else {
@@ -185,10 +185,21 @@ export class ConfirmarComponent implements OnInit {
         },
         error: (err) => {
           this.loading.set(false);
-          this.error.set(err?.error?.detail || 'No se pudo confirmar el pedido.');
+          this.error.set(this.mapError(err, 'No se pudo confirmar el pedido.'));
         }
       });
     }
+  }
+
+  private mapError(err: any, fallback: string): string {
+    const body = err?.error;
+    if (body?.error === 'INSUFFICIENT_STOCK' && Array.isArray(body.items) && body.items.length > 0) {
+      const details = body.items.map((it: any) =>
+        `${it.productName}: pediste ${it.requested} unid., disponibles ${it.available} unid.`
+      ).join('\n');
+      return `No hay stock suficiente para:\n${details}`;
+    }
+    return body?.detail || fallback;
   }
 
   cancel(): void {

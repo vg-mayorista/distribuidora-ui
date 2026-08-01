@@ -42,7 +42,7 @@
   <div *ngIf="!loading() && !error()" class="product-grid">
     <article *ngFor="let p of filteredProducts(); trackBy: trackById"
              class="product-card"
-             [class.product-card--out-of-stock]="p.stock <= 0"
+             [class.product-card--out-of-stock]="isOutOfStock(p)"
              [class.product-card--in-cart]="isInCart(p)">
       <div class="product-card-media">
         <app-badge *ngIf="isInCart(p)" variant="success" class="product-card-cart-badge">
@@ -59,13 +59,12 @@
         <p class="product-card-pack">{{ packLabel(p) }}</p>
         <div class="product-card-price-row">
           <span class="product-card-price">${{ formatPrice(p.price) }}</span>
-          <app-badge [variant]="p.stock <= 0 ? 'inactive' : p.stock < 20 ? 'warning' : 'active'">
-            <ng-container *ngIf="p.stock > 0">{{ p.stock }} unid.</ng-container>
-            <ng-container *ngIf="p.stock <= 0">Sin stock</ng-container>
+          <app-badge [variant]="stockBadgeVariant(p)">
+            {{ stockBadgeLabel(p) }}
           </app-badge>
         </div>
       </div>
-      <div class="product-card-actions" *ngIf="p.stock > 0">
+      <div class="product-card-actions" *ngIf="!isOutOfStock(p)">
         <div class="qty-control">
           <button type="button" class="qty-btn" (click)="decPacks(p)" [disabled]="getPacks(p) <= 1" aria-label="Restar una unidad">−</button>
           <span class="qty-value">{{ getPacks(p) }}</span>
@@ -77,9 +76,9 @@
         <small class="product-card-physical" *ngIf="p.unitsPerPack <= 1">
           = {{ physicalUnits(p) }} u. física
         </small>
-        <app-button variant="primary" size="sm" [block]="true" (onClick)="addToCart(p)">Agregar</app-button>
+        <app-button variant="primary" size="sm" [block]="true" (onClick)="addToCart(p)" [loading]="adding()[p.id!]">Agregar</app-button>
       </div>
-      <div class="product-card-actions" *ngIf="p.stock <= 0">
+      <div class="product-card-actions" *ngIf="isOutOfStock(p)">
         <app-button variant="secondary" size="sm" [block]="true" [disabled]="true">Sin stock</app-button>
       </div>
     </article>

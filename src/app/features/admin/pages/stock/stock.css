@@ -97,6 +97,12 @@
   max-width: 70px;
   font-variant-numeric: tabular-nums;
 }
+.col-threshold {
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+  font-variant-numeric: tabular-nums;
+}
 .col-pack { width: 110px; min-width: 110px; max-width: 110px; }
 .col-status { width: 90px; min-width: 90px; max-width: 90px; }
 .col-actions { width: 80px; min-width: 80px; max-width: 80px; }

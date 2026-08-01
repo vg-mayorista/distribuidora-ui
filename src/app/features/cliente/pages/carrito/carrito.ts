@@ -40,15 +40,27 @@ export class CarritoComponent implements OnInit {
   }
 
   inc(line: CartLine): void {
-    this.cart.setPacks(line.product.id!, line.packs + 1);
+    const next = Math.min(line.packs + 1, line.maxAllowed);
+    this.cart.setPacks(line.product.id!, next);
   }
 
   dec(line: CartLine): void {
     this.cart.setPacks(line.product.id!, line.packs - 1);
   }
 
-  setPacks(line: CartLine, value: number): void {
-    this.cart.setPacks(line.product.id!, Math.floor(value));
+  setPacks(line: CartLine, value: any): void {
+    const n = Math.floor(Number(value));
+    if (!Number.isFinite(n) || n <= 0) return;
+    const clamped = Math.min(n, line.maxAllowed);
+    this.cart.setPacks(line.product.id!, clamped);
+  }
+
+  onInputChange(line: CartLine, event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const n = Math.floor(Number(target.value));
+    if (Number.isFinite(n) && n > line.maxAllowed) {
+      target.value = String(line.maxAllowed);
+    }
   }
 
   remove(line: CartLine): void {

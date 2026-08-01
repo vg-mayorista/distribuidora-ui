@@ -50,6 +50,7 @@
           <th class="col-hide-sm col-category">Categoría</th>
           <th class="text-right col-price">Precio</th>
           <th class="text-right col-stock">Stock</th>
+          <th class="col-hide-sm col-threshold" title="Umbral de stock bajo (unidades)">Umbral</th>
           <th class="col-hide-sm col-pack" title="Unidades por pack cerrado">Unidades/pack</th>
           <th class="col-hide-sm col-status">Estado</th>
           <th class="text-right col-actions">Acciones</th>
@@ -70,12 +71,13 @@
           <td class="col-hide-sm text-muted">{{ categoryName(p.categoryId) }}</td>
           <td class="text-right font-semibold">${{ formatPrice(p.price) }}</td>
           <td class="text-right">
-            <span [class.text-danger]="p.stock === 0"
-                  [class.text-warning]="p.stock > 0 && p.stock < 10"
-                  [class.font-semibold]="p.stock < 10">
-              {{ p.stock }}
+            <span [class.text-danger]="(p.stock ?? 0) === 0"
+                  [class.text-warning]="(p.stock ?? 0) > 0 && (p.stock ?? 0) < 10"
+                  [class.font-semibold]="(p.stock ?? 0) < 10">
+              {{ p.stock ?? 0 }}
             </span>
           </td>
+          <td class="col-hide-sm text-muted">{{ p.lowStockThreshold ?? '—' }}</td>
           <td class="col-hide-sm text-muted">{{ p.unitsPerPack }}</td>
           <td class="col-hide-sm">
             <app-badge [variant]="p.active ? 'active' : 'inactive'">{{ p.active ? 'Activo' : 'Inactivo' }}</app-badge>
@@ -99,7 +101,7 @@
         </tr>
 
         <tr *ngIf="paginatedProducts().length === 0">
-          <td colspan="7">
+          <td colspan="8">
             <app-empty-state
               title="No hay productos"
               [message]="searchTerm() ? 'No se encontraron productos con ese criterio.' : 'Aún no hay productos cargados.'">
@@ -179,10 +181,18 @@
       <div class="form-group">
         <label class="form-label form-label-required" for="np-stock">Stock (unidades físicas)</label>
         <input id="np-stock" type="number" min="0" step="1" class="form-input"
-          [class.is-invalid]="newProduct().stock < 0 && formError()"
+          [class.is-invalid]="(newProduct().stock ?? 0) < 0 && formError()"
           [ngModel]="newProduct().stock"
           (ngModelChange)="newProduct.update(p => ({...p, stock: +$event}))"
           name="npStock" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="np-threshold">Umbral stock bajo (unidades)</label>
+        <input id="np-threshold" type="number" min="0" step="1" class="form-input"
+          [ngModel]="newProduct().lowStockThreshold ?? null"
+          (ngModelChange)="newProduct.update(p => ({...p, lowStockThreshold: $event === null || $event === '' ? null : +$event}))"
+          name="npThreshold"/>
+        <small class="form-hint">Si lo dejás vacío, se usa el default global (20).</small>
       </div>
       <div class="form-group">
         <label class="form-label form-label-required" for="np-upp">Unidades por pack</label>
@@ -255,10 +265,17 @@
       <div class="form-group">
         <label class="form-label form-label-required" for="ep-stock">Stock (unidades físicas)</label>
         <input id="ep-stock" type="number" min="0" step="1" class="form-input"
-          [class.is-invalid]="editProduct().stock < 0 && editFormError()"
+          [class.is-invalid]="(editProduct().stock ?? 0) < 0 && editFormError()"
           [ngModel]="editProduct().stock"
           (ngModelChange)="editProduct.update(p => ({...p, stock: +$event}))"
           name="epStock" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="ep-threshold">Umbral stock bajo (unidades)</label>
+        <input id="ep-threshold" type="number" min="0" step="1" class="form-input"
+          [ngModel]="editProduct().lowStockThreshold ?? null"
+          (ngModelChange)="editProduct.update(p => ({...p, lowStockThreshold: $event === null || $event === '' ? null : +$event}))"
+          name="epThreshold"/>
       </div>
       <div class="form-group">
         <label class="form-label" for="ep-upp">Unidades por pack</label>

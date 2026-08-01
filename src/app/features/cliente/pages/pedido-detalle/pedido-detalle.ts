@@ -133,10 +133,12 @@ export class PedidoDetalleClienteComponent implements OnInit {
         unitsPerPack: item.unitsPerPackAtOrder,
         description: '',
         stock: 9999,
+        stockStatus: 'IN_STOCK' as const,
         active: true
       },
       packs: item.packsRequested,
-      physicalUnits: item.quantity
+      physicalUnits: item.quantity,
+      maxAllowed: 9999
     }));
     this.cart.setLines(lines);
     this.router.navigate(['/cliente/catalogo']);

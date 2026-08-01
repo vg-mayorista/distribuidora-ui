@@ -5,6 +5,7 @@ export interface CartLine {
   product: Product;
   packs: number;
   physicalUnits: number;
+  maxAllowed: number;
 }
 
 const STORAGE_KEY = 'distribuidora.cart.v1';
@@ -54,18 +55,18 @@ export class CartStore {
 
   readonly isEmpty = computed(() => this._lines().length === 0);
 
-  add(product: Product, packs: number): void {
+  add(product: Product, packs: number, maxAllowed: number): void {
     const unitsPerPack = product.unitsPerPack > 0 ? product.unitsPerPack : 1;
     const existing = this._lines().find(l => l.product.id === product.id);
     if (existing) {
       this._lines.update(list =>
         list.map(l => l.product.id === product.id
-          ? { ...l, packs: l.packs + packs, physicalUnits: (l.packs + packs) * unitsPerPack }
+          ? { ...l, packs: l.packs + packs, physicalUnits: (l.packs + packs) * unitsPerPack, maxAllowed: Math.max(l.maxAllowed, maxAllowed) }
           : l));
     } else {
       this._lines.update(list => [
         ...list,
-        { product, packs, physicalUnits: packs * unitsPerPack },
+        { product, packs, physicalUnits: packs * unitsPerPack, maxAllowed },
       ]);
     }
     this.persist();
@@ -83,6 +84,14 @@ export class CartStore {
     this.persist();
   }
 
+  setMaxAllowed(productId: string, maxAllowed: number): void {
+    this._lines.update(list =>
+      list.map(l => l.product.id === productId
+        ? { ...l, maxAllowed: Math.max(l.maxAllowed, maxAllowed) }
+        : l));
+    this.persist();
+  }
+
   remove(productId: string): void {
     this._lines.update(list => list.filter(l => l.product.id !== productId));
     this.persist();
@@ -96,7 +105,6 @@ export class CartStore {
 
   private loadFromStorage(): CartLine[] {
     if (typeof sessionStorage === 'undefined') return [];
-    // Migración defensiva: si quedó un carrito viejo en localStorage, lo movemos.
     try {
       const legacy = localStorage.getItem(STORAGE_KEY);
       if (legacy && !sessionStorage.getItem(STORAGE_KEY)) {
@@ -106,7 +114,12 @@ export class CartStore {
     } catch {}
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as CartLine[];
+      return parsed.map(l => ({
+        ...l,
+        maxAllowed: typeof l.maxAllowed === 'number' ? l.maxAllowed : Number.MAX_SAFE_INTEGER,
+      }));
     } catch {
       return [];
     }

@@ -126,6 +126,8 @@ export class StockComponent implements OnInit {
       description: '',
       price: 0,
       stock: 0,
+      stockStatus: 'IN_STOCK',
+      lowStockThreshold: null,
       unitsPerPack: 1,
       imageUrl: '',
       active: true,
@@ -175,7 +177,7 @@ export class StockComponent implements OnInit {
       this.formError.set('El precio no puede ser negativo.');
       return;
     }
-    if (p.stock < 0) {
+    if ((p.stock ?? 0) < 0) {
       this.formError.set('El stock no puede ser negativo.');
       return;
     }

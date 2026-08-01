@@ -34,6 +34,7 @@ export class ProductService {
       price: product.price,
       stock: product.stock ?? 0,
       unitsPerPack: product.unitsPerPack ?? 1,
+      lowStockThreshold: product.lowStockThreshold ?? null,
     });
   }
 
@@ -46,6 +47,7 @@ export class ProductService {
       price: product.price,
       stock: product.stock,
       unitsPerPack: product.unitsPerPack ?? 1,
+      lowStockThreshold: product.lowStockThreshold ?? null,
     });
   }
 

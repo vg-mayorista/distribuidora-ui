@@ -20,7 +20,6 @@
 
   <div *ngIf="!isEmpty()" class="cart-layout">
     <div class="cart-list">
-      <!-- Banner de modificación de pedido -->
       <div *ngIf="cartStore.editingOrderId()" class="editing-banner">
         <span class="editing-banner-title">
           <span>✏️</span>
@@ -49,10 +48,12 @@
           <div class="qty-control">
             <button type="button" class="qty-btn" (click)="dec(line)">−</button>
             <input type="number" min="1"
+                   [max]="line.maxAllowed"
                    class="qty-input"
                    [value]="line.packs"
+                   (input)="onInputChange(line, $event)"
                    (change)="setPacks(line, $any($event.target).value)">
-            <button type="button" class="qty-btn" (click)="inc(line)">+</button>
+            <button type="button" class="qty-btn" (click)="inc(line)" [disabled]="line.packs >= line.maxAllowed">+</button>
           </div>
           <span class="cart-line-subtotal">${{ formatPrice(line.packs * line.product.price) }}</span>
           <button type="button" class="btn-icon btn-icon--danger" (click)="remove(line)" title="Quitar">
