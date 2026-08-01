@@ -41,19 +41,30 @@
 .product-card-media img { width: 100%; height: 100%; object-fit: cover; }
 .product-card-placeholder {
   font-size: 3.5rem;
-  opacity: 0.65;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   height: 100%;
-  filter: grayscale(1) opacity(0.65);
+  background: linear-gradient(135deg, var(--orange-50) 0%, var(--color-surface-alt) 100%);
+  transition: transform var(--transition-fast);
+}
+.product-card:hover .product-card-placeholder {
+  transform: scale(1.06);
 }
 .product-card-cart-badge {
   position: absolute;
   top: 0.5rem;
   left: 0.5rem;
   z-index: 1;
+}
+
+.qty-btn:focus-visible,
+.filter-pill:focus-visible,
+.btn-toggle:focus-visible,
+.search-clear-btn:focus-visible {
+  outline: 2px solid var(--orange-base);
+  outline-offset: 2px;
 }
 
 .product-card-body {

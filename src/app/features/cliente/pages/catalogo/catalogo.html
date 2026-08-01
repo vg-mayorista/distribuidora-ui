@@ -12,7 +12,8 @@
         <input type="text" class="form-input"
                placeholder="Buscar por nombre…"
                [ngModel]="searchTerm()"
-               (ngModelChange)="searchTerm.set($event)">
+               (ngModelChange)="searchTerm.set($event)"
+               (keydown.escape)="clearSearch()">
         <button *ngIf="searchTerm()" type="button" class="search-clear-btn" (click)="clearSearch()" title="Limpiar búsqueda">✕</button>
       </div>
 
