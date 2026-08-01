@@ -102,7 +102,8 @@
             <small class="product-card-physical" *ngIf="p.unitsPerPack <= 1">
               = {{ physicalUnits(p) }} unidad
             </small>
-            <app-button variant="primary" size="sm" [block]="true" (onClick)="addToCart(p)" [loading]="adding()[p.id!]">Agregar</app-button>
+            <app-button *ngIf="!addedJustNow()[p.id!]" variant="primary" size="sm" [block]="true" (onClick)="addToCart(p)" [loading]="adding()[p.id!]">Agregar</app-button>
+            <app-button *ngIf="addedJustNow()[p.id!]" variant="success" size="sm" [block]="true">¡Agregado! ✓</app-button>
           </ng-container>
           <ng-container *ngIf="maxPacksFor(p) <= 0">
             <app-button variant="secondary" size="sm" [block]="true" [disabled]="true">Stock máximo en carrito</app-button>
@@ -167,7 +168,10 @@
             </td>
             <td class="col-action">
               <ng-container *ngIf="!isOutOfStock(p)">
-                <app-button *ngIf="maxPacksFor(p) > 0" variant="primary" size="sm" (onClick)="addToCart(p)" [loading]="adding()[p.id!]">Agregar</app-button>
+                <ng-container *ngIf="maxPacksFor(p) > 0">
+                  <app-button *ngIf="!addedJustNow()[p.id!]" variant="primary" size="sm" (onClick)="addToCart(p)" [loading]="adding()[p.id!]">Agregar</app-button>
+                  <app-button *ngIf="addedJustNow()[p.id!]" variant="success" size="sm">¡Agregado! ✓</app-button>
+                </ng-container>
                 <app-button *ngIf="maxPacksFor(p) <= 0" variant="secondary" size="sm" [disabled]="true">En carrito</app-button>
               </ng-container>
               <app-button *ngIf="isOutOfStock(p)" variant="secondary" size="sm" [disabled]="true">Sin stock</app-button>

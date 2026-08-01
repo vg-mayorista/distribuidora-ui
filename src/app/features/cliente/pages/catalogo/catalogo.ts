@@ -65,6 +65,7 @@ export class CatalogoComponent implements OnInit {
   quantities: Record<string, number> = {};
   maxPacksByProduct: Record<string, number> = {};
   adding = signal<Record<string, boolean>>({});
+  addedJustNow = signal<Record<string, boolean>>({});
 
   ngOnInit(): void {
     this.loadProducts();
@@ -219,6 +220,10 @@ export class CatalogoComponent implements OnInit {
       }
       this.cart.add(product, capped, maxAllowedTotal);
       this.quantities[product.id] = 1;
+      this.addedJustNow.update(s => ({ ...s, [product.id!]: true }));
+      setTimeout(() => {
+        this.addedJustNow.update(s => ({ ...s, [product.id!]: false }));
+      }, 1500);
     } catch {
       this.error.set('No se pudo agregar el producto al carrito.');
     } finally {

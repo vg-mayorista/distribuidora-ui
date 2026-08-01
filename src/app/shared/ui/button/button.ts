@@ -1,7 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'danger-outline' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'danger-outline' | 'ghost' | 'success';
 export type ButtonSize = 'sm' | 'md';
 
 @Component({
@@ -64,6 +64,9 @@ export type ButtonSize = 'sm' | 'md';
 
     .btn--danger-outline { background: transparent; color: var(--color-danger); border-color: var(--color-danger); }
     .btn--danger-outline:hover:not(:disabled) { background: var(--color-danger-soft); }
+
+    .btn--success { background: #16a34a; color: #ffffff; border-color: #16a34a; }
+    .btn--success:hover:not(:disabled) { background: #15803d; border-color: #15803d; }
   `],
 })
 export class ButtonComponent {
