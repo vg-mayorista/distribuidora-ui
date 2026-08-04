@@ -26,7 +26,7 @@ export class CatalogoComponent implements OnInit {
   private productService = inject(ProductService);
   private categoryService = inject(CategoryService);
   private cartService = inject(CartService);
-  private cart = inject(CartStore);
+  cartStore = inject(CartStore);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
 
@@ -154,7 +154,7 @@ export class CatalogoComponent implements OnInit {
   }
 
   isInCart(product: Product): boolean {
-    return !!product.id && this.cart.lines().some(l => l.product.id === product.id);
+    return !!product.id && this.cartStore.lines().some(l => l.product.id === product.id);
   }
 
   isOutOfStock(product: Product): boolean {
@@ -176,7 +176,7 @@ export class CatalogoComponent implements OnInit {
       totalStockPacks = Math.min(totalStockPacks, this.maxPacksByProduct[product.id]);
     }
 
-    const lineInCart = this.cart.lines().find(l => l.product.id === product.id);
+    const lineInCart = this.cartStore.lines().find(l => l.product.id === product.id);
     const packsInCart = lineInCart ? lineInCart.packs : 0;
 
     return Math.max(0, totalStockPacks - packsInCart);
@@ -210,7 +210,7 @@ export class CatalogoComponent implements OnInit {
       const maxAllowedTotal = Math.floor(stock / unitsPerPack);
       this.maxPacksByProduct[product.id] = maxAllowedTotal;
 
-      const currentLine = this.cart.lines().find(l => l.product.id === product.id);
+      const currentLine = this.cartStore.lines().find(l => l.product.id === product.id);
       const alreadyInCart = currentLine ? currentLine.packs : 0;
       const realMaxCanAdd = Math.max(0, maxAllowedTotal - alreadyInCart);
       const capped = Math.min(packs, realMaxCanAdd);
@@ -218,7 +218,7 @@ export class CatalogoComponent implements OnInit {
         this.error.set('No hay más stock disponible para este producto.');
         return;
       }
-      this.cart.add(product, capped, maxAllowedTotal);
+      this.cartStore.add(product, capped, maxAllowedTotal);
       this.quantities[product.id] = 1;
       this.addedJustNow.update(s => ({ ...s, [product.id!]: true }));
       setTimeout(() => {

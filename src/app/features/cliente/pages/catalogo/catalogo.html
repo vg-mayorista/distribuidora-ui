@@ -32,7 +32,17 @@
         </button>
       </div>
 
-      <app-button variant="primary" (onClick)="viewCart()">Ver carrito</app-button>
+      <app-button variant="primary"
+                  (onClick)="viewCart()"
+                  [attr.aria-label]="cartStore.count() > 0 ? 'Ver carrito: ' + cartStore.count() + ' packs, total $' + formatPrice(cartStore.subtotal()) : 'Ver carrito'">
+        <span class="cart-btn-icon" aria-hidden="true">🛒</span>
+        <span>Ver carrito</span>
+        <span *ngIf="cartStore.count() > 0" class="cart-btn-badge">
+          <span class="cart-btn-count">{{ cartStore.count() }}</span>
+          <span class="cart-btn-sep">·</span>
+          <span class="cart-btn-total">${{ formatPrice(cartStore.subtotal()) }}</span>
+        </span>
+      </app-button>
     </div>
   </header>
 
@@ -191,4 +201,15 @@
       <p>No hay productos disponibles por ahora.</p>
     </div>
   </ng-container>
+
+  <!-- Sticky Mobile Cart Bar -->
+  <div *ngIf="cartStore.count() > 0" class="mobile-cart-bar" role="region" aria-label="Resumen de carrito flotante">
+    <div class="mobile-cart-bar-info">
+      <span class="mobile-cart-bar-count">🛒 {{ cartStore.count() }} pack{{ cartStore.count() === 1 ? '' : 's' }}</span>
+      <span class="mobile-cart-bar-total">${{ formatPrice(cartStore.subtotal()) }}</span>
+    </div>
+    <button type="button" class="mobile-cart-bar-btn" (click)="viewCart()" aria-label="Ir al carrito de compras">
+      Ver carrito →
+    </button>
+  </div>
 </section>

@@ -12,6 +12,8 @@ export type ButtonSize = 'sm' | 'md';
     <button
       [type]="type()"
       [disabled]="disabled() || loading()"
+      [attr.aria-label]="ariaLabel()"
+      [attr.aria-live]="ariaLive()"
       [class]="'btn btn--' + variant() + ' btn--' + size() + (block() ? ' btn--block' : '') + (loading() ? ' btn--loading' : '')"
       (click)="onClick.emit()">
       <span *ngIf="loading()" class="btn-spinner" aria-hidden="true"></span>
@@ -25,18 +27,40 @@ export type ButtonSize = 'sm' | 'md';
       justify-content: center;
       gap: var(--space-sm);
       padding: 0.625rem 1.25rem;
+      min-height: 2.5rem;
       border-radius: var(--radius-md);
       font-size: var(--font-size-sm);
       font-weight: var(--font-weight-semibold);
       line-height: 1;
       border: 1px solid transparent;
       cursor: pointer;
-      transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+      transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
       white-space: nowrap;
+      user-select: none;
+      touch-action: manipulation;
     }
+
+    @media (max-width: 768px), (pointer: coarse) {
+      .btn {
+        min-height: 44px;
+      }
+    }
+
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn:focus-visible { outline: 2px solid var(--orange-base); outline-offset: 2px; }
+    .btn:focus { outline: none; }
+    .btn:focus-visible {
+      outline: 2px solid var(--color-text-strong);
+      outline-offset: 2px;
+      box-shadow: 0 0 0 4px rgba(242, 121, 14, 0.2);
+    }
     .btn--sm { padding: 0.4375rem 0.875rem; font-size: var(--font-size-xs); }
+    @media (max-width: 768px), (pointer: coarse) {
+      .btn--sm {
+        min-height: 44px;
+        padding-top: 0.625rem;
+        padding-bottom: 0.625rem;
+      }
+    }
     .btn--block { width: 100%; }
     .btn--loading { opacity: 0.7; }
     .btn-spinner {
@@ -65,8 +89,8 @@ export type ButtonSize = 'sm' | 'md';
     .btn--danger-outline { background: transparent; color: var(--color-danger); border-color: var(--color-danger); }
     .btn--danger-outline:hover:not(:disabled) { background: var(--color-danger-soft); }
 
-    .btn--success { background: #16a34a; color: #ffffff; border-color: #16a34a; }
-    .btn--success:hover:not(:disabled) { background: #15803d; border-color: #15803d; }
+    .btn--success { background: var(--green-base); color: var(--color-text-inverse); border-color: var(--green-base); }
+    .btn--success:hover:not(:disabled) { background: var(--green-600); border-color: var(--green-600); }
   `],
 })
 export class ButtonComponent {
@@ -76,6 +100,8 @@ export class ButtonComponent {
   disabled = input<boolean>(false);
   loading = input<boolean>(false);
   block = input<boolean>(false);
+  ariaLabel = input<string | undefined>(undefined);
+  ariaLive = input<'polite' | 'assertive' | 'off' | undefined>(undefined);
 
   onClick = output<void>();
 }

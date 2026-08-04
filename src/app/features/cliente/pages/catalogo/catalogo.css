@@ -500,3 +500,123 @@
 .col-action app-button[variant="success"] {
   animation: popInSuccess 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
+
+/* Dynamic Header Cart Button Badge */
+.cart-btn-icon {
+  font-size: 1.05em;
+  line-height: 1;
+}
+
+.cart-btn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(4px);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-bold);
+  margin-left: 0.25rem;
+  letter-spacing: -0.01em;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  transition: transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.cart-btn-count {
+  font-weight: var(--font-weight-bold);
+}
+
+.cart-btn-sep {
+  opacity: 0.75;
+}
+
+.cart-btn-total {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-bold);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STICKY MOBILE CART BAR (Floating Action Bar for Mobile Viewports)
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes slideUpCartBar {
+  from {
+    transform: translateY(100%) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.mobile-cart-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mobile-cart-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    left: 1rem;
+    right: 1rem;
+    z-index: 1000;
+    background: #2D312E;
+    color: #FFFFFF;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22), 0 2px 6px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    animation: slideUpCartBar 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .mobile-cart-bar-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .mobile-cart-bar-count {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .mobile-cart-bar-total {
+    font-size: 1.125rem;
+    font-weight: var(--font-weight-bold);
+    color: #FFFFFF;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mobile-cart-bar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.5rem 1.25rem;
+    background: var(--orange-base);
+    color: #FFFFFF;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
+  }
+
+  .mobile-cart-bar-btn:active {
+    background: var(--orange-600);
+    transform: scale(0.97);
+  }
+}
+
+
