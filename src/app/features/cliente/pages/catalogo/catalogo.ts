@@ -128,9 +128,13 @@ export class CatalogoComponent implements OnInit {
   getPacks(product: Product): number {
     if (!product.id) return 1;
     if (this.isOutOfStock(product)) return 0;
+    const lineInCart = this.cartStore.lines().find(l => l.product.id === product.id);
+    if (lineInCart) {
+      return lineInCart.packs;
+    }
+    const current = this.quantities[product.id] ?? 1;
     const maxPacks = this.maxPacksFor(product);
     if (maxPacks <= 0) return 0;
-    const current = this.quantities[product.id] ?? 1;
     return Math.min(Math.max(1, current), maxPacks);
   }
 
@@ -140,22 +144,58 @@ export class CatalogoComponent implements OnInit {
       this.quantities[product.id] = 0;
       return;
     }
-    const maxPacks = this.maxPacksFor(product);
-    if (maxPacks <= 0) {
-      this.quantities[product.id] = 0;
-      this.cdr.detectChanges();
-      return;
+    const lineInCart = this.cartStore.lines().find(l => l.product.id === product.id);
+    if (lineInCart) {
+      if (packs <= 0) {
+        this.cartStore.remove(product.id);
+        this.quantities[product.id] = 1;
+      } else {
+        const maxAvailable = this.maxPacksFor(product) + lineInCart.packs;
+        const clamped = Math.min(packs, maxAvailable);
+        this.cartStore.setPacks(product.id, clamped);
+      }
+      this.triggerCartPulse();
+    } else {
+      const maxPacks = this.maxPacksFor(product);
+      this.quantities[product.id] = Math.max(1, Math.min(packs, maxPacks));
     }
-    this.quantities[product.id] = Math.max(1, Math.min(packs, maxPacks));
     this.cdr.detectChanges();
   }
 
   incPacks(product: Product): void {
-    this.setPacks(product, this.getPacks(product) + 1);
+    if (!product.id) return;
+    const lineInCart = this.cartStore.lines().find(l => l.product.id === product.id);
+    if (lineInCart) {
+      if (this.maxPacksFor(product) > 0) {
+        this.cartStore.setPacks(product.id, lineInCart.packs + 1);
+        this.triggerCartPulse();
+      }
+    } else {
+      const maxPacks = this.maxPacksFor(product);
+      const current = this.getPacks(product);
+      if (current < maxPacks) {
+        this.quantities[product.id] = current + 1;
+      }
+    }
   }
 
   decPacks(product: Product): void {
-    this.setPacks(product, this.getPacks(product) - 1);
+    if (!product.id) return;
+    const lineInCart = this.cartStore.lines().find(l => l.product.id === product.id);
+    if (lineInCart) {
+      if (lineInCart.packs > 1) {
+        this.cartStore.setPacks(product.id, lineInCart.packs - 1);
+      } else {
+        this.cartStore.remove(product.id);
+        this.quantities[product.id] = 1;
+      }
+      this.triggerCartPulse();
+    } else {
+      const current = this.getPacks(product);
+      if (current > 1) {
+        this.quantities[product.id] = current - 1;
+      }
+    }
   }
 
   physicalUnits(product: Product): number {

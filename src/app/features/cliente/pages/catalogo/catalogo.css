@@ -183,6 +183,29 @@
   margin-top: 0.0625rem;
 }
 
+/* Active Cart Stepper Styling */
+.qty-control--active {
+  border-color: var(--green-base, #5D8A1F);
+  box-shadow: 0 0 0 1px var(--green-base, #5D8A1F);
+}
+
+.qty-display--active {
+  background: var(--green-50, #EEF4E2);
+}
+
+.qty-display--active .qty-label {
+  color: var(--green-900, #22330B);
+  font-weight: 700;
+}
+
+.qty-btn--active-dec {
+  color: var(--red-500, #C43D3D);
+}
+.qty-btn--active-dec:hover:not(:disabled) {
+  background: var(--red-50, #FBEAEA);
+  color: var(--red-600, #A52F2F);
+}
+
 .category-filters-wrapper {
   position: relative;
   margin-bottom: var(--space-md);
