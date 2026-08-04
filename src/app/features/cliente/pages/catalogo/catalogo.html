@@ -48,6 +48,28 @@
     </div>
   </header>
 
+  <!-- Minimum Order Status Banner -->
+  <div class="min-order-banner" [class.min-order-banner--success]="cartStore.meetsMinimumRequirements()" *ngIf="cartStore.count() > 0">
+    <div class="min-order-info">
+      <span class="min-order-icon">{{ cartStore.meetsMinimumRequirements() ? '🎉' : '💡' }}</span>
+      <div class="min-order-text">
+        <strong *ngIf="cartStore.meetsMinimumRequirements()">¡Alcanzaste el mínimo para tu compra!</strong>
+        <strong *ngIf="!cartStore.meetsMinimumRequirements()">Mínimo de compra requerido:</strong>
+        <span *ngIf="!cartStore.meetsMinimumRequirements()">
+          {{ cartStore.minOrderUnits() }} unidades y ${{ formatPrice(cartStore.minOrderAmount()) }} total en el carrito.
+        </span>
+      </div>
+    </div>
+    <div class="min-order-progress-group" *ngIf="!cartStore.meetsMinimumRequirements()">
+      <div class="min-order-badge" *ngIf="cartStore.montoFaltante() > 0">
+        Faltan <strong>${{ formatPrice(cartStore.montoFaltante()) }}</strong>
+      </div>
+      <div class="min-order-badge" *ngIf="cartStore.unidadesFaltantes() > 0">
+        Faltan <strong>{{ cartStore.unidadesFaltantes() }}</strong> unit.
+      </div>
+    </div>
+  </div>
+
   <div class="category-filters-wrapper" *ngIf="categories().length > 0 && !loading()">
     <div class="category-filters">
       <button type="button" class="filter-pill"

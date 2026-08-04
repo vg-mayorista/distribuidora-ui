@@ -74,6 +74,9 @@ export class CarritoComponent implements OnInit {
   }
 
   goConfirm(): void {
+    if (!this.cart.meetsMinimumRequirements()) {
+      return;
+    }
     this.router.navigate(['/cliente/confirmar']);
   }
 

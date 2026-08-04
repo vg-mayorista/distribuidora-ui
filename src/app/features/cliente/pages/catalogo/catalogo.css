@@ -421,3 +421,65 @@
   .cart-fab-container { display: block; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); right: 1rem; left: 1rem; }
   .cart-fab-btn { width: 100%; justify-content: space-between; padding: 0.75rem 1.25rem; min-height: 52px; }
 }
+
+/* Minimum Order Banner Styles */
+.min-order-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--orange-50, #FFF7ED);
+  border: 1px solid var(--orange-200, #FED7AA);
+  border-radius: var(--radius-md, 10px);
+  padding: 0.75rem 1.25rem;
+  margin-bottom: var(--space-md, 1rem);
+  transition: all 0.25s ease;
+}
+
+.min-order-banner--success {
+  background: var(--green-50, #F0FDF4);
+  border-color: var(--green-200, #BBF7D0);
+}
+
+.min-order-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.min-order-icon {
+  font-size: 1.4rem;
+}
+
+.min-order-text {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+  color: var(--color-text, #1E293B);
+}
+
+.min-order-text strong {
+  font-weight: 700;
+  color: var(--orange-950, #431407);
+}
+
+.min-order-banner--success .min-order-text strong {
+  color: var(--green-900, #14532D);
+}
+
+.min-order-progress-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.min-order-badge {
+  background: var(--color-surface, #FFFFFF);
+  border: 1px solid var(--orange-300, #FDBA74);
+  color: var(--orange-900, #7C2D12);
+  font-size: 0.82rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full, 9999px);
+  white-space: nowrap;
+}
+

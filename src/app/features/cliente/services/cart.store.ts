@@ -1,5 +1,6 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, signal, inject } from '@angular/core';
 import { Product } from '../../../models/product.model';
+import { BusinessConfigService } from '../../../services/business-config.service';
 
 export interface CartLine {
   product: Product;
@@ -12,6 +13,7 @@ const STORAGE_KEY = 'distribuidora.cart.v1';
 
 @Injectable({ providedIn: 'root' })
 export class CartStore {
+  private configService = inject(BusinessConfigService);
   private _lines = signal<CartLine[]>(this.loadFromStorage());
   private _editingOrderId = signal<string | null>(this.loadEditingOrderIdFromStorage());
 
@@ -54,6 +56,22 @@ export class CartStore {
   readonly hasItems = computed(() => this._lines().length > 0);
 
   readonly isEmpty = computed(() => this._lines().length === 0);
+
+  readonly minOrderAmount = computed(() => this.configService.config()?.minOrderAmount ?? 30000);
+
+  readonly minOrderUnits = computed(() => this.configService.config()?.minOrderUnits ?? 5);
+
+  readonly montoFaltante = computed(() =>
+    Math.max(0, this.minOrderAmount() - this.subtotal())
+  );
+
+  readonly unidadesFaltantes = computed(() =>
+    Math.max(0, this.minOrderUnits() - this.count())
+  );
+
+  readonly meetsMinimumRequirements = computed(() =>
+    this.montoFaltante() === 0 && this.unidadesFaltantes() === 0
+  );
 
   add(product: Product, packs: number, maxAllowed: number): void {
     const unitsPerPack = product.unitsPerPack > 0 ? product.unitsPerPack : 1;

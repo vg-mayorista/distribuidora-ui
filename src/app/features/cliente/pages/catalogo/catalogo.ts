@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { ProductService } from '../../../../services/product.service';
 import { CategoryService } from '../../../../services/category.service';
 import { CartService } from '../../../../services/cart.service';
+import { BusinessConfigService } from '../../../../services/business-config.service';
 import { CartStore } from '../../services/cart.store';
 import { ButtonComponent } from '../../../../shared/ui/button/button';
 import { BadgeComponent } from '../../../../shared/ui/badge/badge';
@@ -26,6 +27,7 @@ export class CatalogoComponent implements OnInit {
   private productService = inject(ProductService);
   private categoryService = inject(CategoryService);
   private cartService = inject(CartService);
+  configService = inject(BusinessConfigService);
   cartStore = inject(CartStore);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
@@ -77,6 +79,7 @@ export class CatalogoComponent implements OnInit {
   addedJustNow = signal<Record<string, boolean>>({});
 
   ngOnInit(): void {
+    this.configService.loadConfig();
     this.loadProducts();
     this.loadCategories();
   }

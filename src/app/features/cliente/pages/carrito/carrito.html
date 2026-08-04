@@ -85,8 +85,26 @@
         <span>Subtotal</span>
         <span class="summary-value">${{ formatPrice(subtotal()) }}</span>
       </div>
+      <div class="summary-min-order-box" [class.summary-min-order-box--success]="cartStore.meetsMinimumRequirements()">
+        <ng-container *ngIf="cartStore.meetsMinimumRequirements()">
+          <span class="min-order-check">✓ Mínimo de compra alcanzado</span>
+        </ng-container>
+        <ng-container *ngIf="!cartStore.meetsMinimumRequirements()">
+          <p class="summary-min-title">⚠️ Mínimo de compra no alcanzado</p>
+          <ul class="summary-min-list">
+            <li *ngIf="cartStore.montoFaltante() > 0">
+              Faltan <strong>${{ formatPrice(cartStore.montoFaltante()) }}</strong> en total
+            </li>
+            <li *ngIf="cartStore.unidadesFaltantes() > 0">
+              Faltan <strong>{{ cartStore.unidadesFaltantes() }}</strong> unidades
+            </li>
+          </ul>
+          <small class="summary-min-hint">Requisitos: {{ cartStore.minOrderUnits() }} unidades y ${{ formatPrice(cartStore.minOrderAmount()) }}</small>
+        </ng-container>
+      </div>
+
       <p class="summary-hint">El envío se calcula en el siguiente paso.</p>
-      <app-button variant="primary" size="md" (onClick)="goConfirm()" [block]="true">
+      <app-button variant="primary" size="md" (onClick)="goConfirm()" [disabled]="!cartStore.meetsMinimumRequirements()" [block]="true">
         Continuar →
       </app-button>
     </aside>
