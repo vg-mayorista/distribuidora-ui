@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, signal, computed, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -35,6 +35,15 @@ export class CatalogoComponent implements OnInit {
   selectedCategoryId = signal<string | null>(null);
   searchTerm = signal('');
   viewMode = signal<'grid' | 'table'>('grid');
+  isScrolled = signal(false);
+  cartPulse = signal(false);
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    if (typeof window !== 'undefined') {
+      this.isScrolled.set(window.scrollY > 120);
+    }
+  }
 
   clearSearch(): void {
     this.searchTerm.set('');
@@ -219,6 +228,7 @@ export class CatalogoComponent implements OnInit {
         return;
       }
       this.cartStore.add(product, capped, maxAllowedTotal);
+      this.triggerCartPulse();
       this.quantities[product.id] = 1;
       this.addedJustNow.update(s => ({ ...s, [product.id!]: true }));
       setTimeout(() => {
@@ -229,6 +239,13 @@ export class CatalogoComponent implements OnInit {
     } finally {
       this.adding.update(s => ({ ...s, [product.id!]: false }));
     }
+  }
+
+  triggerCartPulse(): void {
+    this.cartPulse.set(true);
+    setTimeout(() => {
+      this.cartPulse.set(false);
+    }, 1200);
   }
 
   viewCart(): void {
