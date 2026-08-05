@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { OrderService } from '../../../../services/order.service';
 import { Order, OrderStatus, ORDER_STATUS_LABELS } from '../../../../models/order.model';
+import { OrderType, ORDER_TYPE_SHORT_LABELS } from '../../../../models/order-type.model';
 import { BadgeComponent } from '../../../../shared/ui/badge/badge';
 import { ButtonComponent } from '../../../../shared/ui/button/button';
 import { EmptyStateComponent } from '../../../../shared/ui/empty-state/empty-state';
@@ -72,6 +73,14 @@ export class MisPedidosComponent implements OnInit {
 
   statusLabel(status: OrderStatus): string {
     return ORDER_STATUS_LABELS[status];
+  }
+
+  typeBadgeLabel(type: OrderType): string {
+    return ORDER_TYPE_SHORT_LABELS[type] ?? type;
+  }
+
+  typeBadgeVariant(type: OrderType): 'active' | 'info' | 'warning' | 'inactive' | 'neutral' {
+    return type === 'WHOLESALE' ? 'info' : 'active';
   }
 
   statusVariant(status: OrderStatus): 'warning' | 'info' | 'active' | 'inactive' | 'neutral' {

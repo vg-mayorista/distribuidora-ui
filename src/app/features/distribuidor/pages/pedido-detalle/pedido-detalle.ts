@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { OrderService } from '../../../../services/order.service';
 import { Order, OrderStatus, ORDER_STATUS_LABELS, nextStatusOptions } from '../../../../models/order.model';
+import { OrderType, ORDER_TYPE_SHORT_LABELS } from '../../../../models/order-type.model';
 import { ModalComponent } from '../../../../shared/components/modal/modal';
 import { BadgeComponent } from '../../../../shared/ui/badge/badge';
 import { ButtonComponent } from '../../../../shared/ui/button/button';
@@ -75,6 +76,14 @@ export class DistribuidorPedidoDetalleComponent implements OnInit {
 
   statusLabel(s: OrderStatus): string {
     return ORDER_STATUS_LABELS[s];
+  }
+
+  typeBadgeLabel(t: OrderType): string {
+    return ORDER_TYPE_SHORT_LABELS[t] ?? t;
+  }
+
+  typeBadgeVariant(t: OrderType): 'active' | 'info' | 'warning' | 'inactive' | 'neutral' {
+    return t === 'WHOLESALE' ? 'info' : 'active';
   }
 
   statusVariant(s: OrderStatus): 'warning' | 'info' | 'active' | 'inactive' | 'neutral' {

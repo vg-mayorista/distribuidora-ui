@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { OrderService } from '../../../../services/order.service';
 import { Order, OrderStatus, ORDER_STATUS_LABELS, ORDER_STATUS_VARIANTS } from '../../../../models/order.model';
+import { OrderType, ORDER_TYPE_SHORT_LABELS } from '../../../../models/order-type.model';
 import { ModalComponent } from '../../../../shared/components/modal/modal';
 import { BadgeComponent } from '../../../../shared/ui/badge/badge';
 import { ButtonComponent } from '../../../../shared/ui/button/button';
@@ -93,6 +94,14 @@ export class OrdersComponent implements OnInit {
 
   statusVariant(s: OrderStatus) {
     return ORDER_STATUS_VARIANTS[s];
+  }
+
+  typeBadgeLabel(t: OrderType): string {
+    return ORDER_TYPE_SHORT_LABELS[t] ?? t;
+  }
+
+  typeBadgeVariant(t: OrderType): 'active' | 'info' | 'warning' | 'inactive' | 'neutral' {
+    return t === 'WHOLESALE' ? 'info' : 'active';
   }
 
   formatPrice(value: number): string {

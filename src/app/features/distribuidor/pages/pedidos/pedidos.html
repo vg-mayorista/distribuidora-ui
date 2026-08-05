@@ -41,6 +41,18 @@
                (ngModelChange)="deliveryDate.set($event); load()">
       </div>
       <div class="filter-group">
+        <label class="filter-label">Flujo</label>
+        <div class="status-chips">
+          <button *ngFor="let t of typeOptions; trackBy: trackByTypeOpt"
+                  type="button"
+                  class="chip"
+                  [class.chip--active]="typeFilter() === t.key"
+                  (click)="setType(t.key)">
+            {{ t.label }}
+          </button>
+        </div>
+      </div>
+      <div class="filter-group">
         <label class="filter-label" for="customer">Cliente</label>
         <select id="customer" class="form-input"
                 [ngModel]="customerId()"
@@ -68,35 +80,39 @@
   </div>
 
   <div *ngIf="!loading() && !error() && orders().length > 0" class="data-table-wrapper">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th class="col-dist-order-num">#Pedido</th>
-          <th class="col-dist-order-customer">Cliente</th>
-          <th class="col-dist-order-items">Items</th>
-          <th class="col-hide-sm col-dist-order-delivery">Entrega</th>
-          <th class="col-hide-sm col-dist-order-date">Día</th>
-          <th class="col-dist-order-status">Estado</th>
-          <th class="text-right col-dist-order-total">Total</th>
-          <th class="text-right col-dist-order-action">Acción</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let o of orders(); trackBy: trackById" (click)="view(o)" class="row-clickable">
-          <td class="font-mono">#{{ shortId(o.id) }}</td>
-          <td>{{ o.customerName ?? '—' }}</td>
-          <td>{{ o.itemCount ?? o.items.length }}</td>
-          <td class="col-hide-sm">{{ o.deliveryMethodName ?? '—' }}</td>
-          <td class="col-hide-sm">{{ formatDate(o.deliveryDate) }}</td>
-          <td>
-            <app-badge [variant]="statusVariant(o.status)">{{ statusLabel(o.status) }}</app-badge>
-          </td>
-          <td class="text-right font-semibold">${{ formatPrice(o.total) }}</td>
-          <td class="text-right">
-            <button class="btn btn-secondary btn-sm" (click)="view(o); $event.stopPropagation()">Ver</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="col-dist-order-num">#Pedido</th>
+            <th class="col-dist-order-customer">Cliente</th>
+            <th class="col-dist-order-items">Items</th>
+            <th class="col-hide-sm col-dist-order-flow">Flujo</th>
+            <th class="col-hide-sm col-dist-order-delivery">Entrega</th>
+            <th class="col-hide-sm col-dist-order-date">Día</th>
+            <th class="col-dist-order-status">Estado</th>
+            <th class="text-right col-dist-order-total">Total</th>
+            <th class="text-right col-dist-order-action">Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let o of orders(); trackBy: trackById" (click)="view(o)" class="row-clickable">
+            <td class="font-mono">#{{ shortId(o.id) }}</td>
+            <td>{{ o.customerName ?? '—' }}</td>
+            <td>{{ o.itemCount ?? o.items.length }}</td>
+            <td class="col-hide-sm">
+              <app-badge [variant]="typeBadgeVariant(o.type)">{{ typeBadgeLabel(o.type) }}</app-badge>
+            </td>
+            <td class="col-hide-sm">{{ o.deliveryMethodName ?? '—' }}</td>
+            <td class="col-hide-sm">{{ formatDate(o.deliveryDate) }}</td>
+            <td>
+              <app-badge [variant]="statusVariant(o.status)">{{ statusLabel(o.status) }}</app-badge>
+            </td>
+            <td class="text-right font-semibold">${{ formatPrice(o.total) }}</td>
+            <td class="text-right">
+              <button class="btn btn-secondary btn-sm" (click)="view(o); $event.stopPropagation()">Ver</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
   </div>
 </section>

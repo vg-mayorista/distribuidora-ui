@@ -41,7 +41,10 @@
           <span class="order-card-label">Pedido</span>
           <span class="order-card-number">#{{ shortId(o.id) }}</span>
         </div>
-        <app-badge [variant]="statusVariant(o.status)">{{ statusLabel(o.status) }}</app-badge>
+        <div class="order-card-badges">
+          <app-badge [variant]="typeBadgeVariant(o.type)">{{ typeBadgeLabel(o.type) }}</app-badge>
+          <app-badge [variant]="statusVariant(o.status)">{{ statusLabel(o.status) }}</app-badge>
+        </div>
       </header>
       <div class="order-card-body">
         <div class="order-card-meta">

@@ -3,7 +3,10 @@
   <header class="pd-header">
     <div class="pd-title-row">
       <h1 class="pd-title">Pedido #{{ shortId(o.id) }}</h1>
-      <app-badge [variant]="statusVariant(o.status)">{{ statusLabel(o.status) }}</app-badge>
+      <div class="pd-title-badges">
+        <app-badge [variant]="typeBadgeVariant(o.type)">{{ typeBadgeLabel(o.type) }}</app-badge>
+        <app-badge [variant]="statusVariant(o.status)">{{ statusLabel(o.status) }}</app-badge>
+      </div>
     </div>
     <p class="pd-subtitle">Creado el {{ formatDateTime(o.createdAt) }}</p>
   </header>

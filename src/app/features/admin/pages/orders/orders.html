@@ -52,6 +52,9 @@
           <td class="font-semibold">#{{ shortId(order.id) }}</td>
           <td>{{ order.customerName ?? '—' }}</td>
           <td class="col-hide-sm">{{ order.itemCount ?? order.items.length }}</td>
+          <td class="col-hide-sm">
+            <app-badge [variant]="typeBadgeVariant(order.type)">{{ typeBadgeLabel(order.type) }}</app-badge>
+          </td>
           <td class="col-hide-sm text-muted">{{ order.deliveryMethodName ?? '—' }}</td>
           <td class="col-hide-sm text-muted">{{ formatDate(order.deliveryDate) }}</td>
           <td>

@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { OrderService } from '../../../../services/order.service';
 import { DistributorCustomerService } from '../../../../services/distributor-customer.service';
 import { Order, OrderStatus, ORDER_STATUS_LABELS } from '../../../../models/order.model';
+import { OrderType, ORDER_TYPE_SHORT_LABELS } from '../../../../models/order-type.model';
 import { CustomerSummary } from '../../../../models/customer.model';
 import { BadgeComponent } from '../../../../shared/ui/badge/badge';
 import { ButtonComponent } from '../../../../shared/ui/button/button';
@@ -26,6 +27,7 @@ export class DistribuidorPedidosComponent implements OnInit {
   activeStatuses = signal<OrderStatus[]>([]);
   deliveryDate = signal<string>('');
   customerId = signal<string>('');
+  typeFilter = signal<'ALL' | OrderType>('ALL');
 
   customers = signal<CustomerSummary[]>([]);
 
@@ -35,6 +37,12 @@ export class DistribuidorPedidosComponent implements OnInit {
     { key: 'ENVIADO', label: 'Enviados' },
     { key: 'ENTREGADO', label: 'Entregados' },
     { key: 'CANCELADO', label: 'Cancelados' },
+  ];
+
+  typeOptions: { key: 'ALL' | OrderType; label: string }[] = [
+    { key: 'ALL', label: 'Todos los flujos' },
+    { key: 'WHOLESALE', label: 'A fábrica' },
+    { key: 'STOCK', label: 'Stock' },
   ];
 
   constructor(
@@ -55,9 +63,11 @@ export class DistribuidorPedidosComponent implements OnInit {
   load(): void {
     this.loading.set(true);
     this.error.set(null);
+    const tf = this.typeFilter();
     this.orderService.listAll({
       statuses: this.activeStatuses().length > 0 ? this.activeStatuses() : undefined,
       deliveryDate: this.deliveryDate() || undefined,
+      type: tf === 'ALL' ? undefined : tf,
       customerId: this.customerId() || undefined,
       search: this.searchTerm().trim() || undefined,
       page: 0,
@@ -83,12 +93,34 @@ export class DistribuidorPedidosComponent implements OnInit {
     return this.activeStatuses().includes(s);
   }
 
+  setType(t: 'ALL' | OrderType): void {
+    this.typeFilter.set(t);
+    this.load();
+  }
+
   clearFilters(): void {
     this.activeStatuses.set([]);
     this.deliveryDate.set('');
     this.customerId.set('');
     this.searchTerm.set('');
+    this.typeFilter.set('ALL');
     this.load();
+  }
+
+  typeBadgeLabel(t: OrderType): string {
+    return ORDER_TYPE_SHORT_LABELS[t] ?? t;
+  }
+
+  typeBadgeVariant(t: OrderType): 'active' | 'info' | 'warning' | 'inactive' | 'neutral' {
+    return t === 'WHOLESALE' ? 'info' : 'active';
+  }
+
+  trackByType(_i: number, t: { key: string }): string {
+    return t.key;
+  }
+
+  trackByTypeOpt(_i: number, t: { key: 'ALL' | OrderType }): 'ALL' | OrderType {
+    return t.key;
   }
 
   view(order: Order): void {
@@ -132,6 +164,10 @@ export class DistribuidorPedidosComponent implements OnInit {
   }
 
   hasActiveFilters(): boolean {
-    return this.activeStatuses().length > 0 || !!this.deliveryDate() || !!this.customerId() || !!this.searchTerm();
+    return this.activeStatuses().length > 0
+      || !!this.deliveryDate()
+      || !!this.customerId()
+      || !!this.searchTerm()
+      || this.typeFilter() !== 'ALL';
   }
 }
