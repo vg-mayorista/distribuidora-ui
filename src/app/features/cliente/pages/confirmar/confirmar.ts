@@ -1,12 +1,16 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CartStore } from '../../services/cart.store';
 import { DeliveryMethodService, DeliveryMethodSummary } from '../../../../services/delivery-method.service';
 import { OrderService } from '../../../../services/order.service';
 import { AuthService } from '../../../../services/auth.service';
+import { BusinessConfigService } from '../../../../services/business-config.service';
+import { DeliveryWindow } from '../../../../models/delivery-window.model';
 import { ButtonComponent } from '../../../../shared/ui/button/button';
+
+type FlowMode = 'wholesale' | 'stock';
 
 @Component({
   selector: 'app-confirmar',
@@ -20,14 +24,20 @@ export class ConfirmarComponent implements OnInit {
   private deliveryMethodService = inject(DeliveryMethodService);
   private orderService = inject(OrderService);
   private authService = inject(AuthService);
+  private configService = inject(BusinessConfigService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
+  mode: FlowMode = 'wholesale';
   cartStore = this.cart;
   lines = this.cart.lines;
+  stockLines = this.cart.stockLines;
   subtotal = this.cart.subtotal;
+  stockSubtotal = this.cart.stockSubtotal;
   count = this.cart.count;
+  stockCount = this.cart.stockCount;
 
-  deliveryMethods = signal<DeliveryMethodSummary[]>([]);
+  allDeliveryMethods = signal<DeliveryMethodSummary[]>([]);
   selectedDeliveryMethodId = signal<string>('');
   deliveryAddress = signal('');
   deliveryPhone = signal('');
@@ -39,25 +49,75 @@ export class ConfirmarComponent implements OnInit {
   error = signal<string | null>(null);
 
   selectedDeliveryMethod = signal<DeliveryMethodSummary | null>(null);
+  deliveryWindows = computed<DeliveryWindow[]>(() => this.configService.config()?.deliveryWindows ?? []);
+
+  /** Para wholesale: próximas 2 fechas; para stock: vacío. */
+  availableDeliveryDates = computed<{ date: string; label: string }[]>(() => {
+    if (this.mode !== 'wholesale') return [];
+    const wins = this.deliveryWindows();
+    if (wins.length === 0) return [];
+    const dates: { date: string; label: string }[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let cursor = new Date(today.getTime() - 24 * 3600 * 1000);
+    while (dates.length < 2 && (cursor.getTime() - today.getTime()) < 1000 * 3600 * 24 * 14) {
+      cursor = new Date(cursor.getTime() + 24 * 3600 * 1000);
+      const dow = ((cursor.getDay() + 6) % 7) + 1; // ISO 1..7, lunes..domingo
+      const matching = wins.filter(w => w.deliveryDayOfWeek === dow);
+      if (matching.length === 0) continue;
+      const cuts = matching
+        .map(w => this.windowCutoff(cursor, w))
+        .filter((d): d is Date => !!d)
+        .sort((a, b) => a.getTime() - b.getTime());
+      const cutoff = cuts[0];
+      if (!cutoff || cutoff.getTime() <= Date.now()) continue;
+      const iso = cursor.toISOString().slice(0, 10);
+      dates.push({
+        date: iso,
+        label: this.formatHumanDate(iso) + ' · ' + (matching[0].description ?? ''),
+      });
+    }
+    return dates;
+  });
+
+  /**
+   * Métodos de entrega disponibles para el flujo actual.
+   *  - wholesale: solo scope WHOLESALE o BOTH (oculta Express).
+   *  - stock:     solo scope STOCK o BOTH.
+   */
+  availableDeliveryMethods = computed<DeliveryMethodSummary[]>(() => {
+    const allowed: Record<FlowMode, string[]> = {
+      wholesale: ['WHOLESALE', 'BOTH'],
+      stock: ['STOCK', 'BOTH'],
+    };
+    return this.allDeliveryMethods().filter(m =>
+      !m.appliesToOrderType || allowed[this.mode].includes(m.appliesToOrderType)
+    );
+  });
 
   ngOnInit(): void {
+    const fromData = (this.route.snapshot.data?.['mode'] ?? '').toString().toLowerCase();
+    if (fromData === 'stock') {
+      this.mode = 'stock';
+    } else {
+      // Por defecto, inferir desde el carrito: si el stockCart tiene líneas -> stock; sino wholesale.
+      const hasStock = this.cart.stockLines().length > 0;
+      this.mode = hasStock ? 'stock' : 'wholesale';
+    }
+    this.configService.loadConfig();
+
     this.deliveryMethodService.listActive().subscribe({
       next: (methods) => {
-        this.deliveryMethods.set(methods);
-        const currentId = this.selectedDeliveryMethodId();
-        if (currentId) {
-          const found = methods.find(m => m.id === currentId);
-          if (found) {
-            this.selectedDeliveryMethod.set(found);
-            return;
-          }
-        }
-        const ret = methods.find(m => m.name.toLowerCase().includes('retiro'));
-        const def = ret ?? methods[0];
+        this.allDeliveryMethods.set(methods);
+        const avail = this.availableDeliveryMethods();
+        const def = avail.find(m => m.name.toLowerCase().includes('retiro'))
+          ?? avail.find(m => m.name.toLowerCase().includes('domicilio'))
+          ?? avail[0];
         if (def) {
           this.selectedDeliveryMethodId.set(def.id);
           this.selectedDeliveryMethod.set(def);
         }
+        this.syncEditingOrderDeliveryMethod();
       },
       error: () => this.error.set('No se pudieron cargar los métodos de entrega.'),
     });
@@ -65,26 +125,17 @@ export class ConfirmarComponent implements OnInit {
     this.orderService.listMine(0, 5).subscribe({
       next: (ordersPage) => {
         const editingId = this.cart.editingOrderId();
-        let targetOrder = editingId ? ordersPage.content.find(o => o.id === editingId) : null;
-        if (!targetOrder) {
-          targetOrder = ordersPage.content.find(o => o.deliveryAddress && o.deliveryAddress.trim());
+        let target = editingId ? ordersPage.content.find(o => o.id === editingId) : null;
+        if (!target) {
+          target = ordersPage.content.find(o => o.deliveryAddress && o.deliveryAddress.trim());
         }
-        
-        if (targetOrder) {
-          if (targetOrder.deliveryAddress) {
+        if (target) {
+          if (target.deliveryAddress) {
             this.hasSavedAddress.set(true);
-            this.deliveryAddress.set(targetOrder.deliveryAddress);
+            this.deliveryAddress.set(target.deliveryAddress);
           }
-          if (targetOrder.deliveryPhone) {
-            this.deliveryPhone.set(this.formatPhoneNumber(targetOrder.deliveryPhone));
-          }
-          if (editingId && targetOrder.deliveryMethodId) {
-            this.selectedDeliveryMethodId.set(targetOrder.deliveryMethodId);
-            const methods = this.deliveryMethods();
-            if (methods.length > 0) {
-              const found = methods.find(m => m.id === targetOrder.deliveryMethodId);
-              if (found) this.selectedDeliveryMethod.set(found);
-            }
+          if (target.deliveryPhone) {
+            this.deliveryPhone.set(this.formatPhoneNumber(target.deliveryPhone));
           }
         }
       }
@@ -106,13 +157,25 @@ export class ConfirmarComponent implements OnInit {
     }
   }
 
+  private syncEditingOrderDeliveryMethod(): void {
+    const editingId = this.cart.editingOrderId();
+    if (!editingId) return;
+    this.orderService.getMine(editingId).subscribe({
+      next: (o) => {
+        if (o?.deliveryMethodId) {
+          const match = this.availableDeliveryMethods().find(m => m.id === o.deliveryMethodId);
+          if (match) {
+            this.selectedDeliveryMethodId.set(match.id);
+            this.selectedDeliveryMethod.set(match);
+          }
+        }
+      }
+    });
+  }
+
   selectDeliveryMethod(method: DeliveryMethodSummary): void {
     this.selectedDeliveryMethodId.set(method.id);
     this.selectedDeliveryMethod.set(method);
-  }
-
-  computeTotal(): number {
-    return (this.subtotal() + (this.selectedDeliveryMethod()?.cost ?? 0));
   }
 
   get requiresAddress(): boolean {
@@ -121,17 +184,21 @@ export class ConfirmarComponent implements OnInit {
   }
 
   get canSubmit(): boolean {
-    if (!this.selectedDeliveryMethodId() || this.lines().length === 0) return false;
+    if (!this.selectedDeliveryMethodId()) return false;
+    if (this.activeLines().length === 0) return false;
     if (this.requiresAddress && (!this.deliveryAddress().trim() || !this.deliveryPhone().trim())) return false;
+    if (this.mode === 'wholesale' && !this.deliveryDate()) return false;
     return true;
   }
 
   get validationErrorMessage(): string | null {
+    if (this.activeLines().length === 0) {
+      return this.mode === 'stock'
+        ? 'Tu carrito de stock está vacío.'
+        : 'Tu carrito mayorista está vacío.';
+    }
     if (!this.selectedDeliveryMethodId()) {
       return 'Seleccioná un método de entrega para continuar.';
-    }
-    if (this.lines().length === 0) {
-      return 'El carrito está vacío.';
     }
     if (this.requiresAddress) {
       const missingAddress = !this.deliveryAddress().trim();
@@ -139,14 +206,29 @@ export class ConfirmarComponent implements OnInit {
       if (missingAddress && missingPhone) {
         return 'Completá la dirección y el teléfono para continuar.';
       }
-      if (missingAddress) {
-        return 'Completá la dirección para continuar.';
-      }
-      if (missingPhone) {
-        return 'Completá el teléfono para continuar.';
-      }
+      if (missingAddress) return 'Completá la dirección para continuar.';
+      if (missingPhone) return 'Completá el teléfono para continuar.';
+    }
+    if (this.mode === 'wholesale' && !this.deliveryDate()) {
+      return 'Elegí un día de entrega (próximo miércoles o viernes).';
     }
     return null;
+  }
+
+  activeLines() {
+    return this.mode === 'wholesale' ? this.cart.lines() : this.cart.stockLines();
+  }
+
+  activeSubtotal(): number {
+    return this.mode === 'wholesale' ? this.cart.subtotal() : this.cart.stockSubtotal();
+  }
+
+  activeCount(): number {
+    return this.mode === 'wholesale' ? this.cart.count() : this.cart.stockCount();
+  }
+
+  computeTotal(): number {
+    return this.activeSubtotal() + (this.selectedDeliveryMethod()?.cost ?? 0);
   }
 
   submit(): void {
@@ -154,66 +236,66 @@ export class ConfirmarComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    const req = {
+    const items = this.activeLines().map(l => ({
+      productId: l.product.id!,
+      quantity: l.packs,
+    }));
+
+    const base: any = {
       deliveryMethodId: this.selectedDeliveryMethodId(),
-      deliveryDate: this.deliveryDate() || undefined,
       deliveryAddress: this.requiresAddress ? this.deliveryAddress().trim() : undefined,
       deliveryPhone: this.requiresAddress ? this.deliveryPhone().trim() : undefined,
       notes: this.notes().trim() || undefined,
-      items: this.lines().map(l => ({ productId: l.product.id!, quantity: l.packs })),
+      items,
     };
+    if (this.mode === 'wholesale') {
+      base.deliveryDate = this.deliveryDate();
+    }
+    const req = base;
 
     const editingOrderId = this.cart.editingOrderId();
-    if (editingOrderId) {
-      this.orderService.updateMine(editingOrderId, req).subscribe({
-        next: (order) => {
-          this.cart.clear();
-          this.loading.set(false);
-          this.router.navigate(['/cliente/mis-pedidos', order.id]);
-        },
-        error: (err) => {
-          this.loading.set(false);
-          this.error.set(this.mapError(err, 'No se pudieron guardar los cambios del pedido.'));
-        }
-      });
-    } else {
-      this.orderService.create(req).subscribe({
-        next: (order) => {
-          this.cart.clear();
-          this.loading.set(false);
-          this.router.navigate(['/cliente/mis-pedidos', order.id]);
-        },
-        error: (err) => {
-          this.loading.set(false);
-          this.error.set(this.mapError(err, 'No se pudo confirmar el pedido.'));
-        }
-      });
-    }
-  }
+    const doCall = () =>
+      editingOrderId
+        ? this.orderService.updateMine(editingOrderId, req)
+        : (this.mode === 'wholesale'
+            ? this.orderService.createWholesale(req)
+            : this.orderService.createStock(req));
 
-  private mapError(err: any, fallback: string): string {
-    const body = err?.error;
-    if (body?.error === 'INSUFFICIENT_STOCK' && Array.isArray(body.items) && body.items.length > 0) {
-      const details = body.items.map((it: any) =>
-        `${it.productName}: pediste ${it.requested} unid., disponibles ${it.available} unid.`
-      ).join('\n');
-      return `No hay stock suficiente para:\n${details}`;
-    }
-    return body?.detail || fallback;
+    doCall().subscribe({
+      next: (order) => {
+        if (this.mode === 'wholesale') this.cart.clearWholesale();
+        else this.cart.clearStock();
+        this.cart.setEditingOrderId(null);
+        this.loading.set(false);
+        this.router.navigate(['/cliente/mis-pedidos', order.id]);
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.error.set(this.mapError(err,
+          this.mode === 'wholesale'
+            ? 'No se pudo confirmar el pedido mayorista.'
+            : 'No se pudo confirmar el pedido de stock.'));
+      }
+    });
   }
 
   cancel(): void {
-    this.router.navigate(['/cliente/carrito']);
+    this.router.navigate([this.mode === 'wholesale' ? '/cliente/catalogo' : '/cliente/stock-disponible']);
   }
 
   cancelModification(): void {
     this.cart.setEditingOrderId(null);
+    this.cart.setStockEditingOrderId(null);
     this.error.set(null);
   }
 
   shortEditingOrderId(): string {
     const id = this.cart.editingOrderId();
     return id ? id.slice(0, 8).toUpperCase() : '';
+  }
+
+  isWholesale(): boolean {
+    return this.mode === 'wholesale';
   }
 
   formatPrice(value: number): string {
@@ -228,49 +310,72 @@ export class ConfirmarComponent implements OnInit {
     return line.product.id;
   }
 
+  trackByDate(_i: number, d: { date: string }): string {
+    return d.date;
+  }
 
   formatPhoneNumber(value: string): string {
     if (!value) return '';
     let cleaned = value.replace(/[^\d+]/g, '');
-    
     if (!cleaned.startsWith('+')) {
       if (cleaned.startsWith('54')) {
         cleaned = '+' + cleaned;
       } else {
-        if (cleaned.length === 10) {
-          cleaned = '+549' + cleaned;
-        } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
-          cleaned = '+549' + cleaned.slice(1);
-        }
+        if (cleaned.length === 10) cleaned = '+549' + cleaned;
+        else if (cleaned.length === 11 && cleaned.startsWith('0')) cleaned = '+549' + cleaned.slice(1);
       }
     }
-    
     const digits = cleaned.replace(/\D/g, '');
-    
     if (cleaned.startsWith('+') && digits.startsWith('549')) {
       const rest = digits.slice(3);
       const areaLen = rest.startsWith('1') ? 2 : 3;
       const area = rest.slice(0, areaLen);
       const remaining = rest.slice(areaLen);
-      
       let formatted = `+54 9 ${area}`;
       if (remaining.length > 0) {
         const first = remaining.slice(0, 3);
         const second = remaining.slice(3, 7);
         formatted += ` ${first}`;
-        if (second.length > 0) {
-          formatted += `-${second}`;
-        }
+        if (second.length > 0) formatted += `-${second}`;
       }
       return formatted;
     }
-    
     return value;
   }
 
   onPhoneBlur(): void {
     const raw = this.deliveryPhone();
-    const formatted = this.formatPhoneNumber(raw);
-    this.deliveryPhone.set(formatted);
+    this.deliveryPhone.set(this.formatPhoneNumber(raw));
+  }
+
+  private formatHumanDate(iso: string): string {
+    const [y, m, d] = iso.split('-').map(n => parseInt(n, 10));
+    const date = new Date(y, (m ?? 1) - 1, d ?? 1);
+    const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    return `${days[date.getDay()]} ${String(d ?? 1).padStart(2, '0')}/${String(m ?? 1).padStart(2, '0')}`;
+  }
+
+  private windowCutoff(deliveryDate: Date, w: DeliveryWindow): Date | null {
+    if (w.cutoffTime == null || w.cutoffDayOfWeek == null || w.deliveryDayOfWeek == null) return null;
+    const [hh, mm, ss] = (w.cutoffTime || '00:00:00').split(':').map(n => parseInt(n, 10));
+    const deliveryIso = ((deliveryDate.getDay() + 6) % 7) + 1;
+    let diff = ((w.deliveryDayOfWeek - deliveryIso) % 7 + 7) % 7;
+    const cutoffDate = new Date(deliveryDate.getTime() - diff * 24 * 3600 * 1000);
+    cutoffDate.setHours(hh || 0, mm || 0, ss || 0, 0);
+    return cutoffDate;
+  }
+
+  private mapError(err: any, fallback: string): string {
+    const body = err?.error;
+    if (body?.error === 'INSUFFICIENT_STOCK' && Array.isArray(body.items) && body.items.length > 0) {
+      const details = body.items.map((it: any) =>
+        `${it.productName}: pediste ${it.requested} unid., disponibles ${it.available} unid.`
+      ).join('\n');
+      return `No hay stock suficiente para:\n${details}`;
+    }
+    if (body?.error === 'DELIVERY_WINDOW_EXPIRED') {
+      return `La fecha de entrega ${body.deliveryDate} ya pasó su ventana de corte. Elegí otra.`;
+    }
+    return body?.detail || fallback;
   }
 }

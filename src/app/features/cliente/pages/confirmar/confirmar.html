@@ -1,11 +1,17 @@
 <section class="confirmar-page">
   <header class="confirmar-header">
-    <h1 class="confirmar-title">Confirmar pedido</h1>
-    <p class="confirmar-subtitle">Elegí cómo querés recibirlo y confirmá.</p>
+    <h1 class="confirmar-title">{{ isWholesale() ? 'Confirmar pedido mayorista' : 'Confirmar pedido de stock' }}</h1>
+    <p class="confirmar-subtitle">
+      {{
+        isWholesale()
+          ? 'Pedido a fábrica. Elegí cuándo lo querés recibir y confirmá.'
+          : 'Compra inmediata del excedente en depósito. Confirmá y retirá/enviamos.'
+      }}
+    </p>
   </header>
 
   <!-- Banner de modificación de pedido -->
-  <div *ngIf="cartStore.editingOrderId()" class="editing-banner">
+  <div *ngIf="cartStore.editingOrderId() as _" class="editing-banner">
     <span class="editing-banner-title">
       <span>✏️</span>
       <span>Modificando pedido #{{ shortEditingOrderId() }}</span>
@@ -17,27 +23,64 @@
 
   <div class="confirmar-grid">
     <div class="confirmar-main">
+      <!-- Banner wholesale: próxima fecha de corte -->
+      <div *ngIf="isWholesale()" class="cutoff-banner">
+        <span class="cutoff-icon" aria-hidden="true">🏭</span>
+        <div>
+          <strong>Pedido a fábrica.</strong>
+          <span>Elegí un día de la próxima semana (miércoles o viernes). El stock no se descuenta.</span>
+        </div>
+      </div>
+
       <section class="card-section">
         <h2 class="section-title">1. Método de entrega</h2>
         <div class="methods-grid">
-          <button *ngFor="let m of deliveryMethods(); trackBy: trackById"
+          <button *ngFor="let m of availableDeliveryMethods(); trackBy: trackById"
                   type="button"
                   class="method-card"
                   [class.method-card--selected]="selectedDeliveryMethodId() === m.id"
                   (click)="selectDeliveryMethod(m)">
             <div class="method-info">
               <span class="method-name">{{ m.name }}</span>
-              <span *ngIf="m.description" class="method-desc">{{ m.description }}</span>
+              <span *ngIf="m.appliesToOrderType as scope" class="method-scope">
+                <ng-container [ngSwitch]="scope">
+                  <ng-container *ngSwitchCase="'WHOLESALE'">Sólo pedidos a fábrica</ng-container>
+                  <ng-container *ngSwitchCase="'STOCK'">Sólo stock disponible</ng-container>
+                  <ng-container *ngSwitchDefault>Aplica a ambos</ng-container>
+                </ng-container>
+              </span>
             </div>
             <span *ngIf="m.cost > 0" class="method-price">+${{ formatPrice(m.cost) }}</span>
             <span *ngIf="m.cost === 0" class="method-price method-price--free">Gratis</span>
           </button>
+          <p *ngIf="availableDeliveryMethods().length === 0" class="muted">
+            No hay métodos de entrega habilitados para este flujo.
+          </p>
         </div>
+      </section>
+
+      <section *ngIf="isWholesale()" class="card-section">
+        <h2 class="section-title">2. Día de entrega</h2>
+        <div class="methods-grid" *ngIf="availableDeliveryDates().length > 0; else noDates">
+          <button *ngFor="let d of availableDeliveryDates(); trackBy: trackByDate"
+                  type="button"
+                  class="method-card"
+                  [class.method-card--selected]="deliveryDate() === d.date"
+                  (click)="deliveryDate.set(d.date)">
+            <span class="method-name">{{ d.label }}</span>
+          </button>
+        </div>
+        <ng-template #noDates>
+          <p class="muted">
+            No hay fechas de entrega disponibles ahora.
+            Si acabás de confirmar un pedido, probá pasados unos minutos; las ventanas se actualizan por día.
+          </p>
+        </ng-template>
       </section>
 
       <section *ngIf="requiresAddress" class="card-section">
         <h2 class="section-title">
-          2. Datos de entrega
+          {{ isWholesale() ? '3' : '2' }}. Datos de entrega
           <span *ngIf="hasSavedAddress()" class="prefilled-badge">Dirección precargada</span>
         </h2>
         <div class="form-grid">
@@ -57,16 +100,16 @@
                    placeholder="Ej: +54 9 370 451-6054">
           </div>
         </div>
-        <div class="delivery-notice-info">
+        <div class="delivery-notice-info" *ngIf="isWholesale()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-svg-icon" style="color: var(--neutral-800);">
             <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
           </svg>
-          Tu pedido se entrega dentro de las próximas 24-48 hs hábiles.
+          Tu pedido se entrega el día que elegiste arriba (miércoles o viernes según la fecha).
         </div>
       </section>
 
       <section class="card-section">
-        <h2 class="section-title">{{ requiresAddress ? '3' : '2' }}. Notas (opcional)</h2>
+        <h2 class="section-title">{{ isWholesale() ? '4' : (requiresAddress ? '3' : '2') }}. Notas (opcional)</h2>
         <div class="form-group">
           <textarea class="form-input" rows="3"
                     placeholder="Algo que el distribuidor deba saber sobre tu pedido…"
@@ -79,7 +122,7 @@
     <aside class="confirmar-summary">
       <h2 class="summary-title">Tu pedido</h2>
       <ul class="summary-list">
-        <li *ngFor="let line of lines(); trackBy: trackByProduct" class="summary-item">
+        <li *ngFor="let line of activeLines(); trackBy: trackByProduct" class="summary-item">
           <div class="summary-item-text">
             <span class="summary-item-name">{{ line.product.name }}</span>
             <span class="summary-item-qty">×{{ line.packs }} {{ line.product.unitsPerPack > 1 ? 'packs' : 'u.' }}</span>
@@ -88,15 +131,13 @@
         </li>
       </ul>
       <div class="summary-totals">
-        <div class="summary-row"><span>Subtotal</span><span>${{ formatPrice(subtotal()) }}</span></div>
+        <div class="summary-row"><span>Subtotal</span><span>${{ formatPrice(activeSubtotal()) }}</span></div>
         <div *ngIf="selectedDeliveryMethod() as dm" class="summary-row">
           <span>Envío</span>
           <span *ngIf="dm.cost === 0" class="summary-value--free">Gratis</span>
           <span *ngIf="dm.cost > 0">${{ formatPrice(dm.cost) }}</span>
         </div>
-        <div class="summary-row summary-row--total">
-          <span>Total</span><span>${{ formatPrice(computeTotal()) }}</span>
-        </div>
+        <div class="summary-row summary-row--total"><span>Total</span><span>${{ formatPrice(computeTotal()) }}</span></div>
       </div>
       <div *ngIf="error()" class="form-error" style="white-space: pre-line;">{{ error() }}</div>
       <div class="summary-actions">
@@ -108,7 +149,7 @@
           {{ validationErrorMessage }}
         </div>
         <app-button variant="ghost" size="md" (onClick)="cancel()" [block]="true">
-          ← Volver al carrito
+          ← Volver
         </app-button>
       </div>
     </aside>
