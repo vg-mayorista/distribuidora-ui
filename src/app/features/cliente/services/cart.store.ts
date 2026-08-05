@@ -73,6 +73,12 @@ export class CartStore {
     this.montoFaltante() === 0 && this.unidadesFaltantes() === 0
   );
 
+  readonly progressPercentage = computed(() => {
+    const amountRatio = Math.min(1, this.subtotal() / (this.minOrderAmount() || 1));
+    const unitsRatio = Math.min(1, this.count() / (this.minOrderUnits() || 1));
+    return Math.floor(((amountRatio + unitsRatio) / 2) * 100);
+  });
+
   add(product: Product, packs: number, maxAllowed: number): void {
     const unitsPerPack = product.unitsPerPack > 0 ? product.unitsPerPack : 1;
     const existing = this._lines().find(l => l.product.id === product.id);

@@ -49,24 +49,44 @@
   </header>
 
   <!-- Minimum Order Status Banner -->
-  <div class="min-order-banner" [class.min-order-banner--success]="cartStore.meetsMinimumRequirements()" *ngIf="cartStore.count() > 0">
-    <div class="min-order-info">
-      <span class="min-order-icon">{{ cartStore.meetsMinimumRequirements() ? '🎉' : '💡' }}</span>
-      <div class="min-order-text">
-        <strong *ngIf="cartStore.meetsMinimumRequirements()">¡Alcanzaste el mínimo para tu compra!</strong>
-        <strong *ngIf="!cartStore.meetsMinimumRequirements()">Mínimo de compra requerido:</strong>
-        <span *ngIf="!cartStore.meetsMinimumRequirements()">
-          {{ cartStore.minOrderUnits() }} unidades y ${{ formatPrice(cartStore.minOrderAmount()) }} total en el carrito.
-        </span>
+  <div class="min-order-banner"
+       [class.min-order-banner--success]="cartStore.meetsMinimumRequirements()"
+       *ngIf="cartStore.count() > 0"
+       role="status"
+       aria-live="polite">
+    <div class="min-order-header">
+      <div class="min-order-info">
+        <span class="min-order-icon" aria-hidden="true">{{ cartStore.meetsMinimumRequirements() ? '🎉' : '💡' }}</span>
+        <div class="min-order-text">
+          <strong *ngIf="cartStore.meetsMinimumRequirements()">¡Alcanzaste el mínimo de compra requerido!</strong>
+          <strong *ngIf="!cartStore.meetsMinimumRequirements()">Progreso para mínimo de compra:</strong>
+          <span class="min-order-subtext" *ngIf="!cartStore.meetsMinimumRequirements()">
+            Requerido: {{ cartStore.minOrderUnits() }} unidades y ${{ formatPrice(cartStore.minOrderAmount()) }} total.
+          </span>
+          <span class="min-order-subtext" *ngIf="cartStore.meetsMinimumRequirements()">
+            ¡Tu pedido cumple con todos los requisitos para ser enviado!
+          </span>
+        </div>
+      </div>
+      <div class="min-order-progress-group" *ngIf="!cartStore.meetsMinimumRequirements()">
+        <div class="min-order-badge" *ngIf="cartStore.montoFaltante() > 0">
+          Faltan <strong>${{ formatPrice(cartStore.montoFaltante()) }}</strong>
+        </div>
+        <div class="min-order-badge" *ngIf="cartStore.unidadesFaltantes() > 0">
+          Faltan <strong>{{ cartStore.unidadesFaltantes() }}</strong> u.
+        </div>
+      </div>
+      <div class="min-order-badge min-order-badge--success" *ngIf="cartStore.meetsMinimumRequirements()">
+        ✓ Mínimo cumplido
       </div>
     </div>
-    <div class="min-order-progress-group" *ngIf="!cartStore.meetsMinimumRequirements()">
-      <div class="min-order-badge" *ngIf="cartStore.montoFaltante() > 0">
-        Faltan <strong>${{ formatPrice(cartStore.montoFaltante()) }}</strong>
+
+    <!-- Visual Progress Bar -->
+    <div class="min-order-progress-wrapper" *ngIf="!cartStore.meetsMinimumRequirements()">
+      <div class="min-order-progress-track">
+        <div class="min-order-progress-fill" [style.transform]="'scaleX(' + (cartStore.progressPercentage() / 100) + ')'"></div>
       </div>
-      <div class="min-order-badge" *ngIf="cartStore.unidadesFaltantes() > 0">
-        Faltan <strong>{{ cartStore.unidadesFaltantes() }}</strong> unit.
-      </div>
+      <span class="min-order-progress-pct">{{ cartStore.progressPercentage() }}%</span>
     </div>
   </div>
 
