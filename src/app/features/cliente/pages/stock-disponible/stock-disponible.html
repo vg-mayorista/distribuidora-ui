@@ -3,7 +3,7 @@
     <div>
       <h1 class="page-header-title">Stock disponible</h1>
       <p class="page-header-subtitle" *ngIf="filteredProducts().length > 0">
-        {{ filteredProducts().length }} productos en depósito. Entrega inmediata.
+        {{ filteredProducts().length }} productos en sucursal. Retirá hoy o pedilo con envío a domicilio.
       </p>
     </div>
     <div class="page-header-actions">
@@ -30,10 +30,10 @@
   <div class="stock-info-banner" role="status">
     <div class="stock-info-icon" aria-hidden="true">📦</div>
     <div class="stock-info-text">
-      <strong>Stock en depósito.</strong>
-      <span>Lo que ves acá es excedente físico ya disponible. Compra inmediata con retiro en local o envío express.</span>
+      <strong>Stock en sucursal.</strong>
+      <span>Comprá y retirá hoy mismo, o coordiná el envío a domicilio.</span>
     </div>
-    <a routerLink="/cliente/catalogo" class="stock-info-link">¿Querés un pedido mayorista? →</a>
+    <a routerLink="/cliente/catalogo" class="stock-info-link">¿Querés hacer un pedido mayorista? →</a>
   </div>
 
   <div class="category-filters-wrapper" *ngIf="categories().length > 0 && !loading()">

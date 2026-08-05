@@ -3,7 +3,7 @@
     <div>
       <h1 class="page-header-title">Pedido mayorista</h1>
       <p class="page-header-subtitle">
-        Armá tu pedido a fábrica. Elegí los productos y la fecha de entrega (miércoles o viernes).
+        Sumá lo que necesitás. Al confirmar elegís cuándo recibirlo.
         <span *ngIf="filteredProducts().length > 0"> · {{ filteredProducts().length }} productos disponibles</span>
       </p>
     </div>
@@ -50,12 +50,12 @@
 
   <!-- Banner informativo del flujo mayorista -->
   <div class="wholesale-info-banner" role="status">
-    <div class="wholesale-info-icon" aria-hidden="true">🏭</div>
+    <div class="wholesale-info-icon" aria-hidden="true">🛍️</div>
     <div class="wholesale-info-text">
-      <strong>Estás armando un pedido a fábrica.</strong>
-      <span>El catálogo no descuenta stock. La fecha de entrega se elige en el siguiente paso según las ventanas semanales (corte martes/jueves 18 h).</span>
+      <strong>Estás haciendo un pedido mayorista.</strong>
+      <span>Sumá lo que necesitás. Al confirmar elegís cuándo recibirlo (miércoles o viernes).</span>
     </div>
-    <a routerLink="/cliente/stock-disponible" class="wholesale-info-link" *ngIf="false">Ver stock disponible →</a>
+    <a routerLink="/cliente/stock-disponible" class="wholesale-info-link">¿Querés ver el stock disponible? →</a>
   </div>
 
   <!-- Minimum Order Status Banner -->
