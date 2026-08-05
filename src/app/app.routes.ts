@@ -16,6 +16,7 @@ import { distributorGuard } from './core/guards/distributor.guard';
 import { homeRedirectGuard } from './core/guards/home-redirect.guard';
 import { CatalogoComponent } from './features/cliente/pages/catalogo/catalogo';
 import { CarritoComponent } from './features/cliente/pages/carrito/carrito';
+import { StockDisponibleComponent } from './features/cliente/pages/stock-disponible/stock-disponible';
 import { ConfirmarComponent } from './features/cliente/pages/confirmar/confirmar';
 import { MisPedidosComponent } from './features/cliente/pages/mis-pedidos/mis-pedidos';
 import { PedidoDetalleClienteComponent } from './features/cliente/pages/pedido-detalle/pedido-detalle';
@@ -44,8 +45,10 @@ export const routes: Routes = [
         children: [
           { path: '', redirectTo: 'catalogo', pathMatch: 'full' },
           { path: 'catalogo', component: CatalogoComponent },
+          { path: 'stock-disponible', component: StockDisponibleComponent },
           { path: 'carrito', component: CarritoComponent },
           { path: 'confirmar', component: ConfirmarComponent },
+          { path: 'confirmar-stock', component: ConfirmarComponent, data: { mode: 'stock' } },
           { path: 'mis-pedidos', component: MisPedidosComponent },
           { path: 'mis-pedidos/:id', component: PedidoDetalleClienteComponent },
         ],

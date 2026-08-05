@@ -24,7 +24,10 @@
         <a class="nav-link" routerLink="/distribuidor/reportes" routerLinkActive="nav-link--active">Reportes</a>
       </li>
       <li *ngIf="user.role === 'ROLE_CUSTOMER'">
-        <a class="nav-link" routerLink="/cliente/catalogo" routerLinkActive="nav-link--active">Catálogo</a>
+        <a class="nav-link" routerLink="/cliente/catalogo" routerLinkActive="nav-link--active">Pedido mayorista</a>
+      </li>
+      <li *ngIf="user.role === 'ROLE_CUSTOMER'">
+        <a class="nav-link" routerLink="/cliente/stock-disponible" routerLinkActive="nav-link--active">Stock disponible</a>
       </li>
       <li *ngIf="user.role === 'ROLE_CUSTOMER'">
         <a class="nav-link" routerLink="/cliente/mis-pedidos" routerLinkActive="nav-link--active">Mis pedidos</a>
