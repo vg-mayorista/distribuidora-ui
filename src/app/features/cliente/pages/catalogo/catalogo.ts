@@ -203,6 +203,11 @@ export class CatalogoComponent implements OnInit {
     return this.minPacks();
   }
 
+  /** Subtotal mínimo del pedido (default 30.000). */
+  minOrderAmount(): number {
+    return this.configService.config()?.minOrderAmount ?? 30000;
+  }
+
   async addToCart(product: Product): Promise<void> {
     if (!product.id) return;
     const packs = this.getPacks(product);

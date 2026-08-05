@@ -35,6 +35,11 @@ export class CarritoComponent implements OnInit {
     return this.configService.config()?.minPacksPerLine ?? 5;
   }
 
+  /** Subtotal mínimo del pedido (default 30.000). */
+  minOrderAmount(): number {
+    return this.configService.config()?.minOrderAmount ?? 30000;
+  }
+
   cancelModification(): void {
     this.cart.setEditingOrderId(null);
   }

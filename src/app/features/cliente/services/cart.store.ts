@@ -25,24 +25,26 @@ export class CartStore {
 
   private readonly _wholesaleLines = signal<CartLine[]>(this.loadFromStorage(STORAGE_KEY));
   private readonly _wholesaleEditingId = signal<string | null>(this.loadEditingId(EDITING_KEY));
-  private readonly _stockLines = signal<CartLine[]>(this.loadFromStorage(STOCK_STORAGE_KEY));
-  private readonly _stockEditingId = signal<string | null>(this.loadEditingId(STOCK_EDITING_KEY));
+  private readonly _stockLines = signal<CartLine[]>(this.loadFromStorage(STORAGE_KEY));
+  private readonly _stockEditingOrderId = signal<string | null>(this.loadEditingId(STOCK_EDITING_KEY));
 
   readonly lines = this._wholesaleLines.asReadonly();
   readonly editingOrderId = this._wholesaleEditingId.asReadonly();
   readonly stockLines = this._stockLines.asReadonly();
-  readonly stockEditingOrderId = this._stockEditingId.asReadonly();
+  readonly stockEditingOrderId = this._stockEditingOrderId.asReadonly();
 
-  /**
-   * Mínimo global de packs por línea configurable desde el backend
-   * (default 5). Cada línea del carrito (mayorista o stock) tiene que
-   * tener al menos este valor.
-   */
+  /** Mínimo global de packs por línea (default 5). */
   readonly minPacksPerLine = computed<number>(() =>
     this.configService.config()?.minPacksPerLine ?? 5
   );
 
+  /** Subtotal mínimo del pedido (default 30000). */
+  readonly minOrderAmount = computed<number>(() =>
+    this.configService.config()?.minOrderAmount ?? 30000
+  );
+
   readonly stockMinPacksPerLine = this.minPacksPerLine;
+  readonly stockMinOrderAmount = this.minOrderAmount;
 
   // ── Wholesale cart (mayorista, sin cap por stock) ────────────────────
 
@@ -59,7 +61,7 @@ export class CartStore {
   // ── Stock cart (excedente, capeado por stock) ────────────────────────
 
   setStockEditingOrderId(orderId: string | null): void {
-    this._stockEditingId.set(orderId);
+    this._stockEditingOrderId.set(orderId);
     this.persistEditingId(orderId, STOCK_EDITING_KEY);
   }
 
@@ -100,15 +102,23 @@ export class CartStore {
   readonly isEmpty = computed(() => this._wholesaleLines().length === 0);
   readonly stockIsEmpty = computed(() => this._stockLines().length === 0);
 
-  readonly montoFaltante = computed(() => 0); // Regla legacy removida; se conserva el computed por compat.
+  /** Cuánto le falta al subtotal mayorista para llegar al mínimo. */
+  readonly montoFaltante = computed(() => {
+    if (this._wholesaleLines().length === 0) return 0;
+    return Math.max(0, this.minOrderAmount() - this.subtotal());
+  });
 
-  readonly stockMontoFaltante = this.montoFaltante;
+  readonly stockMontoFaltante = computed(() => {
+    if (this._stockLines().length === 0) return 0;
+    return Math.max(0, this.minOrderAmount() - this.stockSubtotal());
+  });
 
-  readonly unidadesFaltantes = computed(() => 0); // Regla legacy removida.
+  /** Diferencia de packs totales vs el mínimo de packs * número de líneas. */
+  readonly unidadesFaltantes = computed(() => 0);
 
-  readonly stockUnidadesFaltantes = this.unidadesFaltantes;
+  readonly stockUnidadesFaltantes = computed(() => 0);
 
-  /** True cuando TODAS las líneas del carrito mayorista cumplen el mínimo. */
+  /** Mayorista: cada línea cumple el mínimo de packs. */
   readonly meetsPerLineMinimum = computed(() => {
     const lines = this._wholesaleLines();
     if (lines.length === 0) return false;
@@ -116,7 +126,6 @@ export class CartStore {
     return lines.every(l => l.packs >= min);
   });
 
-  /** True cuando TODAS las líneas del carrito de stock cumplen el mínimo. */
   readonly stockMeetsPerLineMinimum = computed(() => {
     const lines = this._stockLines();
     if (lines.length === 0) return false;
@@ -135,35 +144,37 @@ export class CartStore {
     return this._stockLines().filter(l => l.packs < min);
   });
 
-  readonly meetsMinimumRequirements = this.meetsPerLineMinimum;
-  readonly stockMeetsMinimumRequirements = this.stockMeetsPerLineMinimum;
+  /** Compuesto: ambas reglas (per-line y subtotal). */
+  readonly meetsMinimumRequirements = computed(() =>
+    this.meetsPerLineMinimum() && this.montoFaltante() === 0
+  );
+
+  readonly stockMeetsMinimumRequirements = computed(() =>
+    this.stockMeetsPerLineMinimum() && this.stockMontoFaltante() === 0
+  );
 
   readonly progressPercentage = computed(() => {
     const lines = this._wholesaleLines();
     if (lines.length === 0) return 0;
-    const min = this.minPacksPerLine();
-    let total = 0;
-    let max = 0;
-    for (const l of lines) {
-      total += l.packs;
-      max += l.packs >= min ? l.packs : min * 2;
-    }
-    const target = lines.length * min * 2;
-    return Math.min(100, Math.floor((total / (target || 1)) * 100));
+    const minPacks = this.minPacksPerLine();
+    const minAmount = this.minOrderAmount();
+    const packsRatio = Math.min(1,
+      lines.reduce((s, l) => s + l.packs, 0) / (lines.length * Math.max(minPacks * 2, 1))
+    );
+    const amountRatio = Math.min(1, this.subtotal() / (minAmount || 1));
+    return Math.floor(((packsRatio + amountRatio) / 2) * 100);
   });
 
   readonly stockProgressPercentage = computed(() => {
     const lines = this._stockLines();
     if (lines.length === 0) return 0;
-    const min = this.stockMinPacksPerLine();
-    let total = 0;
-    let max = 0;
-    for (const l of lines) {
-      total += l.packs;
-      max += l.packs >= min ? l.packs : min * 2;
-    }
-    const target = lines.length * min * 2;
-    return Math.min(100, Math.floor((total / (target || 1)) * 100));
+    const minPacks = this.stockMinPacksPerLine();
+    const minAmount = this.stockMinOrderAmount();
+    const packsRatio = Math.min(1,
+      lines.reduce((s, l) => s + l.packs, 0) / (lines.length * Math.max(minPacks * 2, 1))
+    );
+    const amountRatio = Math.min(1, this.stockSubtotal() / (minAmount || 1));
+    return Math.floor(((packsRatio + amountRatio) / 2) * 100);
   });
 
   // ── Mutaciones mayorista ───────────────────────────────────────────────

@@ -10,19 +10,24 @@ export class BusinessConfigService {
   private http = inject(HttpClient);
   private apiUrl = inject(API_BASE) + '/api/config';
 
+  /**
+   * Mínimo de packs por línea. Si el backend no responde, caemos a 5.
+   */
+  readonly defaultMinPacksPerLine = 5;
+
+  /**
+   * Subtotal mínimo del pedido (en pesos). Si el backend no responde,
+   * caemos a 30.000.
+   */
+  readonly defaultMinOrderAmount = 30000;
+
   readonly config = signal<BusinessConfig>({
-    minPacksPerLine: 5,
+    minPacksPerLine: this.defaultMinPacksPerLine,
+    minOrderAmount: this.defaultMinOrderAmount,
     deliveryWindows: [],
   });
   readonly loading = signal<boolean>(false);
   readonly loaded = signal<boolean>(false);
-
-  /**
-   * Mínimo de packs por línea que se exige en cada pedido. Se usa para los
-   * defaults y como fallback si el backend no responde. Configurable desde
-   * el admin via /api/config.
-   */
-  readonly defaultMinPacksPerLine = 5;
 
   loadConfig(): void {
     this.loading.set(true);
@@ -31,6 +36,7 @@ export class BusinessConfigService {
         if (data) {
           this.config.set({
             minPacksPerLine: data.minPacksPerLine ?? this.defaultMinPacksPerLine,
+            minOrderAmount: data.minOrderAmount ?? this.defaultMinOrderAmount,
             deliveryWindows: data.deliveryWindows ?? [],
           });
         }

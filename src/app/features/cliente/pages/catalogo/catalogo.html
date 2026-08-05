@@ -60,38 +60,51 @@
 
   <!-- Minimum Order Status Banner -->
   <div class="min-order-banner"
-       [class.min-order-banner--success]="cartStore.meetsPerLineMinimum()"
+       [class.min-order-banner--success]="(cartStore.meetsPerLineMinimum() && cartStore.montoFaltante() === 0)"
        *ngIf="cartStore.count() > 0"
        role="status"
        aria-live="polite">
     <div class="min-order-header">
       <div class="min-order-info">
-        <span class="min-order-icon" aria-hidden="true">{{ cartStore.meetsPerLineMinimum() ? '🎉' : '💡' }}</span>
+        <span class="min-order-icon" aria-hidden="true">
+          {{ (cartStore.meetsPerLineMinimum() && cartStore.montoFaltante() === 0) ? '🎉' : '💡' }}
+        </span>
         <div class="min-order-text">
-          <strong *ngIf="cartStore.meetsPerLineMinimum()">¡Todas las líneas cumplen el mínimo!</strong>
-          <strong *ngIf="!cartStore.meetsPerLineMinimum()">Progreso por línea</strong>
-          <span class="min-order-subtext" *ngIf="!cartStore.meetsPerLineMinimum()">
+          <strong *ngIf="cartStore.meetsPerLineMinimum() && cartStore.montoFaltante() === 0">
+            ¡Reglas de mínimos cumplidas!
+          </strong>
+          <strong *ngIf="!(cartStore.meetsPerLineMinimum() && cartStore.montoFaltante() === 0)">
+            Progreso del pedido
+          </strong>
+          <span class="min-order-subtext" *ngIf="cartStore.montoFaltante() > 0">
+            Faltan <strong>${{ formatPrice(cartStore.montoFaltante()) }}</strong> para llegar a ${{ formatPrice(minOrderAmount()) }}.
+          </span>
+          <span class="min-order-subtext" *ngIf="cartStore.offendingLines().length > 0">
             Cada producto necesita al menos {{ minPacksPerLine() }} packs.
           </span>
-          <span class="min-order-subtext" *ngIf="cartStore.meetsPerLineMinimum()">
-            Tu pedido cumple con todos los requisitos para ser enviado.
+          <span class="min-order-subtext" *ngIf="cartStore.meetsPerLineMinimum() && cartStore.montoFaltante() === 0">
+            Tu pedido cumple con ambos mínimos y está listo para confirmar.
           </span>
         </div>
       </div>
-      <div class="min-order-progress-group" *ngIf="!cartStore.meetsPerLineMinimum() && (cartStore.offendingLines().length > 0)">
+      <div class="min-order-progress-group"
+           *ngIf="cartStore.offendingLines().length > 0">
         <div class="min-order-badge" *ngFor="let bad of cartStore.offendingLines()">
           {{ bad.product.name }}: {{ bad.packs }} / {{ minPacksPerLine() }} packs.
         </div>
       </div>
-      <div class="min-order-badge min-order-badge--success" *ngIf="cartStore.meetsPerLineMinimum()">
-        ✓ Mínimo cumplido
+      <div class="min-order-badge min-order-badge--success"
+           *ngIf="cartStore.meetsPerLineMinimum() && cartStore.montoFaltante() === 0">
+        ✓ Reglas cumplidas
       </div>
     </div>
 
     <!-- Visual Progress Bar -->
-    <div class="min-order-progress-wrapper" *ngIf="!cartStore.meetsPerLineMinimum()">
+    <div class="min-order-progress-wrapper"
+         *ngIf="!(cartStore.meetsPerLineMinimum() && cartStore.montoFaltante() === 0)">
       <div class="min-order-progress-track">
-        <div class="min-order-progress-fill" [style.transform]="'scaleX(' + (cartStore.progressPercentage() / 100) + ')'"></div>
+        <div class="min-order-progress-fill"
+             [style.transform]="'scaleX(' + (cartStore.progressPercentage() / 100) + ')'"></div>
       </div>
       <span class="min-order-progress-pct">{{ cartStore.progressPercentage() }}%</span>
     </div>

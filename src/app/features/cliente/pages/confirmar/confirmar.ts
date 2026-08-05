@@ -187,9 +187,17 @@ export class ConfirmarComponent implements OnInit {
     return this.configService.config()?.minPacksPerLine ?? 5;
   }
 
+  minOrderAmount(): number {
+    return this.configService.config()?.minOrderAmount ?? 30000;
+  }
+
   hasLinesBelowMin(): boolean {
     const min = this.minPacksPerLine();
     return this.activeLines().some(l => l.packs < min);
+  }
+
+  amountBelowMin(): boolean {
+    return this.activeSubtotal() < this.minOrderAmount();
   }
 
   get canSubmit(): boolean {
@@ -198,6 +206,7 @@ export class ConfirmarComponent implements OnInit {
     if (this.requiresAddress && (!this.deliveryAddress().trim() || !this.deliveryPhone().trim())) return false;
     if (this.mode === 'wholesale' && !this.deliveryDate()) return false;
     if (this.hasLinesBelowMin()) return false;
+    if (this.amountBelowMin()) return false;
     return true;
   }
 
@@ -206,6 +215,10 @@ export class ConfirmarComponent implements OnInit {
       return this.mode === 'stock'
         ? 'Tu carrito de stock está vacío.'
         : 'Tu carrito mayorista está vacío.';
+    }
+    if (this.amountBelowMin()) {
+      const falta = this.formatPrice(this.minOrderAmount() - this.activeSubtotal());
+      return `El subtotal debe ser al menos $${this.formatPrice(this.minOrderAmount())}. Te faltan ${falta}.`;
     }
     if (this.hasLinesBelowMin()) {
       return `Cada línea necesita al menos ${this.minPacksPerLine()} packs. Ajustá las cantidades antes de confirmar.`;
@@ -391,6 +404,9 @@ export class ConfirmarComponent implements OnInit {
         `${it.productName ?? it.productId}: ${it.requestedPacks}/${it.minRequiredPacks} packs`
       ).join('\n');
       return `Cada línea debe tener al menos ${body.offending[0]?.minRequiredPacks ?? 5} packs:\n${details}`;
+    }
+    if (body?.error === 'MIN_ORDER_AMOUNT' && body.minAmount) {
+      return `El subtotal del pedido debe ser al menos $${body.minAmount}. Subtotal actual: $${body.currentAmount}.`;
     }
     if (body?.error === 'DELIVERY_WINDOW_EXPIRED') {
       return `La fecha de entrega ${body.deliveryDate} ya pasó su ventana de corte. Elegí otra.`;

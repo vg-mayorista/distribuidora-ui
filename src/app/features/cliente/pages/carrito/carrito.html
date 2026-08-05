@@ -3,7 +3,8 @@
     <div>
       <h1 class="page-header-title">Mi pedido mayorista</h1>
       <p class="page-header-subtitle" *ngIf="hasItems()">
-        {{ count() }} packs en total · {{ physicalUnits() }} unidades físicas
+        {{ count() }} packs en total · {{ physicalUnits() }} unidades físicas ·
+        Subtotal ${{ formatPrice(subtotal()) }}
       </p>
     </div>
   </header>
@@ -95,24 +96,32 @@
       </div>
 
       <div class="summary-min-order-box"
-           [class.summary-min-order-box--success]="cartStore.meetsPerLineMinimum()"
-           [class.summary-min-order-box--offending]="!cartStore.meetsPerLineMinimum()">
-        <ng-container *ngIf="cartStore.meetsPerLineMinimum()">
-          <span class="min-order-check">✓ Todas las líneas cumplen el mínimo</span>
+           [class.summary-min-order-box--success]="cartStore.meetsPerLineMinimum() && cartStore.montoFaltante() === 0"
+           [class.summary-min-order-box--offending]="!(cartStore.meetsPerLineMinimum() && cartStore.montoFaltante() === 0)">
+        <ng-container *ngIf="cartStore.meetsPerLineMinimum() && cartStore.montoFaltante() === 0">
+          <span class="min-order-check">✓ Reglas de mínimos cumplidas</span>
         </ng-container>
-        <ng-container *ngIf="!cartStore.meetsPerLineMinimum()">
-          <p class="summary-min-title">⚠️ Mínimo por línea no cumplido</p>
+        <ng-container *ngIf="!(cartStore.meetsPerLineMinimum() && cartStore.montoFaltante() === 0)">
+          <p class="summary-min-title">⚠️ Faltan reglas por cumplir</p>
           <ul class="summary-min-list">
+            <li *ngIf="cartStore.montoFaltante() > 0">
+              Faltan <strong>${{ formatPrice(cartStore.montoFaltante()) }}</strong> para llegar a ${{ formatPrice(minOrderAmount()) }}.
+            </li>
             <li *ngFor="let bad of offendingLines()">
               {{ bad.product.name }}: {{ bad.packs }} / {{ minPacksPerLine() }} packs.
             </li>
           </ul>
-          <small class="summary-min-hint">Cada producto tiene que tener al menos {{ minPacksPerLine() }} packs.</small>
+          <small class="summary-min-hint">
+            Cada producto necesita al menos {{ minPacksPerLine() }} packs y el subtotal al menos ${{ formatPrice(minOrderAmount()) }}.
+          </small>
         </ng-container>
       </div>
 
       <p class="summary-hint">El envío se calcula en el siguiente paso.</p>
-      <app-button variant="primary" size="md" (onClick)="goConfirm()" [disabled]="!cartStore.meetsPerLineMinimum()" [block]="true">
+      <app-button variant="primary" size="md"
+                  (onClick)="goConfirm()"
+                  [disabled]="!cartStore.meetsPerLineMinimum() || cartStore.montoFaltante() > 0"
+                  [block]="true">
         Continuar →
       </app-button>
     </aside>
