@@ -13,6 +13,7 @@ export class BusinessConfigService {
   readonly config = signal<BusinessConfig>({
     minOrderAmount: 30000,
     minOrderUnits: 5,
+    deliveryWindows: [],
   });
   readonly loading = signal<boolean>(false);
   readonly loaded = signal<boolean>(false);
@@ -22,7 +23,11 @@ export class BusinessConfigService {
     this.http.get<BusinessConfig>(`${this.apiUrl}/public`).subscribe({
       next: (data) => {
         if (data) {
-          this.config.set(data);
+          this.config.set({
+            minOrderAmount: data.minOrderAmount ?? 30000,
+            minOrderUnits: data.minOrderUnits ?? 5,
+            deliveryWindows: data.deliveryWindows ?? [],
+          });
         }
         this.loading.set(false);
         this.loaded.set(true);

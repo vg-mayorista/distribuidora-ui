@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { API_BASE } from '../core/tokens/api-base.token';
+import { DeliveryMethodScope } from '../models/delivery-window.model';
 
 export interface DeliveryMethodSummary {
   id: string;
@@ -9,9 +10,12 @@ export interface DeliveryMethodSummary {
   description?: string;
   cost: number;
   estimatedDays?: number;
+  appliesToOrderType?: DeliveryMethodScope;
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root',
+})
 export class DeliveryMethodService {
   private apiUrl: string;
 

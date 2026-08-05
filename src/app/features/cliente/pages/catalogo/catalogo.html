@@ -1,9 +1,9 @@
 <section class="page">
   <header class="page-header">
     <div>
-      <h1 class="page-header-title">Catálogo</h1>
+      <h1 class="page-header-title">Pedido mayorista</h1>
       <p class="page-header-subtitle">
-        Elegí los productos y armá tu pedido.
+        Armá tu pedido a fábrica. Elegí los productos y la fecha de entrega (miércoles o viernes).
         <span *ngIf="filteredProducts().length > 0"> · {{ filteredProducts().length }} productos disponibles</span>
       </p>
     </div>
@@ -26,7 +26,7 @@
         </button>
         <button type="button" class="btn-toggle" [class.btn-toggle--active]="viewMode() === 'table'" (click)="setViewMode('table')" title="Vista Lista Compacta">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+            <line x1="8" y1="6" x2="21" y1="6"/><line x1="8" y1="12" x2="21" y1="12"/><line x1="8" y1="18" x2="21" y1="18"/>
             <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
           </svg>
         </button>
@@ -47,6 +47,16 @@
       </div>
     </div>
   </header>
+
+  <!-- Banner informativo del flujo mayorista -->
+  <div class="wholesale-info-banner" role="status">
+    <div class="wholesale-info-icon" aria-hidden="true">🏭</div>
+    <div class="wholesale-info-text">
+      <strong>Estás armando un pedido a fábrica.</strong>
+      <span>El catálogo no descuenta stock. La fecha de entrega se elige en el siguiente paso según las ventanas semanales (corte martes/jueves 18 h).</span>
+    </div>
+    <a routerLink="/cliente/stock-disponible" class="wholesale-info-link" *ngIf="false">Ver stock disponible →</a>
+  </div>
 
   <!-- Minimum Order Status Banner -->
   <div class="min-order-banner"
@@ -118,7 +128,6 @@
     <div *ngIf="viewMode() === 'grid'" class="product-grid">
       <article *ngFor="let p of filteredProducts(); trackBy: trackById"
                class="product-card"
-               [class.product-card--out-of-stock]="isOutOfStock(p)"
                [class.product-card--in-cart]="isInCart(p)">
         <div class="product-card-media">
           <app-badge *ngIf="isInCart(p)" variant="success" class="product-card-cart-badge">
@@ -135,13 +144,13 @@
           <p class="product-card-pack">{{ packLabel(p) }}</p>
           <div class="product-card-price-row">
             <span class="product-card-price">${{ formatPrice(p.price) }}</span>
-            <app-badge [variant]="stockBadgeVariant(p)">
+            <app-badge [variant]="stockBadgeVariant(p)" [title]="'El stock no bloquea pedidos mayoristas'">
               {{ stockBadgeLabel(p) }}
             </app-badge>
           </div>
         </div>
-        <div class="product-card-actions" *ngIf="!isOutOfStock(p)">
-          <!-- State A: Product ALREADY in Cart (Direct +/- Stepper sync) -->
+        <div class="product-card-actions">
+          <!-- State A: Product ALREADY in Cart -->
           <ng-container *ngIf="isInCart(p)">
             <div class="qty-control qty-control--active">
               <button type="button"
@@ -158,7 +167,6 @@
               <button type="button"
                       class="qty-btn"
                       (click)="incPacks(p)"
-                      [disabled]="maxPacksFor(p) <= 0"
                       aria-label="Sumar un pack">+</button>
             </div>
             <small class="product-card-physical" *ngIf="p.unitsPerPack > 1">
@@ -169,29 +177,23 @@
             </small>
           </ng-container>
 
-          <!-- State B: Product NOT in Cart (Primary Agregar Button) -->
+          <!-- State B: Product NOT in Cart -->
           <ng-container *ngIf="!isInCart(p)">
-            <div class="qty-control" *ngIf="maxPacksFor(p) > 0">
+            <div class="qty-control">
               <button type="button" class="qty-btn" (click)="decPacks(p)" [disabled]="getPacks(p) <= 1" aria-label="Quitar un pack">−</button>
               <div class="qty-display">
                 <span class="qty-value">{{ getPacks(p) }}</span>
                 <span class="qty-label">pack{{ getPacks(p) === 1 ? '' : 's' }}</span>
               </div>
-              <button type="button" class="qty-btn" (click)="incPacks(p)" [disabled]="getPacks(p) >= maxPacksFor(p)" aria-label="Sumar un pack">+</button>
+              <button type="button" class="qty-btn" (click)="incPacks(p)" aria-label="Sumar un pack">+</button>
             </div>
-            <small class="product-card-physical" *ngIf="maxPacksFor(p) > 0 && p.unitsPerPack > 1">
+            <small class="product-card-physical" *ngIf="p.unitsPerPack > 1">
               = {{ physicalUnits(p) }} unidades físicas
             </small>
-            <app-button *ngIf="maxPacksFor(p) > 0" variant="primary" size="sm" [block]="true" (onClick)="addToCart(p)" [loading]="adding()[p.id!]">
+            <app-button variant="primary" size="sm" [block]="true" (onClick)="addToCart(p)" [loading]="adding()[p.id!]">
               Agregar al carrito
             </app-button>
-            <app-button *ngIf="maxPacksFor(p) <= 0" variant="secondary" size="sm" [block]="true" [disabled]="true">
-              Sin stock disponible
-            </app-button>
           </ng-container>
-        </div>
-        <div class="product-card-actions" *ngIf="isOutOfStock(p)">
-          <app-button variant="secondary" size="sm" [block]="true" [disabled]="true">Sin stock</app-button>
         </div>
       </article>
     </div>
@@ -204,7 +206,7 @@
             <th class="col-product">Producto</th>
             <th class="col-pack">Presentación</th>
             <th class="col-price">Precio por Pack</th>
-            <th class="col-status">Estado</th>
+            <th class="col-status">Stock de referencia</th>
             <th class="col-qty">Cantidad</th>
             <th class="col-action">Acción</th>
           </tr>
@@ -212,7 +214,6 @@
         <tbody>
           <tr *ngFor="let p of filteredProducts(); trackBy: trackById"
               class="product-table-row"
-              [class.product-table-row--out-of-stock]="isOutOfStock(p)"
               [class.product-table-row--in-cart]="isInCart(p)">
             <td class="col-product">
               <div class="table-product-info">
@@ -230,12 +231,10 @@
               <strong class="table-price">${{ formatPrice(p.price) }}</strong>
             </td>
             <td class="col-status">
-              <app-badge [variant]="stockBadgeVariant(p)">
-                {{ stockBadgeLabel(p) }}
-              </app-badge>
+              <app-badge [variant]="stockBadgeVariant(p)">{{ stockBadgeLabel(p) }}</app-badge>
             </td>
             <td class="col-qty">
-              <div *ngIf="!isOutOfStock(p)" class="qty-control qty-control--compact" [class.qty-control--active]="isInCart(p)">
+              <div class="qty-control qty-control--compact" [class.qty-control--active]="isInCart(p)">
                 <button type="button"
                         class="qty-btn"
                         (click)="decPacks(p)"
@@ -251,19 +250,15 @@
                 <button type="button"
                         class="qty-btn"
                         (click)="incPacks(p)"
-                        [disabled]="maxPacksFor(p) <= 0"
                         aria-label="Sumar un pack">+</button>
               </div>
-              <span *ngIf="!isOutOfStock(p)" class="table-physical-hint">
-                = {{ physicalUnits(p) }} u.
-              </span>
+              <span class="table-physical-hint">= {{ physicalUnits(p) }} u.</span>
             </td>
             <td class="col-action">
-              <ng-container *ngIf="!isOutOfStock(p)">
-                <app-button *ngIf="!isInCart(p)" variant="primary" size="sm" (onClick)="addToCart(p)" [loading]="adding()[p.id!]">Agregar</app-button>
-                <app-badge *ngIf="isInCart(p)" variant="success">✓ En carrito</app-badge>
+              <ng-container *ngIf="!isInCart(p)">
+                <app-button variant="primary" size="sm" (onClick)="addToCart(p)" [loading]="adding()[p.id!]">Agregar</app-button>
               </ng-container>
-              <app-button *ngIf="isOutOfStock(p)" variant="secondary" size="sm" [disabled]="true">Sin stock</app-button>
+              <app-badge *ngIf="isInCart(p)" variant="success">✓ En carrito</app-badge>
             </td>
           </tr>
         </tbody>

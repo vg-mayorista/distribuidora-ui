@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_BASE } from '../core/tokens/api-base.token';
+import { DeliveryMethodScope } from '../models/delivery-window.model';
 
 export interface DeliveryMethod {
   id: string;
@@ -10,6 +11,7 @@ export interface DeliveryMethod {
   cost: number;
   estimatedDays?: number;
   active: boolean;
+  appliesToOrderType: DeliveryMethodScope;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -18,15 +20,19 @@ export interface CreateDeliveryMethodRequest {
   name: string;
   cost: number;
   estimatedDays: number;
+  appliesToOrderType?: DeliveryMethodScope;
 }
 
 export interface UpdateDeliveryMethodRequest {
   name: string;
   cost: number;
   estimatedDays: number;
+  appliesToOrderType?: DeliveryMethodScope;
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root',
+})
 export class AdminDeliveryMethodService {
   private apiUrl: string;
 

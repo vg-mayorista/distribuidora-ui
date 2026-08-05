@@ -28,6 +28,17 @@ export class OrderService {
 
   // ── Cliente ────────────────────────────────────────────────
 
+  /** Pedido mayorista a fábrica. Requiere deliveryDate. */
+  createWholesale(req: CreateOrderRequest): Observable<Order> {
+    return this.http.post<Order>(`${this.apiUrl}/wholesale`, req);
+  }
+
+  /** Pedido contra el excedente en depósito. deliveryDate debe ser null. */
+  createStock(req: CreateOrderRequest): Observable<Order> {
+    return this.http.post<Order>(`${this.apiUrl}/stock`, req);
+  }
+
+  /** Compatibilidad: dispatch retrocompatible según presence de deliveryDate. */
   create(req: CreateOrderRequest): Observable<Order> {
     return this.http.post<Order>(this.apiUrl, req);
   }
@@ -54,6 +65,7 @@ export class OrderService {
   listAll(filters: {
     statuses?: OrderStatus[];
     deliveryDate?: string;
+    type?: 'STOCK' | 'WHOLESALE';
     customerId?: string;
     search?: string;
     page?: number;
@@ -64,6 +76,7 @@ export class OrderService {
       filters.statuses.forEach(s => { params = params.append('statuses', s); });
     }
     if (filters.deliveryDate) params = params.set('deliveryDate', filters.deliveryDate);
+    if (filters.type) params = params.set('type', filters.type);
     if (filters.customerId) params = params.set('customerId', filters.customerId);
     if (filters.search) params = params.set('search', filters.search);
     return this.http.get<PageResponse<Order>>(this.distributorUrl, { params });

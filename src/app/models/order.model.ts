@@ -1,3 +1,5 @@
+import { OrderType } from './order-type.model';
+
 export type OrderStatus = 'PENDIENTE' | 'ARMADO' | 'ENVIADO' | 'ENTREGADO' | 'CANCELADO';
 
 export interface OrderItem {
@@ -18,6 +20,7 @@ export interface Order {
   customerName?: string;
   customerEmail?: string;
   status: OrderStatus;
+  type: OrderType;
   deliveryMethodId?: string;
   deliveryMethodName?: string;
   deliveryCost: number;

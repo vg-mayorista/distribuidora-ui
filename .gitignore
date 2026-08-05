@@ -47,14 +47,11 @@ Thumbs.db
 
 # Dev tools (binarios descargados)
 *.deb
-openspec/
 
 # Scripts locales de cada dev
 scripts/
 
-# Documentación y specs
-docs/
-openspec/
+# (track openspec/ y docs/ — usados para registrar change proposals)
 .env
 
 # Directorios de agentes de IA (configuración local)

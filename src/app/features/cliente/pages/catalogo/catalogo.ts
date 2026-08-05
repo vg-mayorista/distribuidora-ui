@@ -4,17 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProductService } from '../../../../services/product.service';
 import { CategoryService } from '../../../../services/category.service';
-import { CartService } from '../../../../services/cart.service';
 import { BusinessConfigService } from '../../../../services/business-config.service';
 import { CartStore } from '../../services/cart.store';
 import { ButtonComponent } from '../../../../shared/ui/button/button';
 import { BadgeComponent } from '../../../../shared/ui/badge/badge';
-import { Product, StockStatus } from '../../../../models/product.model';
+import { Product } from '../../../../models/product.model';
 import { Category } from '../../../../models/category.model';
 import { getProductEmoji } from '../../../../shared/utils/product-emoji';
-import { firstValueFrom } from 'rxjs';
-
-const MAX_PACKS_PER_LINE = 99;
 
 @Component({
   selector: 'app-catalogo',
@@ -26,7 +22,6 @@ const MAX_PACKS_PER_LINE = 99;
 export class CatalogoComponent implements OnInit {
   private productService = inject(ProductService);
   private categoryService = inject(CategoryService);
-  private cartService = inject(CartService);
   configService = inject(BusinessConfigService);
   cartStore = inject(CartStore);
   private router = inject(Router);
@@ -74,7 +69,6 @@ export class CatalogoComponent implements OnInit {
   loading = signal(false);
   error = signal<string | null>(null);
   quantities: Record<string, number> = {};
-  maxPacksByProduct: Record<string, number> = {};
   adding = signal<Record<string, boolean>>({});
   addedJustNow = signal<Record<string, boolean>>({});
 
@@ -97,22 +91,6 @@ export class CatalogoComponent implements OnInit {
             this.quantities[p.id] = 1;
           }
         }
-        const productIds = activeProducts.map(p => p.id).filter((id): id is string => !!id);
-        if (productIds.length > 0) {
-          this.cartService.checkStock(productIds).subscribe({
-            next: (stockMap) => {
-              for (const p of activeProducts) {
-                if (p.id && p.id in stockMap) {
-                  const physicalStock = Math.max(0, stockMap[p.id] ?? 0);
-                  const unitsPerPack = Math.max(p.unitsPerPack ?? 1, 1);
-                  this.maxPacksByProduct[p.id] = Math.floor(physicalStock / unitsPerPack);
-                }
-              }
-              this.cdr.detectChanges();
-            },
-            error: (err) => console.error('Error al consultar stock inicial:', err)
-          });
-        }
       },
       error: () => {
         this.error.set('No se pudieron cargar los productos.');
@@ -128,39 +106,36 @@ export class CatalogoComponent implements OnInit {
     });
   }
 
+  /**
+   * Mayorista: el input no se capa por stock. Devuelve la cantidad pretendida.
+   * Se mantiene el badge `isOutOfStock` solo como información; el cliente igual puede
+   * pedir (será un pedido a fábrica).
+   */
   getPacks(product: Product): number {
     if (!product.id) return 1;
-    if (this.isOutOfStock(product)) return 0;
     const lineInCart = this.cartStore.lines().find(l => l.product.id === product.id);
     if (lineInCart) {
       return lineInCart.packs;
     }
     const current = this.quantities[product.id] ?? 1;
-    const maxPacks = this.maxPacksFor(product);
-    if (maxPacks <= 0) return 0;
-    return Math.min(Math.max(1, current), maxPacks);
+    return Math.max(1, Math.floor(current));
   }
 
   setPacks(product: Product, packs: number): void {
     if (!product.id) return;
-    if (this.isOutOfStock(product)) {
-      this.quantities[product.id] = 0;
-      return;
-    }
     const lineInCart = this.cartStore.lines().find(l => l.product.id === product.id);
+    const safeMax = Number.MAX_SAFE_INTEGER;
     if (lineInCart) {
       if (packs <= 0) {
         this.cartStore.remove(product.id);
         this.quantities[product.id] = 1;
       } else {
-        const maxAvailable = this.maxPacksFor(product) + lineInCart.packs;
-        const clamped = Math.min(packs, maxAvailable);
+        const clamped = Math.min(Math.max(1, Math.floor(packs)), safeMax);
         this.cartStore.setPacks(product.id, clamped);
       }
       this.triggerCartPulse();
     } else {
-      const maxPacks = this.maxPacksFor(product);
-      this.quantities[product.id] = Math.max(1, Math.min(packs, maxPacks));
+      this.quantities[product.id] = Math.max(1, Math.floor(packs));
     }
     this.cdr.detectChanges();
   }
@@ -169,16 +144,11 @@ export class CatalogoComponent implements OnInit {
     if (!product.id) return;
     const lineInCart = this.cartStore.lines().find(l => l.product.id === product.id);
     if (lineInCart) {
-      if (this.maxPacksFor(product) > 0) {
-        this.cartStore.setPacks(product.id, lineInCart.packs + 1);
-        this.triggerCartPulse();
-      }
+      this.cartStore.setPacks(product.id, lineInCart.packs + 1);
+      this.triggerCartPulse();
     } else {
-      const maxPacks = this.maxPacksFor(product);
       const current = this.getPacks(product);
-      if (current < maxPacks) {
-        this.quantities[product.id] = current + 1;
-      }
+      this.quantities[product.id] = current + 1;
     }
   }
 
@@ -209,29 +179,22 @@ export class CatalogoComponent implements OnInit {
     return !!product.id && this.cartStore.lines().some(l => l.product.id === product.id);
   }
 
+  /**
+   * Informativo. El catálogo mayorista no bloquea por stock: muestra el badge pero
+   * permite pedir. La lógica de stock la maneja el flujo `/cliente/stock-disponible`.
+   */
   isOutOfStock(product: Product): boolean {
     return product.stockStatus === 'OUT_OF_STOCK';
   }
 
+  /**
+   * Compat: en el flujo mayorista siempre hay "espacio" — devolvemos un número
+   * muy alto para que la UI permita sumar sin tope. Se mantiene el método por si
+   * alguna parte lo invoca.
+   */
   maxPacksFor(product: Product): number {
     if (!product.id) return 0;
-    if (this.isOutOfStock(product)) return 0;
-
-    let totalStockPacks = MAX_PACKS_PER_LINE;
-
-    if (typeof product.stock === 'number' && product.stock > 0) {
-      const unitsPerPack = product.unitsPerPack && product.unitsPerPack > 0 ? product.unitsPerPack : 1;
-      totalStockPacks = Math.floor(product.stock / unitsPerPack);
-    }
-
-    if (this.maxPacksByProduct[product.id] != null) {
-      totalStockPacks = Math.min(totalStockPacks, this.maxPacksByProduct[product.id]);
-    }
-
-    const lineInCart = this.cartStore.lines().find(l => l.product.id === product.id);
-    const packsInCart = lineInCart ? lineInCart.packs : 0;
-
-    return Math.max(0, totalStockPacks - packsInCart);
+    return Number.MAX_SAFE_INTEGER;
   }
 
   stockBadgeVariant(product: Product): 'active' | 'warning' | 'inactive' {
@@ -248,29 +211,12 @@ export class CatalogoComponent implements OnInit {
 
   async addToCart(product: Product): Promise<void> {
     if (!product.id) return;
-    if (this.isOutOfStock(product)) return;
-    const maxAvailable = this.maxPacksFor(product);
-    if (maxAvailable <= 0) return;
-    const packs = Math.min(this.getPacks(product), maxAvailable);
+    const packs = this.getPacks(product);
     if (packs <= 0) return;
 
     this.adding.update(s => ({ ...s, [product.id!]: true }));
     try {
-      const stockMap = await firstValueFrom(this.cartService.checkStock([product.id]));
-      const stock = Math.max(0, stockMap[product.id] ?? 0);
-      const unitsPerPack = Math.max(product.unitsPerPack, 1);
-      const maxAllowedTotal = Math.floor(stock / unitsPerPack);
-      this.maxPacksByProduct[product.id] = maxAllowedTotal;
-
-      const currentLine = this.cartStore.lines().find(l => l.product.id === product.id);
-      const alreadyInCart = currentLine ? currentLine.packs : 0;
-      const realMaxCanAdd = Math.max(0, maxAllowedTotal - alreadyInCart);
-      const capped = Math.min(packs, realMaxCanAdd);
-      if (capped <= 0) {
-        this.error.set('No hay más stock disponible para este producto.');
-        return;
-      }
-      this.cartStore.add(product, capped, maxAllowedTotal);
+      this.cartStore.add(product, packs);
       this.triggerCartPulse();
       this.quantities[product.id] = 1;
       this.addedJustNow.update(s => ({ ...s, [product.id!]: true }));
