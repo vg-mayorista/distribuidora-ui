@@ -74,7 +74,7 @@ export class ConfirmarComponent implements OnInit {
       const iso = cursor.toISOString().slice(0, 10);
       dates.push({
         date: iso,
-        label: this.formatHumanDate(iso) + ' · ' + (matching[0].description ?? ''),
+        label: this.formatHumanDate(iso),
       });
     }
     return dates;
@@ -236,7 +236,7 @@ export class ConfirmarComponent implements OnInit {
       if (missingPhone) return 'Completá el teléfono para continuar.';
     }
     if (this.mode === 'wholesale' && !this.deliveryDate()) {
-      return 'Elegí un día de entrega (próximo miércoles o viernes).';
+      return 'Elegí un día de entrega.';
     }
     return null;
   }
@@ -409,7 +409,7 @@ export class ConfirmarComponent implements OnInit {
       return `El subtotal del pedido debe ser al menos $${body.minAmount}. Subtotal actual: $${body.currentAmount}.`;
     }
     if (body?.error === 'DELIVERY_WINDOW_EXPIRED') {
-      return `La fecha de entrega ${body.deliveryDate} ya pasó su ventana de corte. Elegí otra.`;
+      return `La fecha ${body.deliveryDate} ya no está disponible. Elegí otra.`;
     }
     return body?.detail || fallback;
   }

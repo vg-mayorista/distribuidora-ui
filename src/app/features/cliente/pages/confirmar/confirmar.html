@@ -4,7 +4,7 @@
     <p class="confirmar-subtitle">
       {{
         isWholesale()
-          ? 'Pedido a fábrica. Elegí cuándo lo querés recibir y confirmá.'
+          ? 'Elegí cuándo recibirlo y confirmá el pedido.'
           : 'Compra inmediata del excedente en depósito. Confirmá y retirá/enviamos.'
       }}
     </p>
@@ -23,15 +23,6 @@
 
   <div class="confirmar-grid">
     <div class="confirmar-main">
-      <!-- Banner wholesale: próxima fecha de corte -->
-      <div *ngIf="isWholesale()" class="cutoff-banner">
-        <span class="cutoff-icon" aria-hidden="true">🏭</span>
-        <div>
-          <strong>Pedido a fábrica.</strong>
-          <span>Elegí un día de la próxima semana (miércoles o viernes). El stock no se descuenta.</span>
-        </div>
-      </div>
-
       <section class="card-section">
         <h2 class="section-title">1. Método de entrega</h2>
         <div class="methods-grid">
@@ -44,7 +35,7 @@
               <span class="method-name">{{ m.name }}</span>
               <span *ngIf="m.appliesToOrderType as scope" class="method-scope">
                 <ng-container [ngSwitch]="scope">
-                  <ng-container *ngSwitchCase="'WHOLESALE'">Sólo pedidos a fábrica</ng-container>
+                  <ng-container *ngSwitchCase="'WHOLESALE'">Sólo pedidos mayoristas</ng-container>
                   <ng-container *ngSwitchCase="'STOCK'">Sólo stock disponible</ng-container>
                   <ng-container *ngSwitchDefault>Aplica a ambos</ng-container>
                 </ng-container>
@@ -104,7 +95,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-svg-icon" style="color: var(--neutral-800);">
             <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
           </svg>
-          Tu pedido se entrega el día que elegiste arriba (miércoles o viernes según la fecha).
+          Tu pedido se entrega el día que elegiste arriba.
         </div>
       </section>
 
