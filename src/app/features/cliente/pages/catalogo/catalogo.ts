@@ -180,14 +180,6 @@ export class CatalogoComponent implements OnInit {
   }
 
   /**
-   * Informativo. El catálogo mayorista no bloquea por stock: muestra el badge pero
-   * permite pedir. La lógica de stock la maneja el flujo `/cliente/stock-disponible`.
-   */
-  isOutOfStock(product: Product): boolean {
-    return product.stockStatus === 'OUT_OF_STOCK';
-  }
-
-  /**
    * Compat: en el flujo mayorista siempre hay "espacio" — devolvemos un número
    * muy alto para que la UI permita sumar sin tope. Se mantiene el método por si
    * alguna parte lo invoca.
@@ -195,18 +187,6 @@ export class CatalogoComponent implements OnInit {
   maxPacksFor(product: Product): number {
     if (!product.id) return 0;
     return Number.MAX_SAFE_INTEGER;
-  }
-
-  stockBadgeVariant(product: Product): 'active' | 'warning' | 'inactive' {
-    if (product.stockStatus === 'OUT_OF_STOCK') return 'inactive';
-    if (product.stockStatus === 'LOW_STOCK') return 'warning';
-    return 'active';
-  }
-
-  stockBadgeLabel(product: Product): string {
-    if (product.stockStatus === 'OUT_OF_STOCK') return 'Sin stock';
-    if (product.stockStatus === 'LOW_STOCK') return 'Stock bajo';
-    return 'En stock';
   }
 
   async addToCart(product: Product): Promise<void> {

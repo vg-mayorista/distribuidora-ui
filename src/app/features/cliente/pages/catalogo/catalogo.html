@@ -144,9 +144,6 @@
           <p class="product-card-pack">{{ packLabel(p) }}</p>
           <div class="product-card-price-row">
             <span class="product-card-price">${{ formatPrice(p.price) }}</span>
-            <app-badge [variant]="stockBadgeVariant(p)" [title]="'El stock no bloquea pedidos mayoristas'">
-              {{ stockBadgeLabel(p) }}
-            </app-badge>
           </div>
         </div>
         <div class="product-card-actions">
@@ -206,7 +203,6 @@
             <th class="col-product">Producto</th>
             <th class="col-pack">Presentación</th>
             <th class="col-price">Precio por Pack</th>
-            <th class="col-status">Stock de referencia</th>
             <th class="col-qty">Cantidad</th>
             <th class="col-action">Acción</th>
           </tr>
@@ -229,9 +225,6 @@
             </td>
             <td class="col-price">
               <strong class="table-price">${{ formatPrice(p.price) }}</strong>
-            </td>
-            <td class="col-status">
-              <app-badge [variant]="stockBadgeVariant(p)">{{ stockBadgeLabel(p) }}</app-badge>
             </td>
             <td class="col-qty">
               <div class="qty-control qty-control--compact" [class.qty-control--active]="isInCart(p)">
