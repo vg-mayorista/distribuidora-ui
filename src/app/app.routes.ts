@@ -7,6 +7,7 @@ import { OrdersComponent } from './features/admin/pages/orders/orders';
 import { AdminUsersComponent } from './features/admin/pages/users/users';
 import { AdminReportesComponent } from './features/admin/pages/reportes/reportes';
 import { AdminMetodosEntregaComponent } from './features/admin/pages/metodos-entrega/metodos-entrega';
+import { AdminDeliveryWindowsComponent } from './features/admin/pages/delivery-windows/delivery-windows';
 import { LoginComponent } from './features/auth/pages/login/login';
 import { RegisterComponent } from './features/auth/pages/register/register';
 import { adminGuard } from './core/guards/admin.guard';
@@ -73,6 +74,7 @@ export const routes: Routes = [
           { path: '', redirectTo: 'usuarios', pathMatch: 'full' },
           { path: 'usuarios', component: AdminUsersComponent },
           { path: 'reportes', component: AdminReportesComponent },
+          { path: 'delivery-windows', component: AdminDeliveryWindowsComponent },
         ],
       },
     ],

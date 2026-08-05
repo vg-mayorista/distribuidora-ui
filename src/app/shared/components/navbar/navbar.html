@@ -36,6 +36,9 @@
         <a class="nav-link" routerLink="/admin/usuarios" routerLinkActive="nav-link--active">Usuarios</a>
       </li>
       <li *ngIf="user.role === 'ROLE_ADMIN'">
+        <a class="nav-link" routerLink="/admin/delivery-windows" routerLinkActive="nav-link--active">Ventanas</a>
+      </li>
+      <li *ngIf="user.role === 'ROLE_ADMIN'">
         <a class="nav-link" routerLink="/admin/reportes" routerLinkActive="nav-link--active">Reportes IT</a>
       </li>
     </ng-container>

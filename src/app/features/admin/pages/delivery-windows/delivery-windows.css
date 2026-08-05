@@ -1,0 +1,38 @@
+/* Métodos de entrega - Estilos específicos de página */
+
+.toggle-inactive {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.toggle-inactive input[type="checkbox"] {
+  accent-color: var(--orange-base);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.me-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+@media (max-width: 576px) {
+  .me-form .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Anchos de columnas */
+.col-me-name { width: auto; }
+.col-me-cost { width: 110px; min-width: 110px; max-width: 110px; }
+.col-me-days { width: 140px; min-width: 140px; max-width: 140px; }
+.col-me-status { width: 90px; min-width: 90px; max-width: 90px; }
+.col-me-actions { width: 100px; min-width: 100px; max-width: 100px; }
