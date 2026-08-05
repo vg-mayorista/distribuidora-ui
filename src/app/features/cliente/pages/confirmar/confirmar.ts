@@ -183,11 +183,21 @@ export class ConfirmarComponent implements OnInit {
     return !name.includes('retiro') && !name.includes('local');
   }
 
+  minPacksPerLine(): number {
+    return this.configService.config()?.minPacksPerLine ?? 5;
+  }
+
+  hasLinesBelowMin(): boolean {
+    const min = this.minPacksPerLine();
+    return this.activeLines().some(l => l.packs < min);
+  }
+
   get canSubmit(): boolean {
     if (!this.selectedDeliveryMethodId()) return false;
     if (this.activeLines().length === 0) return false;
     if (this.requiresAddress && (!this.deliveryAddress().trim() || !this.deliveryPhone().trim())) return false;
     if (this.mode === 'wholesale' && !this.deliveryDate()) return false;
+    if (this.hasLinesBelowMin()) return false;
     return true;
   }
 
@@ -196,6 +206,9 @@ export class ConfirmarComponent implements OnInit {
       return this.mode === 'stock'
         ? 'Tu carrito de stock está vacío.'
         : 'Tu carrito mayorista está vacío.';
+    }
+    if (this.hasLinesBelowMin()) {
+      return `Cada línea necesita al menos ${this.minPacksPerLine()} packs. Ajustá las cantidades antes de confirmar.`;
     }
     if (!this.selectedDeliveryMethodId()) {
       return 'Seleccioná un método de entrega para continuar.';
@@ -372,6 +385,12 @@ export class ConfirmarComponent implements OnInit {
         `${it.productName}: pediste ${it.requested} unid., disponibles ${it.available} unid.`
       ).join('\n');
       return `No hay stock suficiente para:\n${details}`;
+    }
+    if (body?.error === 'MIN_PACKS_PER_LINE' && Array.isArray(body.offending)) {
+      const details = body.offending.map((it: any) =>
+        `${it.productName ?? it.productId}: ${it.requestedPacks}/${it.minRequiredPacks} packs`
+      ).join('\n');
+      return `Cada línea debe tener al menos ${body.offending[0]?.minRequiredPacks ?? 5} packs:\n${details}`;
     }
     if (body?.error === 'DELIVERY_WINDOW_EXPIRED') {
       return `La fecha de entrega ${body.deliveryDate} ya pasó su ventana de corte. Elegí otra.`;

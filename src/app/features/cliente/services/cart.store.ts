@@ -8,8 +8,8 @@ export interface CartLine {
   physicalUnits: number;
   /**
    * Máximo de packs permitidos. En el flujo mayorista se inicializa en
-   * {@link Number.MAX_SAFE_INTEGER} (no se capa por stock). En el flujo de stock se
-   * setea con el stock real del producto.
+   * {@link Number.MAX_SAFE_INTEGER} (no se capa por stock). En el flujo de stock
+   * se setea con el stock real del producto.
    */
   maxAllowed: number;
 }
@@ -32,6 +32,17 @@ export class CartStore {
   readonly editingOrderId = this._wholesaleEditingId.asReadonly();
   readonly stockLines = this._stockLines.asReadonly();
   readonly stockEditingOrderId = this._stockEditingId.asReadonly();
+
+  /**
+   * Mínimo global de packs por línea configurable desde el backend
+   * (default 5). Cada línea del carrito (mayorista o stock) tiene que
+   * tener al menos este valor.
+   */
+  readonly minPacksPerLine = computed<number>(() =>
+    this.configService.config()?.minPacksPerLine ?? 5
+  );
+
+  readonly stockMinPacksPerLine = this.minPacksPerLine;
 
   // ── Wholesale cart (mayorista, sin cap por stock) ────────────────────
 
@@ -57,7 +68,7 @@ export class CartStore {
     this.persist(this._stockLines(), STOCK_STORAGE_KEY);
   }
 
-  // ── Helpers genéricos (sobre el carrito wholesale) ─────────────────────
+  // ── Helpers genéricos ──────────────────────────────────────────────
 
   readonly count = computed(() =>
     this._wholesaleLines().reduce((s, l) => s + l.packs, 0)
@@ -89,44 +100,70 @@ export class CartStore {
   readonly isEmpty = computed(() => this._wholesaleLines().length === 0);
   readonly stockIsEmpty = computed(() => this._stockLines().length === 0);
 
-  readonly minOrderAmount = computed(() => this.configService.config()?.minOrderAmount ?? 30000);
+  readonly montoFaltante = computed(() => 0); // Regla legacy removida; se conserva el computed por compat.
 
-  readonly minOrderUnits = computed(() => this.configService.config()?.minOrderUnits ?? 5);
+  readonly stockMontoFaltante = this.montoFaltante;
 
-  readonly montoFaltante = computed(() =>
-    Math.max(0, this.minOrderAmount() - this.subtotal())
-  );
+  readonly unidadesFaltantes = computed(() => 0); // Regla legacy removida.
 
-  readonly stockMontoFaltante = computed(() =>
-    Math.max(0, this.minOrderAmount() - this.stockSubtotal())
-  );
+  readonly stockUnidadesFaltantes = this.unidadesFaltantes;
 
-  readonly unidadesFaltantes = computed(() =>
-    Math.max(0, this.minOrderUnits() - this.count())
-  );
+  /** True cuando TODAS las líneas del carrito mayorista cumplen el mínimo. */
+  readonly meetsPerLineMinimum = computed(() => {
+    const lines = this._wholesaleLines();
+    if (lines.length === 0) return false;
+    const min = this.minPacksPerLine();
+    return lines.every(l => l.packs >= min);
+  });
 
-  readonly stockUnidadesFaltantes = computed(() =>
-    Math.max(0, this.minOrderUnits() - this.stockCount())
-  );
+  /** True cuando TODAS las líneas del carrito de stock cumplen el mínimo. */
+  readonly stockMeetsPerLineMinimum = computed(() => {
+    const lines = this._stockLines();
+    if (lines.length === 0) return false;
+    const min = this.stockMinPacksPerLine();
+    return lines.every(l => l.packs >= min);
+  });
 
-  readonly meetsMinimumRequirements = computed(() =>
-    this.montoFaltante() === 0 && this.unidadesFaltantes() === 0
-  );
+  /** Líneas que no cumplen el mínimo — usado para mostrar mensajes. */
+  readonly offendingLines = computed(() => {
+    const min = this.minPacksPerLine();
+    return this._wholesaleLines().filter(l => l.packs < min);
+  });
 
-  readonly stockMeetsMinimumRequirements = computed(() =>
-    this.stockMontoFaltante() === 0 && this.stockUnidadesFaltantes() === 0
-  );
+  readonly stockOffendingLines = computed(() => {
+    const min = this.stockMinPacksPerLine();
+    return this._stockLines().filter(l => l.packs < min);
+  });
+
+  readonly meetsMinimumRequirements = this.meetsPerLineMinimum;
+  readonly stockMeetsMinimumRequirements = this.stockMeetsPerLineMinimum;
 
   readonly progressPercentage = computed(() => {
-    const amountRatio = Math.min(1, this.subtotal() / (this.minOrderAmount() || 1));
-    const unitsRatio = Math.min(1, this.count() / (this.minOrderUnits() || 1));
-    return Math.floor(((amountRatio + unitsRatio) / 2) * 100);
+    const lines = this._wholesaleLines();
+    if (lines.length === 0) return 0;
+    const min = this.minPacksPerLine();
+    let total = 0;
+    let max = 0;
+    for (const l of lines) {
+      total += l.packs;
+      max += l.packs >= min ? l.packs : min * 2;
+    }
+    const target = lines.length * min * 2;
+    return Math.min(100, Math.floor((total / (target || 1)) * 100));
   });
 
   readonly stockProgressPercentage = computed(() => {
-    const amountRatio = Math.min(1, this.stockSubtotal() / (this.minOrderAmount() || 1));
-    const unitsRatio = Math.min(1, this.stockCount() / (this.minOrderUnits() || 1));
-    return Math.floor(((amountRatio + unitsRatio) / 2) * 100);
+    const lines = this._stockLines();
+    if (lines.length === 0) return 0;
+    const min = this.stockMinPacksPerLine();
+    let total = 0;
+    let max = 0;
+    for (const l of lines) {
+      total += l.packs;
+      max += l.packs >= min ? l.packs : min * 2;
+    }
+    const target = lines.length * min * 2;
+    return Math.min(100, Math.floor((total / (target || 1)) * 100));
   });
 
   // ── Mutaciones mayorista ───────────────────────────────────────────────
@@ -205,19 +242,21 @@ export class CartStore {
     storageKey: string
   ): void {
     const unitsPerPack = product.unitsPerPack > 0 ? product.unitsPerPack : 1;
+    const min = target === 'wholesale' ? this.minPacksPerLine() : this.stockMinPacksPerLine();
+    const safePacks = Math.max(min, Math.floor(packs));
     const apply = (list: CartLine[]): CartLine[] => {
       const existing = list.find(l => l.product.id === product.id);
       if (existing) {
         return list.map(l => l.product.id === product.id
           ? {
               ...l,
-              packs: l.packs + packs,
-              physicalUnits: (l.packs + packs) * unitsPerPack,
+              packs: l.packs + safePacks,
+              physicalUnits: (l.packs + safePacks) * unitsPerPack,
               maxAllowed: target === 'wholesale' ? maxAllowed : Math.max(l.maxAllowed, maxAllowed),
             }
           : l);
       }
-      return [...list, { product, packs, physicalUnits: packs * unitsPerPack, maxAllowed }];
+      return [...list, { product, packs: safePacks, physicalUnits: safePacks * unitsPerPack, maxAllowed }];
     };
     if (target === 'wholesale') {
       this._wholesaleLines.update(apply);
@@ -236,8 +275,9 @@ export class CartStore {
     const apply = (list: CartLine[]): CartLine[] =>
       list.map(l => {
         if (l.product.id !== productId) return l;
+        const min = target === 'wholesale' ? this.minPacksPerLine() : this.stockMinPacksPerLine();
         const safeMax = l.maxAllowed > 0 ? l.maxAllowed : Number.MAX_SAFE_INTEGER;
-        const clamped = Math.min(Math.max(1, Math.floor(packs)), safeMax);
+        const clamped = Math.min(Math.max(min, Math.floor(packs)), safeMax);
         return { ...l, packs: clamped, physicalUnits: clamped * (l.product.unitsPerPack || 1) };
       });
 
@@ -290,8 +330,10 @@ export class CartStore {
       const raw = sessionStorage.getItem(key);
       if (!raw) return [];
       const parsed = JSON.parse(raw) as CartLine[];
+      const min = this.configService.config()?.minPacksPerLine ?? 5;
       return parsed.map(l => ({
         ...l,
+        packs: Math.max(min, typeof l.packs === 'number' ? l.packs : min),
         maxAllowed: typeof l.maxAllowed === 'number' ? l.maxAllowed : Number.MAX_SAFE_INTEGER,
       }));
     } catch {

@@ -1,10 +1,9 @@
 <section class="page">
   <header class="page-header">
     <div>
-      <h1 class="page-header-title">Mi pedido</h1>
+      <h1 class="page-header-title">Mi pedido mayorista</h1>
       <p class="page-header-subtitle" *ngIf="hasItems()">
-        {{ count() }} {{ count() === 1 ? 'producto' : 'productos' }} ·
-        {{ physicalUnits() }} unidades físicas totales
+        {{ count() }} packs en total · {{ physicalUnits() }} unidades físicas
       </p>
     </div>
   </header>
@@ -30,7 +29,9 @@
         </button>
       </div>
 
-      <article *ngFor="let line of lines(); trackBy: trackByProduct" class="cart-line">
+      <article *ngFor="let line of lines(); trackBy: trackByProduct"
+               class="cart-line"
+               [class.cart-line--offending]="isOffending(line)">
         <img *ngIf="line.product.imageUrl" [src]="line.product.imageUrl" [alt]="line.product.name" class="cart-line-img"/>
         <div *ngIf="!line.product.imageUrl" class="cart-line-placeholder">{{ productEmoji(line.product.name) }}</div>
         <div class="cart-line-body">
@@ -43,17 +44,24 @@
           <p *ngIf="line.product.unitsPerPack > 1" class="cart-line-physical">
             {{ line.packs }} pack{{ line.packs === 1 ? '' : 's' }} = <strong>{{ line.physicalUnits }}</strong> unidades
           </p>
+          <p class="cart-line-min" [class.cart-line-min--offending]="isOffending(line)">
+            Mínimo por línea: {{ minPacksPerLine() }} packs.
+          </p>
         </div>
         <div class="cart-line-actions">
           <div class="qty-control">
-            <button type="button" class="qty-btn" (click)="dec(line)" aria-label="Quitar un pack">−</button>
-            <input type="number" min="1"
-                   [max]="line.maxAllowed"
+            <button type="button"
+                    class="qty-btn"
+                    (click)="dec(line)"
+                    [disabled]="line.packs <= minPacksPerLine()"
+                    aria-label="Quitar un pack">−</button>
+            <input type="number"
+                   [min]="minPacksPerLine()"
                    class="qty-input"
                    [value]="line.packs"
                    (input)="onInputChange(line, $event)"
                    (change)="setPacks(line, $any($event.target).value)">
-            <button type="button" class="qty-btn" (click)="inc(line)" [disabled]="line.packs >= line.maxAllowed" aria-label="Sumar un pack">+</button>
+            <button type="button" class="qty-btn" (click)="inc(line)" aria-label="Sumar un pack">+</button>
           </div>
           <span class="cart-line-subtotal">${{ formatPrice(line.packs * line.product.price) }}</span>
           <button type="button" class="btn-icon btn-icon--danger" (click)="remove(line)" title="Quitar">
@@ -85,26 +93,26 @@
         <span>Subtotal</span>
         <span class="summary-value">${{ formatPrice(subtotal()) }}</span>
       </div>
-      <div class="summary-min-order-box" [class.summary-min-order-box--success]="cartStore.meetsMinimumRequirements()">
-        <ng-container *ngIf="cartStore.meetsMinimumRequirements()">
-          <span class="min-order-check">✓ Mínimo de compra alcanzado</span>
+
+      <div class="summary-min-order-box"
+           [class.summary-min-order-box--success]="cartStore.meetsPerLineMinimum()"
+           [class.summary-min-order-box--offending]="!cartStore.meetsPerLineMinimum()">
+        <ng-container *ngIf="cartStore.meetsPerLineMinimum()">
+          <span class="min-order-check">✓ Todas las líneas cumplen el mínimo</span>
         </ng-container>
-        <ng-container *ngIf="!cartStore.meetsMinimumRequirements()">
-          <p class="summary-min-title">⚠️ Mínimo de compra no alcanzado</p>
+        <ng-container *ngIf="!cartStore.meetsPerLineMinimum()">
+          <p class="summary-min-title">⚠️ Mínimo por línea no cumplido</p>
           <ul class="summary-min-list">
-            <li *ngIf="cartStore.montoFaltante() > 0">
-              Faltan <strong>${{ formatPrice(cartStore.montoFaltante()) }}</strong> en total
-            </li>
-            <li *ngIf="cartStore.unidadesFaltantes() > 0">
-              Faltan <strong>{{ cartStore.unidadesFaltantes() }}</strong> unidades
+            <li *ngFor="let bad of offendingLines()">
+              {{ bad.product.name }}: {{ bad.packs }} / {{ minPacksPerLine() }} packs.
             </li>
           </ul>
-          <small class="summary-min-hint">Requisitos: {{ cartStore.minOrderUnits() }} unidades y ${{ formatPrice(cartStore.minOrderAmount()) }}</small>
+          <small class="summary-min-hint">Cada producto tiene que tener al menos {{ minPacksPerLine() }} packs.</small>
         </ng-container>
       </div>
 
       <p class="summary-hint">El envío se calcula en el siguiente paso.</p>
-      <app-button variant="primary" size="md" (onClick)="goConfirm()" [disabled]="!cartStore.meetsMinimumRequirements()" [block]="true">
+      <app-button variant="primary" size="md" (onClick)="goConfirm()" [disabled]="!cartStore.meetsPerLineMinimum()" [block]="true">
         Continuar →
       </app-button>
     </aside>

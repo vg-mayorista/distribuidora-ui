@@ -72,6 +72,10 @@ export class CatalogoComponent implements OnInit {
   adding = signal<Record<string, boolean>>({});
   addedJustNow = signal<Record<string, boolean>>({});
 
+  private minPacks(): number {
+    return this.configService.config()?.minPacksPerLine ?? 5;
+  }
+
   ngOnInit(): void {
     this.configService.loadConfig();
     this.loadProducts();
@@ -86,9 +90,10 @@ export class CatalogoComponent implements OnInit {
         const activeProducts = data.content.filter(p => p.active);
         this.products.set(activeProducts);
         this.loading.set(false);
+        const min = this.minPacks();
         for (const p of activeProducts) {
           if (p.id && !(p.id in this.quantities)) {
-            this.quantities[p.id] = 1;
+            this.quantities[p.id] = min;
           }
         }
       },
@@ -107,35 +112,34 @@ export class CatalogoComponent implements OnInit {
   }
 
   /**
-   * Mayorista: el input no se capa por stock. Devuelve la cantidad pretendida.
-   * Se mantiene el badge `isOutOfStock` solo como información; el cliente igual puede
-   * pedir (será un pedido a fábrica).
+   * Mayorista: el input arranca en el mínimo de packs por línea y puede crecer.
    */
   getPacks(product: Product): number {
-    if (!product.id) return 1;
+    if (!product.id) return this.minPacks();
     const lineInCart = this.cartStore.lines().find(l => l.product.id === product.id);
     if (lineInCart) {
       return lineInCart.packs;
     }
-    const current = this.quantities[product.id] ?? 1;
-    return Math.max(1, Math.floor(current));
+    const current = this.quantities[product.id] ?? this.minPacks();
+    return Math.max(this.minPacks(), Math.floor(current));
   }
 
   setPacks(product: Product, packs: number): void {
     if (!product.id) return;
+    const min = this.minPacks();
     const lineInCart = this.cartStore.lines().find(l => l.product.id === product.id);
     const safeMax = Number.MAX_SAFE_INTEGER;
     if (lineInCart) {
       if (packs <= 0) {
         this.cartStore.remove(product.id);
-        this.quantities[product.id] = 1;
+        this.quantities[product.id] = min;
       } else {
-        const clamped = Math.min(Math.max(1, Math.floor(packs)), safeMax);
+        const clamped = Math.min(Math.max(min, Math.floor(packs)), safeMax);
         this.cartStore.setPacks(product.id, clamped);
       }
       this.triggerCartPulse();
     } else {
-      this.quantities[product.id] = Math.max(1, Math.floor(packs));
+      this.quantities[product.id] = Math.max(min, Math.floor(packs));
     }
     this.cdr.detectChanges();
   }
@@ -154,18 +158,20 @@ export class CatalogoComponent implements OnInit {
 
   decPacks(product: Product): void {
     if (!product.id) return;
+    const min = this.minPacks();
     const lineInCart = this.cartStore.lines().find(l => l.product.id === product.id);
     if (lineInCart) {
-      if (lineInCart.packs > 1) {
+      if (lineInCart.packs > min) {
         this.cartStore.setPacks(product.id, lineInCart.packs - 1);
       } else {
+        // llegó al mínimo; lo quitamos del carrito (o podríamos mantener con "min")
         this.cartStore.remove(product.id);
-        this.quantities[product.id] = 1;
+        this.quantities[product.id] = min;
       }
       this.triggerCartPulse();
     } else {
       const current = this.getPacks(product);
-      if (current > 1) {
+      if (current > min) {
         this.quantities[product.id] = current - 1;
       }
     }
@@ -189,6 +195,14 @@ export class CatalogoComponent implements OnInit {
     return Number.MAX_SAFE_INTEGER;
   }
 
+  /**
+   * Devuelve el mínimo de packs por línea (config). Útil para mostrar el hint
+   * "mínimo 5 packs por línea" en la grilla.
+   */
+  minPacksPerLine(): number {
+    return this.minPacks();
+  }
+
   async addToCart(product: Product): Promise<void> {
     if (!product.id) return;
     const packs = this.getPacks(product);
@@ -198,7 +212,7 @@ export class CatalogoComponent implements OnInit {
     try {
       this.cartStore.add(product, packs);
       this.triggerCartPulse();
-      this.quantities[product.id] = 1;
+      this.quantities[product.id] = this.minPacks();
       this.addedJustNow.update(s => ({ ...s, [product.id!]: true }));
       setTimeout(() => {
         this.addedJustNow.update(s => ({ ...s, [product.id!]: false }));
