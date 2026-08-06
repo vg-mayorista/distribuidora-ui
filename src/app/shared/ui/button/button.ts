@@ -73,9 +73,9 @@ export type ButtonSize = 'sm' | 'md';
     }
     @keyframes btn-spin { to { transform: rotate(360deg); } }
 
-    .btn--primary { background: var(--orange-base); color: var(--color-text-inverse); border-color: var(--orange-base); }
-    .btn--primary:hover:not(:disabled) { background: var(--orange-600); border-color: var(--orange-600); }
-    .btn--primary:active:not(:disabled) { background: var(--orange-700); border-color: var(--orange-700); }
+    .btn--primary { background: var(--orange-700); color: var(--color-text-inverse); border-color: var(--orange-700); }
+    .btn--primary:hover:not(:disabled) { background: var(--orange-900); border-color: var(--orange-900); }
+    .btn--primary:active:not(:disabled) { background: var(--orange-900); border-color: var(--orange-900); }
 
     .btn--secondary { background: var(--color-surface); color: var(--color-text); border-color: var(--color-border); }
     .btn--secondary:hover:not(:disabled) { background: var(--color-surface-alt); border-color: var(--color-border-strong); }

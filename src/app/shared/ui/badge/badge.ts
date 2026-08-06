@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type BadgeVariant = 'active' | 'inactive' | 'warning' | 'info' | 'neutral' | 'success' | 'danger';
+export type BadgeVariant = 'active' | 'inactive' | 'warning' | 'info' | 'neutral' | 'success' | 'danger' | 'accent';
 
 @Component({
   selector: 'app-badge',
@@ -39,6 +39,15 @@ export type BadgeVariant = 'active' | 'inactive' | 'warning' | 'info' | 'neutral
       background: var(--neutral-50);
       color: var(--neutral-400);
     }
+    .badge--accent {
+      background: #F2EEF8;
+      color: #5B2A86;
+    }
+    /*
+     * Colors registered in DESIGN.md (palette.accent / palette.accent-soft).
+     * Used for the "stock" order-flow badge so it stays categorically distinct
+     * from wholesale (info/gray) without implying success (green) or warning (orange).
+     */
   `],
 })
 export class BadgeComponent {
