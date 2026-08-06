@@ -25,6 +25,7 @@ export class BusinessConfigService {
     minPacksPerLine: this.defaultMinPacksPerLine,
     minOrderAmount: this.defaultMinOrderAmount,
     deliveryWindows: [],
+    nextCutoffInstant: undefined,
   });
   readonly loading = signal<boolean>(false);
   readonly loaded = signal<boolean>(false);
@@ -38,6 +39,7 @@ export class BusinessConfigService {
             minPacksPerLine: data.minPacksPerLine ?? this.defaultMinPacksPerLine,
             minOrderAmount: data.minOrderAmount ?? this.defaultMinOrderAmount,
             deliveryWindows: data.deliveryWindows ?? [],
+            nextCutoffInstant: data.nextCutoffInstant,
           });
         }
         this.loading.set(false);

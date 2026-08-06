@@ -4,5 +4,6 @@ export interface BusinessConfig {
   minPacksPerLine: number;
   minOrderAmount: number;
   deliveryWindows?: DeliveryWindow[];
+  nextCutoffInstant?: string;
   updatedAt?: string;
 }
