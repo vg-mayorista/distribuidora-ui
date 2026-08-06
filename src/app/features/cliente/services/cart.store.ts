@@ -25,7 +25,7 @@ export class CartStore {
 
   private readonly _wholesaleLines = signal<CartLine[]>(this.loadFromStorage(STORAGE_KEY));
   private readonly _wholesaleEditingId = signal<string | null>(this.loadEditingId(EDITING_KEY));
-  private readonly _stockLines = signal<CartLine[]>(this.loadFromStorage(STORAGE_KEY));
+  private readonly _stockLines = signal<CartLine[]>(this.loadFromStorage(STOCK_STORAGE_KEY));
   private readonly _stockEditingOrderId = signal<string | null>(this.loadEditingId(STOCK_EDITING_KEY));
 
   readonly lines = this._wholesaleLines.asReadonly();
