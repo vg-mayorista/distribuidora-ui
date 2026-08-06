@@ -37,6 +37,58 @@
     <a routerLink="/cliente/catalogo" class="stock-info-link" aria-label="Ir al flujo de pedido mayorista para envío programado">¿Querés ver el pedido mayorista? →</a>
   </div>
 
+  <!-- Minimum Order Status Banner (mismas reglas que mayorista) -->
+  <div class="min-order-banner"
+       [class.min-order-banner--success]="cartStore.stockMeetsMinimumRequirements()"
+       *ngIf="cartStore.stockCount() > 0"
+       role="status"
+       aria-live="polite">
+    <div class="min-order-header">
+      <div class="min-order-info">
+        <span class="min-order-icon" aria-hidden="true">
+          {{ cartStore.stockMeetsMinimumRequirements() ? '🎉' : '💡' }}
+        </span>
+        <div class="min-order-text">
+          <strong *ngIf="cartStore.stockMeetsMinimumRequirements()">
+            ¡Reglas de mínimos cumplidas!
+          </strong>
+          <strong *ngIf="!cartStore.stockMeetsMinimumRequirements()">
+            Progreso del pedido
+          </strong>
+          <span class="min-order-subtext" *ngIf="cartStore.stockMontoFaltante() > 0">
+            Faltan <strong>${{ formatPrice(cartStore.stockMontoFaltante()) }}</strong> para llegar a ${{ formatPrice(minOrderAmount()) }}.
+          </span>
+          <span class="min-order-subtext" *ngIf="cartStore.stockOffendingLines().length > 0">
+            Cada producto necesita al menos {{ minPacksPerLine() }} unidades físicas.
+          </span>
+          <span class="min-order-subtext" *ngIf="cartStore.stockMeetsMinimumRequirements()">
+            Tu pedido cumple con ambos mínimos y está listo para confirmar.
+          </span>
+        </div>
+      </div>
+      <div class="min-order-progress-group"
+           *ngIf="cartStore.stockOffendingLines().length > 0">
+        <div class="min-order-badge" *ngFor="let bad of cartStore.stockOffendingLines()">
+          {{ bad.product.name }}: {{ bad.packs }} pack{{ bad.packs === 1 ? '' : 's' }} (mín. {{ minPacksPerLine() }} u. físicas).
+        </div>
+      </div>
+      <div class="min-order-badge min-order-badge--success"
+           *ngIf="cartStore.stockMeetsMinimumRequirements()">
+        ✓ Reglas cumplidas
+      </div>
+    </div>
+
+    <!-- Visual Progress Bar -->
+    <div class="min-order-progress-wrapper"
+         *ngIf="!cartStore.stockMeetsMinimumRequirements()">
+      <div class="min-order-progress-track">
+        <div class="min-order-progress-fill"
+             [style.transform]="'scaleX(' + (cartStore.stockProgressPercentage() / 100) + ')'"></div>
+      </div>
+      <span class="min-order-progress-pct">{{ cartStore.stockProgressPercentage() }}%</span>
+    </div>
+  </div>
+
   <div class="category-filters-wrapper" *ngIf="categories().length > 0 && !loading()">
     <div class="category-filters">
       <button type="button" class="filter-pill"
@@ -80,9 +132,10 @@
           <p class="product-card-pack">{{ packLabel(p) }}</p>
           <div class="product-card-price-row">
             <span class="product-card-price">${{ formatPrice(p.price) }}</span>
-            <span class="stock-available-badge" [class.stock-available-badge--low]="(p.stock ?? 0) < 20">
-              {{ p.stock ?? 0 }} unidades disponibles
-            </span>
+            <app-badge
+              [variant]="p.stockStatus === 'LOW_STOCK' ? 'warning' : 'success'">
+              {{ p.stockStatus === 'LOW_STOCK' ? 'Stock bajo' : 'En stock' }}
+            </app-badge>
           </div>
         </div>
         <div class="product-card-actions">
@@ -90,13 +143,13 @@
             <div class="qty-control qty-control--active">
               <button type="button" class="qty-btn qty-btn--active-dec"
                       (click)="decPacks(p)"
-                      [attr.aria-label]="stockInCart(p) === 1 ? 'Quitar del carrito' : 'Restar un pack'">
-                <span *ngIf="stockInCart(p) === 1" aria-hidden="true">🗑</span>
-                <span *ngIf="stockInCart(p) > 1" aria-hidden="true">−</span>
+                      [attr.aria-label]="stockInCart(p) <= effectiveMinPacksFor(p) ? 'Quitar del carrito' : 'Restar un pack'">
+                <span *ngIf="stockInCart(p) <= effectiveMinPacksFor(p)" aria-hidden="true">🗑</span>
+                <span *ngIf="stockInCart(p) > effectiveMinPacksFor(p)" aria-hidden="true">−</span>
               </button>
               <div class="qty-display qty-display--active">
                 <span class="qty-value">{{ stockInCart(p) }}</span>
-                <span class="qty-label">en carrito</span>
+                <span class="qty-label">packs en carrito</span>
               </div>
               <button type="button" class="qty-btn" (click)="incPacks(p)"
                       [disabled]="maxPacksFor(p) <= 0" aria-label="Sumar un pack">+</button>
