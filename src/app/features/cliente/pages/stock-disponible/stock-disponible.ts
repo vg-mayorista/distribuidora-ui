@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, signal, computed, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -42,6 +42,7 @@ export class StockDisponibleComponent implements OnInit {
   loading = signal(false);
   error = signal<string | null>(null);
   cartPulse = signal(false);
+  isScrolled = signal(false);
   adding = signal<Record<string, boolean>>({});
   addedJustNow = signal<Record<string, boolean>>({});
 
@@ -72,6 +73,13 @@ export class StockDisponibleComponent implements OnInit {
     this.configService.loadConfig();
     this.loadProducts();
     this.loadCategories();
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    if (typeof window !== 'undefined') {
+      this.isScrolled.set(window.scrollY > 120);
+    }
   }
 
   loadProducts(): void {

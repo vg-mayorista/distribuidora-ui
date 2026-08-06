@@ -624,3 +624,55 @@
   outline: 2px solid var(--orange-base);
   outline-offset: 2px;
 }
+
+/* Cart header capsule — primary surface for cart access.
+   Mirrors the wholesale visual contract so the stock cart button
+   stops rendering as an unstyled browser-default anchor. */
+.cart-header-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+.cart-header-capsule--primary {
+  background: var(--orange-base);
+  color: var(--color-text-inverse);
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  min-height: 44px;
+  box-shadow: 0 2px 8px rgba(242, 121, 14, 0.25);
+  transition: filter var(--transition-fast), transform var(--transition-fast);
+}
+.cart-header-capsule--primary:hover {
+  filter: brightness(0.92);
+  transform: translateY(-1px);
+}
+.cart-header-capsule--primary:focus-visible {
+  outline: 2px solid var(--orange-base);
+  outline-offset: 2px;
+}
+
+@keyframes cartPulseBadge {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+.cart-pulse-badge {
+  animation: cartPulseBadge 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cart-pulse-badge,
+  .cart-fab-btn,
+  .cart-btn-badge.badge-pulse,
+  .product-card-actions app-button[variant="success"] {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -15,7 +15,8 @@
                (keydown.escape)="clearSearch()">
         <button *ngIf="searchTerm()" type="button" class="search-clear-btn" (click)="clearSearch()">✕</button>
       </div>
-      <button type="button" class="cart-header-capsule" (click)="viewCart()" [class.cart-pulse-badge]="cartPulse()">
+      <button type="button" class="cart-header-capsule cart-header-capsule--primary" (click)="viewCart()" [class.cart-pulse-badge]="cartPulse()"
+              [attr.aria-label]="cartStore.stockCount() > 0 ? 'Ver carrito de stock: ' + cartStore.stockCount() + ' packs, total $' + formatPrice(cartStore.stockSubtotal()) : 'Ver carrito de stock (vacío)'">
         <span class="cart-btn-icon" aria-hidden="true">📦</span>
         <span>Carrito stock</span>
         <span *ngIf="cartStore.stockCount() > 0" class="cart-btn-badge" [class.badge-pulse]="cartPulse()">
@@ -127,4 +128,20 @@
       <p>No hay stock disponible por ahora. Probá volver más tarde o hace tu <a routerLink="/cliente/catalogo">pedido mayorista</a>.</p>
     </div>
   </ng-container>
+
+  <!-- Persistent Floating Action Button (FAB) on Scroll / Mobile -->
+  <div *ngIf="cartStore.stockCount() > 0"
+       class="cart-fab-container"
+       [class.cart-fab-container--visible]="isScrolled()"
+       [class.cart-pulse-fab]="cartPulse()">
+    <button type="button"
+            class="cart-fab-btn"
+            (click)="viewCart()"
+            [attr.aria-label]="'Ver carrito de stock con ' + cartStore.stockCount() + ' packs por $' + formatPrice(cartStore.stockSubtotal())">
+      <span class="cart-fab-icon" aria-hidden="true">📦</span>
+      <span class="cart-fab-badge">{{ cartStore.stockCount() }}</span>
+      <span class="cart-fab-total">${{ formatPrice(cartStore.stockSubtotal()) }}</span>
+      <span class="cart-fab-arrow" aria-hidden="true">→</span>
+    </button>
+  </div>
 </section>
