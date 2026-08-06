@@ -33,7 +33,12 @@ export class CartStore {
   readonly stockLines = this._stockLines.asReadonly();
   readonly stockEditingOrderId = this._stockEditingOrderId.asReadonly();
 
-  /** Mínimo global de packs por línea (default 5). */
+  /**
+   * Mínimo global por línea en **unidades físicas** (default 5).
+   * El nombre del campo conserva "Packs" por compatibilidad con migraciones,
+   * pero la semántica desde hoy es "mínimo de unidades físicas por línea".
+   * Para pack de 1u → 5 packs. Para pack de 12u → 1 pack basta.
+   */
   readonly minPacksPerLine = computed<number>(() =>
     this.configService.config()?.minPacksPerLine ?? 5
   );
@@ -42,6 +47,19 @@ export class CartStore {
   readonly minOrderAmount = computed<number>(() =>
     this.configService.config()?.minOrderAmount ?? 30000
   );
+
+  /**
+   * Mínimo de packs que necesita un producto puntual para alcanzar el mínimo
+   * de unidades físicas de la línea. Útil para UX (trash vs minus, hints).
+   *   unitsPerPack=1  → ceil(5/1)  = 5 packs
+   *   unitsPerPack=2  → ceil(5/2)  = 3 packs
+   *   unitsPerPack=4  → ceil(5/4)  = 2 packs
+   *   unitsPerPack=12 → ceil(5/12) = 1 pack
+   */
+  effectiveMinPacksFor(unitsPerPack: number): number {
+    const units = unitsPerPack > 0 ? unitsPerPack : 1;
+    return Math.ceil(this.minPacksPerLine() / units);
+  }
 
   readonly stockMinPacksPerLine = this.minPacksPerLine;
   readonly stockMinOrderAmount = this.minOrderAmount;
@@ -118,30 +136,39 @@ export class CartStore {
 
   readonly stockUnidadesFaltantes = computed(() => 0);
 
-  /** Mayorista: cada línea cumple el mínimo de packs. */
+  /**
+   * Mayorista: cada línea cumple el mínimo de unidades físicas
+   * (packs × unitsPerPack >= minPacksPerLine).
+   * El campo conserva el nombre histórico `minPacksPerLine` para evitar
+   * migraciones, pero su semántica es "mínimo de unidades físicas por línea".
+   */
   readonly meetsPerLineMinimum = computed(() => {
     const lines = this._wholesaleLines();
     if (lines.length === 0) return false;
     const min = this.minPacksPerLine();
-    return lines.every(l => l.packs >= min);
+    return lines.every(l => l.packs * Math.max(l.product.unitsPerPack, 1) >= min);
   });
 
   readonly stockMeetsPerLineMinimum = computed(() => {
     const lines = this._stockLines();
     if (lines.length === 0) return false;
     const min = this.stockMinPacksPerLine();
-    return lines.every(l => l.packs >= min);
+    return lines.every(l => l.packs * Math.max(l.product.unitsPerPack, 1) >= min);
   });
 
-  /** Líneas que no cumplen el mínimo — usado para mostrar mensajes. */
+  /** Líneas que no cumplen el mínimo de unidades físicas. */
   readonly offendingLines = computed(() => {
     const min = this.minPacksPerLine();
-    return this._wholesaleLines().filter(l => l.packs < min);
+    return this._wholesaleLines().filter(
+      l => l.packs * Math.max(l.product.unitsPerPack, 1) < min
+    );
   });
 
   readonly stockOffendingLines = computed(() => {
     const min = this.stockMinPacksPerLine();
-    return this._stockLines().filter(l => l.packs < min);
+    return this._stockLines().filter(
+      l => l.packs * Math.max(l.product.unitsPerPack, 1) < min
+    );
   });
 
   /** Compuesto: ambas reglas (per-line y subtotal). */
@@ -253,8 +280,10 @@ export class CartStore {
     storageKey: string
   ): void {
     const unitsPerPack = product.unitsPerPack > 0 ? product.unitsPerPack : 1;
-    const min = target === 'wholesale' ? this.minPacksPerLine() : this.stockMinPacksPerLine();
-    const safePacks = Math.max(min, Math.floor(packs));
+    const minUnits = target === 'wholesale' ? this.minPacksPerLine() : this.stockMinPacksPerLine();
+    // Mínimo de packs necesario para alcanzar el mínimo de unidades físicas.
+    const minPacks = Math.ceil(minUnits / unitsPerPack);
+    const safePacks = Math.max(minPacks, Math.floor(packs));
     const apply = (list: CartLine[]): CartLine[] => {
       const existing = list.find(l => l.product.id === product.id);
       if (existing) {
@@ -286,10 +315,12 @@ export class CartStore {
     const apply = (list: CartLine[]): CartLine[] =>
       list.map(l => {
         if (l.product.id !== productId) return l;
-        const min = target === 'wholesale' ? this.minPacksPerLine() : this.stockMinPacksPerLine();
+        const minUnits = target === 'wholesale' ? this.minPacksPerLine() : this.stockMinPacksPerLine();
+        const unitsPerPack = l.product.unitsPerPack > 0 ? l.product.unitsPerPack : 1;
+        const minPacks = Math.ceil(minUnits / unitsPerPack);
         const safeMax = l.maxAllowed > 0 ? l.maxAllowed : Number.MAX_SAFE_INTEGER;
-        const clamped = Math.min(Math.max(min, Math.floor(packs)), safeMax);
-        return { ...l, packs: clamped, physicalUnits: clamped * (l.product.unitsPerPack || 1) };
+        const clamped = Math.min(Math.max(minPacks, Math.floor(packs)), safeMax);
+        return { ...l, packs: clamped, physicalUnits: clamped * unitsPerPack };
       });
 
     if (packs <= 0) {
@@ -341,12 +372,18 @@ export class CartStore {
       const raw = sessionStorage.getItem(key);
       if (!raw) return [];
       const parsed = JSON.parse(raw) as CartLine[];
-      const min = this.configService.config()?.minPacksPerLine ?? 5;
-      return parsed.map(l => ({
-        ...l,
-        packs: Math.max(min, typeof l.packs === 'number' ? l.packs : min),
-        maxAllowed: typeof l.maxAllowed === 'number' ? l.maxAllowed : Number.MAX_SAFE_INTEGER,
-      }));
+      const minUnits = this.configService.config()?.minPacksPerLine ?? 5;
+      return parsed.map(l => {
+        const unitsPerPack = l.product?.unitsPerPack > 0 ? l.product.unitsPerPack : 1;
+        const minPacks = Math.ceil(minUnits / unitsPerPack);
+        const rawPacks = typeof l.packs === 'number' ? l.packs : minPacks;
+        return {
+          ...l,
+          packs: Math.max(minPacks, rawPacks),
+          physicalUnits: Math.max(minPacks, rawPacks) * unitsPerPack,
+          maxAllowed: typeof l.maxAllowed === 'number' ? l.maxAllowed : Number.MAX_SAFE_INTEGER,
+        };
+      });
     } catch {
       return [];
     }

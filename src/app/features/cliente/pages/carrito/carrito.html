@@ -46,7 +46,7 @@
             {{ line.packs }} pack{{ line.packs === 1 ? '' : 's' }} = <strong>{{ line.physicalUnits }}</strong> unidades
           </p>
           <p class="cart-line-min" [class.cart-line-min--offending]="isOffending(line)">
-            Mínimo por línea: {{ minPacksPerLine() }} packs.
+            Mínimo por línea: {{ minPacksPerLine() }} unidades físicas.
           </p>
         </div>
         <div class="cart-line-actions">
@@ -54,10 +54,10 @@
             <button type="button"
                     class="qty-btn"
                     (click)="dec(line)"
-                    [disabled]="line.packs <= minPacksPerLine()"
+                    [disabled]="line.packs <= effectiveMinPacksFor(line.product.unitsPerPack)"
                     aria-label="Quitar un pack">−</button>
             <input type="number"
-                   [min]="minPacksPerLine()"
+                   [min]="effectiveMinPacksFor(line.product.unitsPerPack)"
                    class="qty-input"
                    [value]="line.packs"
                    (input)="onInputChange(line, $event)"
@@ -108,11 +108,11 @@
               Faltan <strong>${{ formatPrice(cartStore.montoFaltante()) }}</strong> para llegar a ${{ formatPrice(minOrderAmount()) }}.
             </li>
             <li *ngFor="let bad of offendingLines()">
-              {{ bad.product.name }}: {{ bad.packs }} / {{ minPacksPerLine() }} packs.
+              {{ bad.product.name }}: {{ bad.packs }} pack{{ bad.packs === 1 ? '' : 's' }} (mín. {{ minPacksPerLine() }} u. físicas).
             </li>
           </ul>
           <small class="summary-min-hint">
-            Cada producto necesita al menos {{ minPacksPerLine() }} packs y el subtotal al menos ${{ formatPrice(minOrderAmount()) }}.
+            Cada producto necesita al menos {{ minPacksPerLine() }} unidades físicas y el subtotal al menos ${{ formatPrice(minOrderAmount()) }}.
           </small>
         </ng-container>
       </div>

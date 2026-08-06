@@ -80,7 +80,7 @@
             Faltan <strong>${{ formatPrice(cartStore.montoFaltante()) }}</strong> para llegar a ${{ formatPrice(minOrderAmount()) }}.
           </span>
           <span class="min-order-subtext" *ngIf="cartStore.offendingLines().length > 0">
-            Cada producto necesita al menos {{ minPacksPerLine() }} packs.
+            Cada producto necesita al menos {{ minPacksPerLine() }} unidades físicas.
           </span>
           <span class="min-order-subtext" *ngIf="cartStore.meetsPerLineMinimum() && cartStore.montoFaltante() === 0">
             Tu pedido cumple con ambos mínimos y está listo para confirmar.
@@ -90,7 +90,7 @@
       <div class="min-order-progress-group"
            *ngIf="cartStore.offendingLines().length > 0">
         <div class="min-order-badge" *ngFor="let bad of cartStore.offendingLines()">
-          {{ bad.product.name }}: {{ bad.packs }} / {{ minPacksPerLine() }} packs.
+          {{ bad.product.name }}: {{ bad.packs }} pack{{ bad.packs === 1 ? '' : 's' }} (mín. {{ minPacksPerLine() }} u. físicas).
         </div>
       </div>
       <div class="min-order-badge min-order-badge--success"
@@ -163,10 +163,10 @@
               <button type="button"
                       class="qty-btn qty-btn--active-dec"
                       (click)="decPacks(p)"
-                      [disabled]="getPacks(p) <= minPacksPerLine()"
-                      [attr.aria-label]="getPacks(p) <= minPacksPerLine() ? 'Quitar del carrito' : 'Restar un pack'">
-                <span *ngIf="getPacks(p) <= minPacksPerLine()" aria-hidden="true">🗑</span>
-                <span *ngIf="getPacks(p) > minPacksPerLine()" aria-hidden="true">−</span>
+                      [disabled]="getPacks(p) <= effectiveMinPacksFor(p)"
+                      [attr.aria-label]="getPacks(p) <= effectiveMinPacksFor(p) ? 'Quitar del carrito' : 'Restar un pack'">
+                <span *ngIf="getPacks(p) <= effectiveMinPacksFor(p)" aria-hidden="true">🗑</span>
+                <span *ngIf="getPacks(p) > effectiveMinPacksFor(p)" aria-hidden="true">−</span>
               </button>
               <div class="qty-display qty-display--active">
                 <span class="qty-value">{{ getPacks(p) }}</span>
@@ -188,7 +188,7 @@
           <!-- State B: Product NOT in Cart -->
           <ng-container *ngIf="!isInCart(p)">
             <div class="qty-control">
-              <button type="button" class="qty-btn" (click)="decPacks(p)" [disabled]="getPacks(p) <= minPacksPerLine()" aria-label="Quitar un pack">−</button>
+              <button type="button" class="qty-btn" (click)="decPacks(p)" [disabled]="getPacks(p) <= effectiveMinPacksFor(p)" aria-label="Quitar un pack">−</button>
               <div class="qty-display">
                 <span class="qty-value">{{ getPacks(p) }}</span>
                 <span class="qty-label">pack{{ getPacks(p) === 1 ? '' : 's' }}</span>
@@ -201,7 +201,7 @@
             <app-button variant="primary" size="sm" [block]="true" (onClick)="addToCart(p)" [loading]="adding()[p.id!]">
               Agregar al carrito
             </app-button>
-            <small class="qty-hint">Mínimo {{ minPacksPerLine() }} packs por línea.</small>
+            <small class="qty-hint">Mínimo {{ minPacksPerLine() }} unidades físicas por línea.</small>
           </ng-container>
         </div>
       </article>
@@ -243,10 +243,10 @@
                 <button type="button"
                         class="qty-btn"
                         (click)="decPacks(p)"
-                        [disabled]="!isInCart(p) && getPacks(p) <= minPacksPerLine() || (isInCart(p) && getPacks(p) <= minPacksPerLine())"
-                        [attr.aria-label]="(isInCart(p) && getPacks(p) <= minPacksPerLine()) ? 'Quitar del carrito' : 'Restar un pack'">
-                  <span *ngIf="isInCart(p) && getPacks(p) <= minPacksPerLine()">🗑</span>
-                  <span *ngIf="!isInCart(p) || getPacks(p) > minPacksPerLine()">−</span>
+                        [disabled]="!isInCart(p) && getPacks(p) <= effectiveMinPacksFor(p) || (isInCart(p) && getPacks(p) <= effectiveMinPacksFor(p))"
+                        [attr.aria-label]="(isInCart(p) && getPacks(p) <= effectiveMinPacksFor(p)) ? 'Quitar del carrito' : 'Restar un pack'">
+                  <span *ngIf="isInCart(p) && getPacks(p) <= effectiveMinPacksFor(p)">🗑</span>
+                  <span *ngIf="!isInCart(p) || getPacks(p) > effectiveMinPacksFor(p)">−</span>
                 </button>
                 <div class="qty-display">
                   <span class="qty-value">{{ getPacks(p) }}</span>

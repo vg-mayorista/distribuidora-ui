@@ -30,9 +30,17 @@ export class CarritoComponent implements OnInit {
   subtotal = this.cart.subtotal;
   offendingLines = this.cart.offendingLines;
 
-  /** Mínimo de packs por línea tomado del BusinessConfig del backend (default 5). */
+  /**
+   * Mínimo de unidades físicas por línea (default 5). El nombre del campo
+   * conserva "Packs" por compatibilidad con la migración.
+   */
   minPacksPerLine(): number {
     return this.configService.config()?.minPacksPerLine ?? 5;
+  }
+
+  /** Mínimo de packs para un producto puntual. */
+  effectiveMinPacksFor(unitsPerPack: number): number {
+    return this.cart.effectiveMinPacksFor(unitsPerPack);
   }
 
   /** Subtotal mínimo del pedido (default 30.000). */
@@ -69,7 +77,7 @@ export class CarritoComponent implements OnInit {
 
   onInputChange(line: CartLine, event: Event): void {
     const target = event.target as HTMLInputElement;
-    const min = this.minPacksPerLine();
+    const min = this.effectiveMinPacksFor(line.product.unitsPerPack);
     const n = Math.floor(Number(target.value));
     if (!Number.isFinite(n) || n < min) {
       target.value = String(line.packs);
@@ -104,6 +112,6 @@ export class CarritoComponent implements OnInit {
   }
 
   isOffending(line: CartLine): boolean {
-    return line.packs < this.minPacksPerLine();
+    return line.packs < this.effectiveMinPacksFor(line.product.unitsPerPack);
   }
 }

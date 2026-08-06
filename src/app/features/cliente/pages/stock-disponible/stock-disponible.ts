@@ -38,6 +38,7 @@ export class StockDisponibleComponent implements OnInit {
   searchTerm = signal('');
   quantities: Record<string, number> = {};
   maxPacksByProduct: Record<string, number> = {};
+  private liveStock = signal<Record<string, number>>({});
 
   loading = signal(false);
   error = signal<string | null>(null);
@@ -49,24 +50,50 @@ export class StockDisponibleComponent implements OnInit {
   filteredProducts = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
     const categoryId = this.selectedCategoryId();
+    const stockMap = this.liveStock();
+    const statusPriority = (s: Product['stockStatus']) =>
+      s === 'IN_STOCK' ? 2 : s === 'LOW_STOCK' ? 1 : 0;
+    const stockOf = (id?: string) =>
+      id != null && stockMap[id] != null ? stockMap[id] : 0;
     let list = this.products();
     if (categoryId) {
       list = list.filter(p => p.categoryId === categoryId);
     }
-    if (!term) {
-      return [...list].sort((a, b) => (b.stock ?? 0) - (a.stock ?? 0));
-    }
-    return list
+    const sorted = [...list].sort((a, b) => {
+      const statusDiff = statusPriority(b.stockStatus) - statusPriority(a.stockStatus);
+      if (statusDiff !== 0) return statusDiff;
+      return stockOf(b.id) - stockOf(a.id);
+    });
+    if (!term) return sorted;
+    return sorted
       .filter(p => p.name.toLowerCase().includes(term) || (p.description ?? '').toLowerCase().includes(term))
-      .sort((a, b) => (b.stock ?? 0) - (a.stock ?? 0));
+      .sort((a, b) => {
+        const statusDiff = statusPriority(b.stockStatus) - statusPriority(a.stockStatus);
+        if (statusDiff !== 0) return statusDiff;
+        return stockOf(b.id) - stockOf(a.id);
+      });
   });
 
   private minPacks(): number {
     return this.configService.config()?.minPacksPerLine ?? 5;
   }
 
+  /**
+   * Mínimo de unidades físicas por línea (default 5).
+   * El nombre del campo conserva "Packs" por compatibilidad, pero la semántica
+   * desde este PR es "unidades físicas".
+   */
   minPacksPerLine(): number {
     return this.minPacks();
+  }
+
+  /** Mínimo de packs para un producto puntual. */
+  effectiveMinPacksFor(product: Product): number {
+    return this.cartStore.effectiveMinPacksFor(product.unitsPerPack);
+  }
+
+  minOrderAmount(): number {
+    return this.configService.config()?.minOrderAmount ?? 30000;
   }
 
   ngOnInit(): void {
@@ -86,18 +113,36 @@ export class StockDisponibleComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     this.productService.getProducts().subscribe({
-      next: (data) => {
-        const inStock = data.content.filter(p => p.active && (p.stock ?? 0) > 0);
+      next: async (data) => {
+        const inStock = data.content.filter(
+          p => p.active && p.stockStatus !== 'OUT_OF_STOCK'
+        );
         this.products.set(inStock);
+        const ids = inStock
+          .map(p => p.id)
+          .filter((id): id is string => !!id);
+        let liveStockMap: Record<string, number> = {};
+        if (ids.length > 0) {
+          try {
+            const raw = await firstValueFrom(this.cartService.checkStock(ids));
+            for (const [id, value] of Object.entries(raw ?? {})) {
+              liveStockMap[id] = Number(value) || 0;
+            }
+          } catch {
+            liveStockMap = {};
+          }
+        }
+        this.liveStock.set(liveStockMap);
         this.loading.set(false);
-        const min = this.minPacks();
         for (const p of inStock) {
           if (p.id && !(p.id in this.quantities)) {
-            this.quantities[p.id] = min;
+            this.quantities[p.id] = this.effectiveMinPacksFor(p);
           }
           if (p.id && p.unitsPerPack > 0) {
-            const stockPacks = Math.floor((p.stock ?? 0) / p.unitsPerPack);
-            this.maxPacksByProduct[p.id] = Math.max(stockPacks, min);
+            const units = liveStockMap[p.id] ?? 0;
+            const stockPacks = Math.floor(units / p.unitsPerPack);
+            const effectiveMin = this.effectiveMinPacksFor(p);
+            this.maxPacksByProduct[p.id] = Math.max(stockPacks, effectiveMin);
           }
         }
       },
@@ -130,26 +175,29 @@ export class StockDisponibleComponent implements OnInit {
   }
 
   getPacks(product: Product): number {
-    if (!product.id) return this.minPacks();
+    if (!product.id) return this.effectiveMinPacksFor(product);
     const lineInCart = this.cartStore.stockLines().find(l => l.product.id === product.id);
     if (lineInCart) return lineInCart.packs;
-    const current = this.quantities[product.id] ?? this.minPacks();
+    const current = this.quantities[product.id] ?? this.effectiveMinPacksFor(product);
     const maxPacks = this.maxPacksFor(product);
     if (maxPacks <= 0) return 0;
-    return Math.min(Math.max(this.minPacks(), current), maxPacks);
+    return Math.min(Math.max(this.effectiveMinPacksFor(product), current), maxPacks);
   }
 
   maxPacksFor(product: Product): number {
     if (!product.id) return 0;
     const cartLine = this.cartStore.stockLines().find(l => l.product.id === product.id);
     const inCart = cartLine ? cartLine.packs : 0;
-    const live = this.maxPacksByProduct[product.id] ?? Math.floor((product.stock ?? 0) / Math.max(product.unitsPerPack, 1));
-    return Math.max(0, live - inCart);
+    const cached = this.maxPacksByProduct[product.id];
+    if (cached != null) return Math.max(0, cached - inCart);
+    const live = this.liveStock()[product.id] ?? 0;
+    const fallbackPacks = Math.floor(live / Math.max(product.unitsPerPack, 1));
+    return Math.max(0, fallbackPacks - inCart);
   }
 
   setPacks(product: Product, packs: number): void {
     if (!product.id) return;
-    const min = this.minPacks();
+    const min = this.effectiveMinPacksFor(product);
     const lineInCart = this.cartStore.stockLines().find(l => l.product.id === product.id);
     if (lineInCart) {
       if (packs <= 0) {
@@ -185,7 +233,7 @@ export class StockDisponibleComponent implements OnInit {
 
   decPacks(product: Product): void {
     if (!product.id) return;
-    const min = this.minPacks();
+    const min = this.effectiveMinPacksFor(product);
     const lineInCart = this.cartStore.stockLines().find(l => l.product.id === product.id);
     if (lineInCart) {
       if (lineInCart.packs > min) {
@@ -203,7 +251,7 @@ export class StockDisponibleComponent implements OnInit {
 
   async addToCart(product: Product): Promise<void> {
     if (!product.id) return;
-    const min = this.minPacks();
+    const min = this.effectiveMinPacksFor(product);
     const packs = this.getPacks(product);
     if (packs <= 0) return;
     this.adding.update(s => ({ ...s, [product.id!]: true }));

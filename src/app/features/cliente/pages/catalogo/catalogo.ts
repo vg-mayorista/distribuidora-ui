@@ -90,10 +90,9 @@ export class CatalogoComponent implements OnInit {
         const activeProducts = data.content.filter(p => p.active);
         this.products.set(activeProducts);
         this.loading.set(false);
-        const min = this.minPacks();
         for (const p of activeProducts) {
           if (p.id && !(p.id in this.quantities)) {
-            this.quantities[p.id] = min;
+            this.quantities[p.id] = this.effectiveMinPacksFor(p);
           }
         }
       },
@@ -112,21 +111,22 @@ export class CatalogoComponent implements OnInit {
   }
 
   /**
-   * Mayorista: el input arranca en el mínimo de packs por línea y puede crecer.
+   * Mayorista: el input arranca en el mínimo de packs efectivos del producto.
+   * (1 pack para productos con unitsPerPack >= 5, ceil(5/unitsPerPack) para unitarios).
    */
   getPacks(product: Product): number {
-    if (!product.id) return this.minPacks();
+    if (!product.id) return this.effectiveMinPacksFor(product);
     const lineInCart = this.cartStore.lines().find(l => l.product.id === product.id);
     if (lineInCart) {
       return lineInCart.packs;
     }
-    const current = this.quantities[product.id] ?? this.minPacks();
-    return Math.max(this.minPacks(), Math.floor(current));
+    const current = this.quantities[product.id] ?? this.effectiveMinPacksFor(product);
+    return Math.max(this.effectiveMinPacksFor(product), Math.floor(current));
   }
 
   setPacks(product: Product, packs: number): void {
     if (!product.id) return;
-    const min = this.minPacks();
+    const min = this.effectiveMinPacksFor(product);
     const lineInCart = this.cartStore.lines().find(l => l.product.id === product.id);
     const safeMax = Number.MAX_SAFE_INTEGER;
     if (lineInCart) {
@@ -158,20 +158,20 @@ export class CatalogoComponent implements OnInit {
 
   decPacks(product: Product): void {
     if (!product.id) return;
-    const min = this.minPacks();
+    const effectiveMin = this.effectiveMinPacksFor(product);
     const lineInCart = this.cartStore.lines().find(l => l.product.id === product.id);
     if (lineInCart) {
-      if (lineInCart.packs > min) {
+      if (lineInCart.packs > effectiveMin) {
         this.cartStore.setPacks(product.id, lineInCart.packs - 1);
       } else {
-        // llegó al mínimo; lo quitamos del carrito (o podríamos mantener con "min")
+        // llegó al mínimo de unidades físicas; lo quitamos del carrito
         this.cartStore.remove(product.id);
-        this.quantities[product.id] = min;
+        this.quantities[product.id] = effectiveMin;
       }
       this.triggerCartPulse();
     } else {
       const current = this.getPacks(product);
-      if (current > min) {
+      if (current > effectiveMin) {
         this.quantities[product.id] = current - 1;
       }
     }
@@ -196,11 +196,20 @@ export class CatalogoComponent implements OnInit {
   }
 
   /**
-   * Devuelve el mínimo de packs por línea (config). Útil para mostrar el hint
-   * "mínimo 5 packs por línea" en la grilla.
+   * Devuelve el mínimo de unidades físicas por línea (config).
+   * El nombre conserva "Packs" por compatibilidad con la migración, pero la
+   * semántica real desde este PR es "unidades físicas".
    */
   minPacksPerLine(): number {
     return this.minPacks();
+  }
+
+  /**
+   * Mínimo de packs para un producto puntual. Si el pack trae 12 unidades,
+   * 1 pack ya alcanza el mínimo de 5 unidades físicas.
+   */
+  effectiveMinPacksFor(product: Product): number {
+    return this.cartStore.effectiveMinPacksFor(product.unitsPerPack);
   }
 
   /** Subtotal mínimo del pedido (default 30.000). */
