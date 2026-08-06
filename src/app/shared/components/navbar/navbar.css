@@ -85,7 +85,7 @@
   width: 28px;
   height: 28px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--green-base), #385611);
+  background: linear-gradient(135deg, var(--green-base), var(--green-700));
   color: var(--color-text-inverse);
   display: flex;
   align-items: center;

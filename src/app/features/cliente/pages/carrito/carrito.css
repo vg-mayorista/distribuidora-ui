@@ -117,17 +117,17 @@
   margin-top: 1rem;
   padding: 0.75rem;
   border-radius: var(--radius-md, 8px);
-  background: var(--orange-50, #FFF7ED);
-  border: 1px solid var(--orange-200, #FED7AA);
+  background: var(--orange-50);
+  border: 1px solid var(--orange-100);
 }
 
 .summary-min-order-box--success {
-  background: var(--green-50, #F0FDF4);
-  border-color: var(--green-200, #BBF7D0);
+  background: var(--green-50);
+  border-color: var(--green-100);
 }
 
 .min-order-check {
-  color: var(--green-900, #14532D);
+  color: var(--green-900);
   font-weight: 600;
   font-size: 0.85rem;
   display: block;
@@ -137,19 +137,19 @@
   margin: 0 0 0.4rem 0;
   font-size: 0.85rem;
   font-weight: 700;
-  color: var(--orange-950, #431407);
+  color: var(--orange-900);
 }
 
 .summary-min-list {
   margin: 0 0 0.4rem 0;
   padding-left: 1.2rem;
   font-size: 0.82rem;
-  color: var(--orange-900, #7C2D12);
+  color: var(--orange-900);
 }
 
 .summary-min-hint {
   font-size: 0.75rem;
-  color: var(--color-text-muted, #64748B);
+  color: var(--color-text-muted);
   display: block;
 }
 
