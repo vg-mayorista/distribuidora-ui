@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, signal, computed, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ProductService } from '../../../../services/product.service';
 import { CategoryService } from '../../../../services/category.service';
 import { BusinessConfigService } from '../../../../services/business-config.service';
@@ -15,7 +15,7 @@ import { getProductEmoji } from '../../../../shared/utils/product-emoji';
 @Component({
   selector: 'app-catalogo',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, BadgeComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ButtonComponent, BadgeComponent],
   templateUrl: './catalogo.html',
   styleUrl: './catalogo.css',
 })

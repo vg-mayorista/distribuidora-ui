@@ -27,13 +27,13 @@
     </div>
   </header>
 
-  <div class="stock-info-banner" role="status">
+  <div class="stock-info-banner">
     <div class="stock-info-icon" aria-hidden="true">📦</div>
     <div class="stock-info-text">
       <strong>Stock en sucursal.</strong>
       <span>Comprá y retirá hoy mismo, o coordiná el envío a domicilio.</span>
     </div>
-    <a routerLink="/cliente/catalogo" class="stock-info-link">¿Querés hacer un pedido mayorista? →</a>
+    <a routerLink="/cliente/catalogo" class="stock-info-link" aria-label="Ir al flujo de pedido mayorista para envío programado">¿Querés ver el pedido mayorista? →</a>
   </div>
 
   <div class="category-filters-wrapper" *ngIf="categories().length > 0 && !loading()">

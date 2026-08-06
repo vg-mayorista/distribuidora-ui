@@ -559,3 +559,68 @@
     justify-content: flex-start;
   }
 }
+
+/* Cross-flow switcher banner (shared visual contract with catalogo) */
+.stock-info-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  padding: var(--space-md) var(--space-lg);
+  background: linear-gradient(135deg, var(--orange-50) 0%, var(--color-surface-alt) 100%);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--orange-base);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-md);
+}
+
+.stock-info-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.stock-info-text {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--color-text-strong);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}
+
+.stock-info-text strong {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-strong);
+}
+
+.stock-info-text span {
+  color: var(--color-text-muted);
+}
+
+.stock-info-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-md);
+  background: var(--orange-base);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+  transition: filter var(--transition-fast), transform var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.stock-info-link:hover {
+  filter: brightness(0.92);
+  transform: translateY(-1px);
+}
+
+.stock-info-link:focus-visible {
+  outline: 2px solid var(--orange-base);
+  outline-offset: 2px;
+}
