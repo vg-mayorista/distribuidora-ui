@@ -1,149 +1,147 @@
 <div class="page-container">
   <div class="page-header">
     <div class="page-header-text">
-      <h1 class="page-header-title">Reportes del Negocio</h1>
-      <p class="page-header-subtitle">Volumen de ventas, ticket promedio, productos más vendidos, mejores clientes y alertas de stock.</p>
+      <h1 class="page-header-title">Reportes</h1>
+      <p class="page-header-subtitle">Volumen de ventas y métricas clave del período seleccionado.</p>
     </div>
   </div>
 
-  <section class="rep-filters">
-    <div class="filter-grid">
-      <div class="form-group">
-        <label class="form-label" for="from">Desde</label>
-        <input id="from" type="date" class="form-input" [ngModel]="from()" (ngModelChange)="from.set($event)"/>
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="to">Hasta</label>
-        <input id="to" type="date" class="form-input" [ngModel]="to()" (ngModelChange)="to.set($event)"/>
-      </div>
-      <div class="form-group form-group--actions">
-        <app-button variant="primary" (onClick)="refreshAll()">Aplicar filtros</app-button>
-      </div>
+  <div class="rep-toolbar">
+    <div class="rep-toolbar-field">
+      <label for="from">Desde</label>
+      <input id="from" type="date" class="form-input form-input--sm"
+             [ngModel]="from()" (ngModelChange)="from.set($event)"/>
     </div>
+    <div class="rep-toolbar-field">
+      <label for="to">Hasta</label>
+      <input id="to" type="date" class="form-input form-input--sm"
+             [ngModel]="to()" (ngModelChange)="to.set($event)"/>
+    </div>
+    <app-button variant="primary" size="sm" (onClick)="refreshAll()">Aplicar</app-button>
+  </div>
+
+  <!-- Hero: 3 KPIs balanceados, el primero destacado con icono -->
+  <section class="rep-hero">
+    <article class="kpi-card kpi-card--primary">
+      <span class="kpi-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="1" x2="12" y2="23"/>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+      </span>
+      <div class="kpi-card-body">
+        <span class="kpi-label">Ingresos entregados</span>
+        <span class="kpi-value">${{ formatPrice(volume()?.deliveredRevenue ?? 0) }}</span>
+        <span class="kpi-meta">{{ volume()?.deliveredCount ?? 0 }} pedidos</span>
+      </div>
+    </article>
+
+    <article class="kpi-card">
+      <span class="kpi-label">Ticket promedio</span>
+      <span class="kpi-value">${{ formatPrice(volume()?.avgTicket ?? 0) }}</span>
+      <span class="kpi-meta">Por pedido entregado</span>
+    </article>
+
+    <article class="kpi-card">
+      <span class="kpi-label">Pedidos cerrados</span>
+      <span class="kpi-value">{{ volume()?.closedCount ?? 0 }}</span>
+      <span class="kpi-meta">Entregados o cancelados</span>
+    </article>
   </section>
 
-  <div class="rep-grid">
-    <!-- Volumen y ticket -->
-    <section class="rep-card">
+  <!-- Rankings: 2 columnas -->
+  <section class="rep-rankings">
+    <article class="rep-card">
       <header class="rep-card-header">
-        <h2 class="rep-card-title">💰 Volumen de Ventas y Ticket</h2>
-        <app-button variant="ghost" size="sm" (onClick)="exportVolumeCsv()">↓ Excel</app-button>
-      </header>
-      <div class="kpi-row">
-        <div class="kpi-block kpi-block--success">
-          <span class="kpi-label">Pedidos entregados</span>
-          <span class="kpi-value">{{ volume()?.deliveredCount ?? '—' }}</span>
+        <div class="rep-card-title-group">
+          <span class="rep-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+              <path d="M4 22h16"/>
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+            </svg>
+          </span>
+          <h2 class="rep-card-title">Productos más vendidos</h2>
         </div>
-        <div class="kpi-block kpi-block--success">
-          <span class="kpi-label">Ingresos entregados</span>
-          <span class="kpi-value">${{ formatPrice(volume()?.deliveredRevenue ?? 0) }}</span>
-        </div>
-        <div class="kpi-block">
-          <span class="kpi-label">Ticket promedio</span>
-          <span class="kpi-value">${{ formatPrice(volume()?.avgTicket ?? 0) }}</span>
-        </div>
-        <div class="kpi-block">
-          <span class="kpi-label">Pedidos cerrados</span>
-          <span class="kpi-value">{{ volume()?.closedCount ?? '—' }}</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Top productos -->
-    <section class="rep-card">
-      <header class="rep-card-header">
-        <h2 class="rep-card-title">🏆 Top 10 Productos Más Vendidos</h2>
-        <app-button variant="ghost" size="sm" (onClick)="exportTopProductsCsv()">↓ Excel</app-button>
+        <app-button variant="ghost" size="sm" (onClick)="exportTopProductsCsv()"
+                    [disabled]="topProducts().length === 0">Exportar a Excel</app-button>
       </header>
       <table class="data-table" *ngIf="topProducts().length > 0; else noTopProducts">
         <thead>
           <tr>
+            <th class="rank-col">#</th>
             <th>Producto</th>
-            <th class="text-right">Unidades</th>
             <th class="text-right">Packs</th>
-            <th class="text-right">Pedidos</th>
+            <th class="text-right">Unidades</th>
             <th class="text-right">Ingresos</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let p of topProducts()">
+          <tr *ngFor="let p of topProducts(); let i = index">
+            <td class="rank-cell">{{ i + 1 }}</td>
             <td>{{ p.name }}</td>
-            <td class="text-right">{{ p.unitsSold }}</td>
             <td class="text-right">{{ p.packsSold }}</td>
-            <td class="text-right">{{ p.orderCount }}</td>
+            <td class="text-right">{{ p.unitsSold }}</td>
             <td class="text-right font-semibold">${{ formatPrice(p.revenue) }}</td>
           </tr>
         </tbody>
       </table>
       <ng-template #noTopProducts>
-        <p class="empty-text">No hay productos vendidos en el período seleccionado.</p>
+        <app-empty-state
+          title="Sin ventas en el período"
+          message="Cuando confirmes pedidos en este rango de fechas, aparecerán acá.">
+        </app-empty-state>
       </ng-template>
-    </section>
+    </article>
 
-    <!-- Top clientes -->
-    <section class="rep-card">
+    <article class="rep-card">
       <header class="rep-card-header">
-        <h2 class="rep-card-title">⭐ Top 10 Clientes Mayoristas</h2>
-        <app-button variant="ghost" size="sm" (onClick)="exportTopCustomersCsv()">↓ Excel</app-button>
+        <div class="rep-card-title-group">
+          <span class="rep-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </span>
+          <h2 class="rep-card-title">Clientes top</h2>
+        </div>
+        <app-button variant="ghost" size="sm" (onClick)="exportTopCustomersCsv()"
+                    [disabled]="topCustomers().length === 0">Exportar a Excel</app-button>
       </header>
       <table class="data-table" *ngIf="topCustomers().length > 0; else noTopCustomers">
         <thead>
           <tr>
+            <th class="rank-col">#</th>
             <th>Cliente</th>
-            <th>Email</th>
             <th class="text-right">Pedidos</th>
             <th class="text-right">Gastado</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let c of topCustomers()">
-            <td>{{ customerName(c) }}</td>
-            <td class="text-muted">{{ c.email }}</td>
+          <tr *ngFor="let c of topCustomers(); let i = index">
+            <td class="rank-cell">{{ i + 1 }}</td>
+            <td>
+              <div class="customer-cell">
+                <span class="customer-name">{{ customerName(c) }}</span>
+                <span class="customer-email">{{ c.email }}</span>
+              </div>
+            </td>
             <td class="text-right">{{ c.orderCount }}</td>
             <td class="text-right font-semibold">${{ formatPrice(c.totalSpent) }}</td>
           </tr>
         </tbody>
       </table>
       <ng-template #noTopCustomers>
-        <p class="empty-text">No hay clientes con compras en el período seleccionado.</p>
+        <app-empty-state
+          title="Sin clientes con compras"
+          message="Cuando los clientes confirmen pedidos en este período, aparecerán acá.">
+        </app-empty-state>
       </ng-template>
-    </section>
-
-    <!-- Stock bajo -->
-    <section class="rep-card">
-      <header class="rep-card-header">
-        <h2 class="rep-card-title">⚠️ Control de Stock Bajo</h2>
-        <app-button variant="ghost" size="sm" (onClick)="exportLowStockCsv()">↓ Excel</app-button>
-      </header>
-      <div class="threshold-row">
-        <label class="form-label" for="threshold">Umbral de alerta (unidades ≤):</label>
-        <input id="threshold" type="number" min="0" class="form-input form-input--sm"
-               [ngModel]="lowStockThreshold()"
-               (ngModelChange)="lowStockThreshold.set(+$event); refreshLowStock()">
-      </div>
-      <table class="data-table" *ngIf="lowStock().length > 0; else noLowStock">
-        <thead>
-          <tr>
-            <th>Producto</th>
-            <th class="text-right">Stock</th>
-            <th class="text-right">U. por pack</th>
-            <th class="text-right">Precio</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let p of lowStock()" [class.row-warning]="p.stock === 0">
-            <td>{{ p.name }}</td>
-            <td class="text-right font-semibold" [class.text-danger]="p.stock === 0">
-              {{ p.stock }}
-            </td>
-            <td class="text-right">{{ p.unitsPerPack }}</td>
-            <td class="text-right">${{ formatPrice(p.price) }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <ng-template #noLowStock>
-        <p class="empty-text">No hay productos con stock por debajo del umbral. ✓</p>
-      </ng-template>
-    </section>
-  </div>
+    </article>
+  </section>
 </div>

@@ -2,13 +2,14 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReportService } from '../../../../services/report.service';
-import { VolumeAndTicket, TopProduct, TopCustomer, LowStock } from '../../../../models/report.model';
+import { VolumeAndTicket, TopProduct, TopCustomer } from '../../../../models/report.model';
 import { ButtonComponent } from '../../../../shared/ui/button/button';
+import { EmptyStateComponent } from '../../../../shared/ui/empty-state/empty-state';
 
 @Component({
   selector: 'app-distribuidor-reportes',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent],
+  imports: [CommonModule, FormsModule, ButtonComponent, EmptyStateComponent],
   templateUrl: './reportes.html',
   styleUrl: './reportes.css',
 })
@@ -21,14 +22,6 @@ export class DueñoReportesComponent implements OnInit {
   volume = signal<VolumeAndTicket | null>(null);
   topProducts = signal<TopProduct[]>([]);
   topCustomers = signal<TopCustomer[]>([]);
-  lowStock = signal<LowStock[]>([]);
-
-  loadingVolume = signal(false);
-  loadingTopProducts = signal(false);
-  loadingTopCustomers = signal(false);
-  loadingLowStock = signal(false);
-
-  lowStockThreshold = signal<number>(10);
 
   ngOnInit(): void {
     this.refreshAll();
@@ -38,43 +31,27 @@ export class DueñoReportesComponent implements OnInit {
     this.refreshVolume();
     this.refreshTopProducts();
     this.refreshTopCustomers();
-    this.refreshLowStock();
   }
 
   refreshVolume(): void {
-    this.loadingVolume.set(true);
     this.reportService.volume(this.filters()).subscribe({
-      next: (v) => { this.volume.set(v); this.loadingVolume.set(false); },
-      error: () => this.loadingVolume.set(false),
+      next: (v) => this.volume.set(v),
+      error: () => { /* silencioso */ },
     });
   }
 
   refreshTopProducts(): void {
-    this.loadingTopProducts.set(true);
     this.reportService.topProducts({ ...this.filters(), limit: 10 }).subscribe({
-      next: (rows) => { this.topProducts.set(rows); this.loadingTopProducts.set(false); },
-      error: () => this.loadingTopProducts.set(false),
+      next: (rows) => this.topProducts.set(rows),
+      error: () => { /* silencioso */ },
     });
   }
 
   refreshTopCustomers(): void {
-    this.loadingTopCustomers.set(true);
     this.reportService.topCustomers({ ...this.filters(), limit: 10 }).subscribe({
-      next: (rows) => { this.topCustomers.set(rows); this.loadingTopCustomers.set(false); },
-      error: () => this.loadingTopCustomers.set(false),
+      next: (rows) => this.topCustomers.set(rows),
+      error: () => { /* silencioso */ },
     });
-  }
-
-  refreshLowStock(): void {
-    this.loadingLowStock.set(true);
-    this.reportService.lowStock(this.lowStockThreshold()).subscribe({
-      next: (rows) => { this.lowStock.set(rows); this.loadingLowStock.set(false); },
-      error: () => this.loadingLowStock.set(false),
-    });
-  }
-
-  exportVolumeCsv(): void {
-    this.download(this.reportService.exportUrl('volume', this.filters()));
   }
 
   exportTopProductsCsv(): void {
@@ -83,10 +60,6 @@ export class DueñoReportesComponent implements OnInit {
 
   exportTopCustomersCsv(): void {
     this.download(this.reportService.exportUrl('top-customers', this.filters()));
-  }
-
-  exportLowStockCsv(): void {
-    this.download(this.reportService.exportUrl('low-stock', { threshold: this.lowStockThreshold() }));
   }
 
   customerName(c: TopCustomer): string {

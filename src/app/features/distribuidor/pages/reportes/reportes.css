@@ -1,82 +1,93 @@
-/* Reportes - Estilos específicos de página */
+/* Reportes del Distribuidor — diseño por jerarquía:
+   1. Toolbar de filtros (compacto, sin borde)
+   2. Hero KPIs (3 cards balanceados, el primero destacado con icono)
+   3. Rankings (2 columnas) */
 
-.rep-filters {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-md);
-  margin-bottom: var(--space-lg);
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-md) var(--space-lg);
+  box-sizing: border-box;
 }
 
-.filter-grid {
+.rep-toolbar {
   display: flex;
-  gap: var(--space-md);
   align-items: flex-end;
+  gap: var(--space-md);
+  padding: var(--space-md) 0;
+  margin-bottom: var(--space-lg);
   flex-wrap: wrap;
 }
 
-.filter-grid .form-group {
-  margin-bottom: 0;
+.rep-toolbar-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 140px;
 }
 
-.rep-grid {
+.rep-toolbar-field label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Hero: 3 KPI cards balanceados, mismo tamaño. El primero lleva icono + highlight */
+.rep-hero {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-lg);
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
 }
 
-@media (max-width: 991.98px) {
-  .rep-grid {
+@media (max-width: 767.98px) {
+  .rep-hero {
     grid-template-columns: 1fr;
   }
 }
 
-.rep-card {
+.kpi-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  box-shadow: var(--shadow-sm);
-}
-
-.rep-card-header {
+  padding: var(--space-md) var(--space-lg);
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.kpi-card--primary {
+  background: linear-gradient(135deg, var(--orange-50) 0%, var(--color-surface) 60%);
+  border-color: var(--orange-100);
+  flex-direction: row;
   align-items: center;
-  margin-bottom: var(--space-md);
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
 }
 
-.rep-card-title {
-  font-family: var(--font-display);
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-bold);
-  margin: 0;
-  color: var(--color-text-strong);
+.kpi-card-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--orange-100);
+  color: var(--orange-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.kpi-row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-sm);
+.kpi-card-icon svg {
+  width: 20px;
+  height: 20px;
 }
 
-.kpi-block {
-  background: var(--color-surface-alt);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 0.75rem 1rem;
+.kpi-card-body {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-}
-
-.kpi-block--success {
-  background: var(--green-50);
-  border-color: var(--green-100);
-}
-
-.kpi-block--success .kpi-value {
-  color: var(--green-900);
 }
 
 .kpi-label {
@@ -88,28 +99,106 @@
 }
 
 .kpi-value {
-  font-family: var(--font-body);
-  font-size: var(--font-size-xl);
+  font-family: var(--font-display);
+  font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-strong);
   font-variant-numeric: tabular-nums;
+  line-height: 1.1;
 }
 
-.threshold-row {
+.kpi-meta {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* Rankings: 2 columnas, layout compacto */
+.rep-rankings {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+
+@media (max-width: 991.98px) {
+  .rep-rankings {
+    grid-template-columns: 1fr;
+  }
+}
+
+.rep-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md) var(--space-lg) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.rep-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.rep-card-title-group {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  margin-bottom: var(--space-md);
 }
 
-.threshold-row .form-label {
+.rep-card-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rep-card-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.rep-card-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-strong);
   margin: 0;
 }
 
-.empty-text {
+/* Rank # column */
+.rank-col {
+  width: 36px;
   text-align: center;
   color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  padding: var(--space-md);
-  margin: 0;
+  font-weight: var(--font-weight-semibold);
+}
+.rank-cell {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Customer name + email stack */
+.customer-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+.customer-name {
+  color: var(--color-text-strong);
+  font-weight: var(--font-weight-semibold);
+}
+.customer-email {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
 }
