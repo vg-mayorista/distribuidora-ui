@@ -7,6 +7,21 @@
 .confirmar-title { font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); margin: 0; color: var(--color-text-strong); }
 .confirmar-subtitle { font-size: var(--font-size-sm); color: var(--color-text-muted); margin: 0.25rem 0 0; }
 
+/* Banner de cierre de ventana próximo (1h antes del cutoff o recién cerrado) */
+.cutoff-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: var(--orange-50);
+  border: 1px solid var(--orange-200);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem 1rem;
+  margin-bottom: var(--space-md);
+}
+.cutoff-warning-icon { font-size: 1.25rem; line-height: 1.2; }
+.cutoff-warning-text { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.875rem; color: var(--color-text); }
+.cutoff-warning-text strong { font-weight: 700; color: var(--orange-900); }
+
 .confirmar-grid {
   display: grid;
   grid-template-columns: 1fr 340px;

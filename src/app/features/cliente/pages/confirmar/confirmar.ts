@@ -81,6 +81,61 @@ export class ConfirmarComponent implements OnInit {
   });
 
   /**
+   * Banner de cierre de ventana: aparece cuando el próximo cutoff está a ≤ 60 min,
+   * o cuando acaba de pasar (≤ 5 min). Devuelve `null` fuera de wholesale o si no
+   * hay próximo cutoff (caso patológico: no hay ventanas activas).
+   */
+  cutoffWarning = computed<{
+    isClosed: boolean;
+    humanLabel: string;
+    cutoffHourLabel: string;
+    nextDeliveryLabel: string;
+  } | null>(() => {
+    if (this.mode !== 'wholesale') return null;
+    const nextIso = this.configService.config()?.nextCutoffInstant;
+    if (!nextIso) return null;
+    const nextCutoff = new Date(nextIso);
+    if (Number.isNaN(nextCutoff.getTime())) return null;
+
+    const now = Date.now();
+    const diffMs = nextCutoff.getTime() - now;
+    const minLeft = Math.round(diffMs / 60000);
+
+    // Próximo día de entrega disponible (después del cutoff actual)
+    const nextDates = this.availableDeliveryDates();
+    const nextDeliveryLabel = nextDates[0]?.label ?? 'el próximo día hábil';
+
+    // Cortada hace menos de 5 min
+    if (diffMs < -5 * 60_000) return null;
+    const isClosed = diffMs <= 0;
+    if (isClosed) {
+      return {
+        isClosed: true,
+        humanLabel: '0 min',
+        cutoffHourLabel: String(nextCutoff.getHours()).padStart(2, '0'),
+        nextDeliveryLabel,
+      };
+    }
+    // Más de 60 min → no mostrar banner
+    if (minLeft > 60) return null;
+    const humanLabel = this.humanizeMinutes(minLeft);
+    return {
+      isClosed: false,
+      humanLabel,
+      cutoffHourLabel: String(nextCutoff.getHours()).padStart(2, '0'),
+      nextDeliveryLabel,
+    };
+  });
+
+  private humanizeMinutes(min: number): string {
+    if (min < 1) return 'menos de 1 min';
+    if (min < 60) return `${min} min`;
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return m === 0 ? `${h} h` : `${h} h ${m} min`;
+  }
+
+  /**
    * Métodos de entrega disponibles para el flujo actual.
    *  - wholesale: solo scope WHOLESALE o BOTH (oculta Express).
    *  - stock:     solo scope STOCK o BOTH.
@@ -124,7 +179,7 @@ export class ConfirmarComponent implements OnInit {
 
     this.orderService.listMine(0, 5).subscribe({
       next: (ordersPage) => {
-        const editingId = this.cart.editingOrderId();
+        const editingId = this.currentEditingOrderId();
         let target = editingId ? ordersPage.content.find(o => o.id === editingId) : null;
         if (!target) {
           target = ordersPage.content.find(o => o.deliveryAddress && o.deliveryAddress.trim());
@@ -141,24 +196,24 @@ export class ConfirmarComponent implements OnInit {
       }
     });
 
-    const editingId = this.cart.editingOrderId();
+    const editingId = this.currentEditingOrderId();
     if (editingId) {
       this.orderService.getMine(editingId).subscribe({
         next: (o) => {
           if (o && !o.editable) {
-            this.cart.setEditingOrderId(null);
+            this.cancelModification();
             this.error.set('El pedido que estabas modificando ya fue procesado y no se puede editar. Se procederá a confirmar como un pedido nuevo.');
           }
         },
         error: () => {
-          this.cart.setEditingOrderId(null);
+          this.cancelModification();
         }
       });
     }
   }
 
   private syncEditingOrderDeliveryMethod(): void {
-    const editingId = this.cart.editingOrderId();
+    const editingId = this.currentEditingOrderId();
     if (!editingId) return;
     this.orderService.getMine(editingId).subscribe({
       next: (o) => {
@@ -221,7 +276,7 @@ export class ConfirmarComponent implements OnInit {
       return `El subtotal debe ser al menos $${this.formatPrice(this.minOrderAmount())}. Te faltan ${falta}.`;
     }
     if (this.hasLinesBelowMin()) {
-      return `Cada línea necesita al menos ${this.minPacksPerLine()} packs. Ajustá las cantidades antes de confirmar.`;
+      return `Cada línea necesita al menos ${this.minPacksPerLine()} unidades físicas. Ajustá las cantidades antes de confirmar.`;
     }
     if (!this.selectedDeliveryMethodId()) {
       return 'Seleccioná un método de entrega para continuar.';
@@ -279,7 +334,7 @@ export class ConfirmarComponent implements OnInit {
     }
     const req = base;
 
-    const editingOrderId = this.cart.editingOrderId();
+    const editingOrderId = this.currentEditingOrderId();
     const doCall = () =>
       editingOrderId
         ? this.orderService.updateMine(editingOrderId, req)
@@ -292,6 +347,7 @@ export class ConfirmarComponent implements OnInit {
         if (this.mode === 'wholesale') this.cart.clearWholesale();
         else this.cart.clearStock();
         this.cart.setEditingOrderId(null);
+        this.cart.setStockEditingOrderId(null);
         this.loading.set(false);
         this.router.navigate(['/cliente/mis-pedidos', order.id]);
       },
@@ -315,13 +371,42 @@ export class ConfirmarComponent implements OnInit {
     this.error.set(null);
   }
 
-  shortEditingOrderId(): string {
-    const id = this.cart.editingOrderId();
+  /** Editing ID del flujo activo (wholesale vs stock). */
+  currentEditingOrderId(): string | null {
+    return this.mode === 'wholesale'
+      ? this.cart.editingOrderId()
+      : this.cart.stockEditingOrderId();
+  }
+
+  shortId(id: string): string {
     return id ? id.slice(0, 8).toUpperCase() : '';
+  }
+
+  shortEditingOrderId(): string {
+    return this.shortId(this.currentEditingOrderId() ?? '');
   }
 
   isWholesale(): boolean {
     return this.mode === 'wholesale';
+  }
+
+  /**
+   * Numeración auto-incrementada de secciones, omitiendo las que no aplican al flujo.
+   * Útil para que el título "3." no quede en blanco si `requiresAddress` es false.
+   */
+  sectionNumber(currentSection: 1 | 2 | 3 | 4): number {
+    const sectionsVisible: Record<1 | 2 | 3 | 4, boolean> = {
+      1: true,
+      2: this.isWholesale(),
+      3: this.requiresAddress,
+      4: true,
+    };
+    let n = 0;
+    for (const k of [1, 2, 3, 4] as const) {
+      if (sectionsVisible[k]) n++;
+      if (k === currentSection) return n;
+    }
+    return n;
   }
 
   formatPrice(value: number): string {
