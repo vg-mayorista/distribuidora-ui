@@ -111,8 +111,8 @@ export class DistribuidorPedidosComponent implements OnInit {
     return ORDER_TYPE_SHORT_LABELS[t] ?? t;
   }
 
-  typeBadgeVariant(t: OrderType): 'active' | 'info' | 'warning' | 'inactive' | 'neutral' {
-    return t === 'WHOLESALE' ? 'info' : 'active';
+  typeBadgeVariant(t: OrderType): 'active' | 'info' | 'warning' | 'inactive' | 'neutral' | 'accent' {
+    return t === 'WHOLESALE' ? 'info' : 'accent';
   }
 
   trackByType(_i: number, t: { key: string }): string {
@@ -135,7 +135,7 @@ export class DistribuidorPedidosComponent implements OnInit {
   statusVariant(s: OrderStatus): 'warning' | 'info' | 'active' | 'inactive' | 'neutral' {
     switch (s) {
       case 'PENDIENTE': return 'warning';
-      case 'ARMADO': return 'info';
+      case 'ARMADO': return 'warning';
       case 'ENVIADO': return 'info';
       case 'ENTREGADO': return 'active';
       case 'CANCELADO': return 'inactive';

@@ -100,8 +100,8 @@ export class OrdersComponent implements OnInit {
     return ORDER_TYPE_SHORT_LABELS[t] ?? t;
   }
 
-  typeBadgeVariant(t: OrderType): 'active' | 'info' | 'warning' | 'inactive' | 'neutral' {
-    return t === 'WHOLESALE' ? 'info' : 'active';
+  typeBadgeVariant(t: OrderType): 'active' | 'info' | 'warning' | 'inactive' | 'neutral' | 'accent' {
+    return t === 'WHOLESALE' ? 'info' : 'accent';
   }
 
   formatPrice(value: number): string {

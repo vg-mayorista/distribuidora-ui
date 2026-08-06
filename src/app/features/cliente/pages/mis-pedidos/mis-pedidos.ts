@@ -79,14 +79,14 @@ export class MisPedidosComponent implements OnInit {
     return ORDER_TYPE_SHORT_LABELS[type] ?? type;
   }
 
-  typeBadgeVariant(type: OrderType): 'active' | 'info' | 'warning' | 'inactive' | 'neutral' {
-    return type === 'WHOLESALE' ? 'info' : 'active';
+  typeBadgeVariant(type: OrderType): 'active' | 'info' | 'warning' | 'inactive' | 'neutral' | 'accent' {
+    return type === 'WHOLESALE' ? 'info' : 'accent';
   }
 
   statusVariant(status: OrderStatus): 'warning' | 'info' | 'active' | 'inactive' | 'neutral' {
     switch (status) {
       case 'PENDIENTE': return 'warning';
-      case 'ARMADO': return 'info';
+      case 'ARMADO': return 'warning';
       case 'ENVIADO': return 'info';
       case 'ENTREGADO': return 'active';
       case 'CANCELADO': return 'inactive';
