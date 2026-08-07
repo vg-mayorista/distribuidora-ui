@@ -1,79 +1,177 @@
 <div class="auth-page">
-  <a class="back-arrow" routerLink="/">&#8592;</a>
+  <a class="back-arrow" routerLink="/" aria-label="Volver al inicio">←</a>
 
   <div class="auth-card">
-    <h2 class="auth-title">¡Bienvenido!</h2>
+    <header class="auth-head">
+      <div class="auth-brand">
+        <img src="vglogo.jpeg" alt="" class="auth-brand-logo" aria-hidden="true" />
+        <span class="auth-brand-name">VG Mayorista</span>
+      </div>
+      <h1 class="auth-title">Creá tu cuenta</h1>
+      <p class="auth-subtitle">Comprá más rápido, recibí mejor.</p>
+    </header>
 
-    <div *ngIf="errorMsg" class="auth-error">{{ errorMsg }}</div>
+    <div *ngIf="errorMsg" class="auth-error" role="alert">
+      <span class="auth-error-icon" aria-hidden="true">!</span>
+      <span>{{ errorMsg }}</span>
+    </div>
 
-    <form (ngSubmit)="onSubmit()">
-      <div class="input-row">
-        <div class="input-group">
+    <form (ngSubmit)="onSubmit()" class="auth-form" novalidate>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label" for="reg-firstName">Nombre</label>
           <input
+            id="reg-firstName"
             type="text"
             name="firstName"
             [(ngModel)]="formData.firstName"
-            placeholder="Nombre"
-            class="auth-input"
+            class="form-input"
             autocomplete="given-name"
             required
           />
         </div>
-
-        <div class="input-group">
+        <div class="form-field">
+          <label class="form-label" for="reg-lastName">Apellido</label>
           <input
+            id="reg-lastName"
             type="text"
             name="lastName"
             [(ngModel)]="formData.lastName"
-            placeholder="Apellido"
-            class="auth-input"
+            class="form-input"
             autocomplete="family-name"
             required
           />
         </div>
       </div>
 
-      <div class="input-group">
+      <div class="form-field">
+        <label class="form-label" for="reg-email">Correo electrónico</label>
         <input
+          id="reg-email"
           type="email"
           name="email"
           [(ngModel)]="formData.email"
-          placeholder="Email"
-          class="auth-input"
+          class="form-input"
           autocomplete="email"
+          placeholder="vos@negocio.com"
           required
         />
       </div>
 
-      <div class="input-group input-password">
+      <div class="form-field">
+        <label class="form-label" for="reg-phone">Teléfono</label>
         <input
-          [type]="showPassword ? 'text' : 'password'"
-          name="password"
-          [(ngModel)]="formData.password"
-          placeholder="Password"
-          class="auth-input"
-          autocomplete="new-password"
+          id="reg-phone"
+          type="tel"
+          name="phone"
+          [(ngModel)]="formData.phone"
+          (blur)="onPhoneBlur()"
+          class="form-input"
+          autocomplete="tel"
+          inputmode="numeric"
+          maxlength="13"
+          placeholder="3704516054"
           required
         />
-        <button type="button" class="toggle-password" (click)="togglePassword()">
-          {{ showPassword ? '🙈' : '👁️' }}
-        </button>
+        <span class="form-helper">Lo usamos para coordinar entregas.</span>
       </div>
 
+      <div class="form-field">
+        <label class="form-label">Ubicación de tu negocio</label>
+        <button
+          type="button"
+          class="location-button"
+          [class.location-button--filled]="hasLocation()"
+          (click)="openPicker()"
+          [attr.aria-label]="hasLocation() ? 'Cambiar ubicación en el mapa' : 'Elegir ubicación en el mapa'"
+        >
+          <span class="location-button-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12Z"/>
+              <circle cx="12" cy="9" r="2.5"/>
+            </svg>
+          </span>
+          <span class="location-button-text" *ngIf="!hasLocation()">
+            Elegí tu ubicación en el mapa
+          </span>
+          <span class="location-button-text" *ngIf="hasLocation()">
+            {{ formData.address }}
+          </span>
+          <span class="location-button-chevron" aria-hidden="true">›</span>
+        </button>
+
+        <div class="location-meta" *ngIf="hasLocation()">
+          <span *ngIf="formData.zone" class="location-meta-chip">Zona: {{ formData.zone }}</span>
+          <span class="location-meta-coords">{{ formData.latitude }}, {{ formData.longitude }}</span>
+          <button type="button" class="location-edit-link" (click)="openPicker()">Cambiar</button>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label class="form-label" for="reg-password">Contraseña</label>
+        <div class="form-input-wrap">
+          <input
+            id="reg-password"
+            [type]="showPassword ? 'text' : 'password'"
+            name="password"
+            [(ngModel)]="formData.password"
+            class="form-input"
+            autocomplete="new-password"
+            placeholder="Mínimo 6 caracteres"
+            required
+          />
+          <button
+            type="button"
+            class="form-input-action"
+            (click)="togglePassword()"
+            [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          >
+            <svg *ngIf="!showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <svg *ngIf="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20C5 20 1 12 1 12a18.4 18.4 0 0 1 5.06-5.94"/>
+              <path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+              <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          </button>
+        </div>
+      </div>
 
       <label class="terms-label">
         <input type="checkbox" name="acceptTerms" [(ngModel)]="acceptTerms" />
-        Acepto los términos y condiciones
+        <span>Acepto los <a href="#" class="terms-link">términos y condiciones</a></span>
       </label>
 
-      <button type="submit" class="btn-auth" [disabled]="loading">
-        {{ loading ? 'Registrando...' : 'Registrarse' }}
+      <button type="submit" class="btn-submit" [disabled]="loading">
+        <span *ngIf="!loading" class="btn-submit-label">Crear cuenta</span>
+        <span *ngIf="loading" class="btn-submit-loading">
+          <span class="btn-submit-spinner" aria-hidden="true"></span>
+          Creando cuenta...
+        </span>
       </button>
     </form>
 
     <p class="auth-redirect">
-      ¿Ya tienes cuenta?
-      <a class="auth-link" routerLink="/login">Inicia Sesión</a>
+      ¿Ya tenés cuenta?
+      <a class="auth-link" routerLink="/login">Iniciar sesión</a>
     </p>
   </div>
 </div>
+
+<app-modal
+  [open]="pickerOpen()"
+  title="Ubicación de tu negocio"
+  size="lg"
+  (close)="onPickerCancel()"
+>
+  <app-location-picker
+    [initialLat]="formData.latitude ? +formData.latitude : null"
+    [initialLng]="formData.longitude ? +formData.longitude : null"
+    [initialAddress]="formData.address"
+    (selected)="onLocationPicked($event)"
+    (cancel)="onPickerCancel()"
+  />
+</app-modal>

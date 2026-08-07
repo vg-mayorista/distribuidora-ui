@@ -9,6 +9,11 @@ export interface RegisterRequest {
   lastName: string;
   email: string;
   password: string;
+  phone: string;
+  address: string;
+  zone?: string;
+  latitude?: string;
+  longitude?: string;
 }
 
 export interface AuthResponse {
@@ -18,6 +23,11 @@ export interface AuthResponse {
   firstName: string;
   lastName: string;
   role: string;
+  address?: string;
+  phone?: string;
+  zone?: string;
+  latitude?: string;
+  longitude?: string;
 }
 
 
@@ -27,6 +37,11 @@ export interface UserSession {
   firstName: string;
   lastName: string;
   role: string;
+  address?: string;
+  phone?: string;
+  zone?: string;
+  latitude?: string;
+  longitude?: string;
 }
 
 export interface UserProfileResponse {
@@ -37,4 +52,7 @@ export interface UserProfileResponse {
   role: string;
   address?: string;
   phone?: string;
+  zone?: string;
+  latitude?: string;
+  longitude?: string;
 }

@@ -36,3 +36,30 @@
 .col-me-days { width: 140px; min-width: 140px; max-width: 140px; }
 .col-me-status { width: 90px; min-width: 90px; max-width: 90px; }
 .col-me-actions { width: 100px; min-width: 100px; max-width: 100px; }
+
+/* Campos read-only: indicador visual de sistema */
+.me-form .form-input[readonly] {
+  background-color: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+  border-style: dashed;
+}
+
+.me-form .form-input[readonly]:focus {
+  border-color: var(--color-border);
+  box-shadow: none;
+}
+
+.me-form .readonly-hint {
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: 0.35rem;
+}
+
+.me-form .form-label {
+  align-items: baseline;
+  display: flex;
+}

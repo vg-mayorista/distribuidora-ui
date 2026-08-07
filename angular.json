@@ -25,8 +25,22 @@
                 "input": "public"
               }
             ],
-            "styles": ["node_modules/bootstrap/dist/css/bootstrap.min.css", "src/styles.css"],
-            "scripts": ["node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"]
+            "styles": [
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "node_modules/ol/ol.css",
+              "src/styles.css"
+            ],
+            "scripts": ["node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"],
+            "allowedCommonJsDependencies": [
+              "ol",
+              "rbush",
+              "earcut",
+              "color-parse",
+              "color-name",
+              "xml-utils/find-tags-by-name",
+              "xml-utils/get-attribute",
+              "web-worker"
+            ]
           },
           "configurations": {
             "production": {
