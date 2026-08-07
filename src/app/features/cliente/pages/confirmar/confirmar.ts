@@ -51,31 +51,36 @@ export class ConfirmarComponent implements OnInit {
   selectedDeliveryMethod = signal<DeliveryMethodSummary | null>(null);
   deliveryWindows = computed<DeliveryWindow[]>(() => this.configService.config()?.deliveryWindows ?? []);
 
-  /** Para wholesale: próximas 2 fechas; para stock: vacío. */
+  /** Wholesale: SOLO miércoles y viernes como días de entrega. Esto es una
+   *  regla de negocio hardcoded — no depende del config de delivery windows.
+   *  El cutoff sigue viniendo del config (la ventana de pedido cierra a las
+   *  18:00 del día anterior). Si el admin desactiva las ventanas, el array
+   *  queda vacío y el cliente no puede confirmar. */
   availableDeliveryDates = computed<{ date: string; label: string }[]>(() => {
     if (this.mode !== 'wholesale') return [];
-    const wins = this.deliveryWindows();
-    if (wins.length === 0) return [];
-    const dates: { date: string; label: string }[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    let cursor = new Date(today.getTime() - 24 * 3600 * 1000);
-    while (dates.length < 2 && (cursor.getTime() - today.getTime()) < 1000 * 3600 * 24 * 14) {
-      cursor = new Date(cursor.getTime() + 24 * 3600 * 1000);
-      const dow = ((cursor.getDay() + 6) % 7) + 1; // ISO 1..7, lunes..domingo
-      const matching = wins.filter(w => w.deliveryDayOfWeek === dow);
-      if (matching.length === 0) continue;
-      const cuts = matching
-        .map(w => this.windowCutoff(cursor, w))
+    const dates: { date: string; label: string }[] = [];
+    for (let i = 0; i < 14 && dates.length < 2; i++) {
+      const date = new Date(today.getTime() + i * 24 * 3600 * 1000);
+      const dow = date.getDay(); // 0=Sun, 1=Mon, ..., 3=Wed, 5=Fri
+      if (dow !== 3 && dow !== 5) continue; // ← solo miércoles o viernes
+      const iso = date.toISOString().slice(0, 10);
+      const cuts = this.deliveryWindows()
+        .filter(w => w.deliveryDayOfWeek === ((dow + 6) % 7) + 1)
+        .map(w => this.windowCutoff(date, w))
         .filter((d): d is Date => !!d)
         .sort((a, b) => a.getTime() - b.getTime());
       const cutoff = cuts[0];
-      if (!cutoff || cutoff.getTime() <= Date.now()) continue;
-      const iso = cursor.toISOString().slice(0, 10);
+      if (cutoff && cutoff.getTime() <= Date.now()) continue;
       dates.push({
         date: iso,
         label: this.formatHumanDate(iso),
       });
+    }
+    // Pickup: el cliente normalmente quiere retirar cuanto antes → solo la más cercana.
+    if (!this.requiresAddress && dates.length > 0) {
+      return [dates[0]];
     }
     return dates;
   });
@@ -151,14 +156,12 @@ export class ConfirmarComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    // El modo se determina SIEMPRE por la URL. /cliente/confirmar-stock => stock,
+    // todo lo demás => wholesale. NO inferirlo desde el contenido del carrito,
+    // porque si el cliente tiene ítems en ambas carts (wholesale sin confirmar +
+    // stock agregado después) el modo debería ser estable según la ruta.
     const fromData = (this.route.snapshot.data?.['mode'] ?? '').toString().toLowerCase();
-    if (fromData === 'stock') {
-      this.mode = 'stock';
-    } else {
-      // Por defecto, inferir desde el carrito: si el stockCart tiene líneas -> stock; sino wholesale.
-      const hasStock = this.cart.stockLines().length > 0;
-      this.mode = hasStock ? 'stock' : 'wholesale';
-    }
+    this.mode = fromData === 'stock' ? 'stock' : 'wholesale';
     this.configService.loadConfig();
 
     this.deliveryMethodService.listActive().subscribe({
@@ -169,8 +172,7 @@ export class ConfirmarComponent implements OnInit {
           ?? avail.find(m => m.name.toLowerCase().includes('domicilio'))
           ?? avail[0];
         if (def) {
-          this.selectedDeliveryMethodId.set(def.id);
-          this.selectedDeliveryMethod.set(def);
+          this.selectDeliveryMethod(def);
         }
         this.syncEditingOrderDeliveryMethod();
       },
@@ -192,8 +194,11 @@ export class ConfirmarComponent implements OnInit {
           if (target.deliveryPhone) {
             this.deliveryPhone.set(this.formatPhoneNumber(target.deliveryPhone));
           }
+        } else {
+          this.prefillFromProfile();
         }
-      }
+      },
+      error: () => this.prefillFromProfile()
     });
 
     const editingId = this.currentEditingOrderId();
@@ -228,9 +233,29 @@ export class ConfirmarComponent implements OnInit {
     });
   }
 
+  private prefillFromProfile(): void {
+    const session = this.authService.getCurrentUser();
+    if (!session) return;
+    if (session.address && session.address.trim()) {
+      this.hasSavedAddress.set(true);
+      this.deliveryAddress.set(session.address.trim());
+    }
+    if (session.phone && session.phone.trim()) {
+      this.deliveryPhone.set(this.formatPhoneNumber(session.phone.trim()));
+    }
+  }
+
   selectDeliveryMethod(method: DeliveryMethodSummary): void {
     this.selectedDeliveryMethodId.set(method.id);
     this.selectedDeliveryMethod.set(method);
+
+    // Para pickup, autoseleccionamos la fecha más cercana disponible.
+    if (!this.requiresAddress) {
+      const dates = this.availableDeliveryDates();
+      if (dates.length > 0) {
+        this.deliveryDate.set(dates[0].date);
+      }
+    }
   }
 
   get requiresAddress(): boolean {
@@ -246,9 +271,15 @@ export class ConfirmarComponent implements OnInit {
     return this.configService.config()?.minOrderAmount ?? 30000;
   }
 
+  /**
+   * Mínimo de unidades físicas por línea. Toma el valor del config y, si el
+   * producto es Unitario, packs = unidades. Coherente con cart.store.
+   */
   hasLinesBelowMin(): boolean {
     const min = this.minPacksPerLine();
-    return this.activeLines().some(l => l.packs < min);
+    return this.activeLines().some(
+      l => l.packs * Math.max(l.product.unitsPerPack, 1) < min
+    );
   }
 
   amountBelowMin(): boolean {
@@ -308,8 +339,44 @@ export class ConfirmarComponent implements OnInit {
     return this.mode === 'wholesale' ? this.cart.count() : this.cart.stockCount();
   }
 
+  /**
+   * Costo del envío tal como lo verá el cliente. Refleja la misma regla
+   * que el backend (computeDeliveryCost): "Envío a Domicilio" es gratis
+   * cuando la entrega cae en miércoles o viernes.
+   */
+  computedDeliveryCost = computed<number>(() => {
+    const m = this.selectedDeliveryMethod();
+    if (!m) return 0;
+    if (this.mode === 'wholesale'
+        && m.name.toLowerCase().includes('domicilio')
+        && this.deliveryDate()) {
+      const [y, m, d] = this.deliveryDate().split('-').map(n => parseInt(n, 10));
+      const date = new Date(y, (m ?? 1) - 1, d ?? 1);
+      const dow = date.getDay();
+      if (dow === 3 || dow === 5) return 0;  // miércoles o viernes
+    }
+    return m.cost;
+  });
+
+  /**
+   * Etiqueta de costo para la card del método. Mismo cálculo que
+   * computedDeliveryCost pero aplicado a cualquier método.
+   */
+  methodCardCost(method: DeliveryMethodSummary): string {
+    if (method.cost === 0) return 'Gratis';
+    if (this.mode === 'wholesale'
+        && method.name.toLowerCase().includes('domicilio')
+        && this.deliveryDate()) {
+      const [y, m, d] = this.deliveryDate().split('-').map(n => parseInt(n, 10));
+      const date = new Date(y, (m ?? 1) - 1, d ?? 1);
+      const dow = date.getDay();
+      if (dow === 3 || dow === 5) return 'Gratis';
+    }
+    return `+$${this.formatPrice(method.cost)}`;
+  }
+
   computeTotal(): number {
-    return this.activeSubtotal() + (this.selectedDeliveryMethod()?.cost ?? 0);
+    return this.activeSubtotal() + this.computedDeliveryCost();
   }
 
   submit(): void {
@@ -427,31 +494,21 @@ export class ConfirmarComponent implements OnInit {
 
   formatPhoneNumber(value: string): string {
     if (!value) return '';
-    let cleaned = value.replace(/[^\d+]/g, '');
-    if (!cleaned.startsWith('+')) {
-      if (cleaned.startsWith('54')) {
-        cleaned = '+' + cleaned;
-      } else {
-        if (cleaned.length === 10) cleaned = '+549' + cleaned;
-        else if (cleaned.length === 11 && cleaned.startsWith('0')) cleaned = '+549' + cleaned.slice(1);
-      }
-    }
-    const digits = cleaned.replace(/\D/g, '');
-    if (cleaned.startsWith('+') && digits.startsWith('549')) {
-      const rest = digits.slice(3);
-      const areaLen = rest.startsWith('1') ? 2 : 3;
-      const area = rest.slice(0, areaLen);
-      const remaining = rest.slice(areaLen);
-      let formatted = `+54 9 ${area}`;
-      if (remaining.length > 0) {
-        const first = remaining.slice(0, 3);
-        const second = remaining.slice(3, 7);
-        formatted += ` ${first}`;
-        if (second.length > 0) formatted += `-${second}`;
-      }
-      return formatted;
-    }
-    return value;
+    let digits = value.replace(/\D/g, '');
+    if (digits.startsWith('54')) digits = digits.slice(2);
+    if (digits.startsWith('0')) digits = digits.slice(1);
+    if (digits.length === 0) return '';
+
+    const areaLen = digits.startsWith('1') ? 2 : 3;
+    const area = digits.slice(0, areaLen);
+    const remaining = digits.slice(areaLen);
+    if (remaining.length === 0) return area;
+
+    const first = remaining.slice(0, 3);
+    const second = remaining.slice(3, 7);
+    let formatted = `${area} ${first}`;
+    if (second.length > 0) formatted += `-${second}`;
+    return formatted;
   }
 
   onPhoneBlur(): void {
@@ -470,7 +527,10 @@ export class ConfirmarComponent implements OnInit {
     if (w.cutoffTime == null || w.cutoffDayOfWeek == null || w.deliveryDayOfWeek == null) return null;
     const [hh, mm, ss] = (w.cutoffTime || '00:00:00').split(':').map(n => parseInt(n, 10));
     const deliveryIso = ((deliveryDate.getDay() + 6) % 7) + 1;
-    let diff = ((w.deliveryDayOfWeek - deliveryIso) % 7 + 7) % 7;
+    // Distancia en días desde el día del cutoff hasta el día de la entrega.
+    // Debe coincidir con la fórmula del backend: `Math.floorMod(deliveryDow - cutoffDow, 7)`.
+    // Si la entrega es Viernes (5) y el cutoff es Jueves (4), diff = 1.
+    const diff = ((deliveryIso - w.cutoffDayOfWeek) % 7 + 7) % 7;
     const cutoffDate = new Date(deliveryDate.getTime() - diff * 24 * 3600 * 1000);
     cutoffDate.setHours(hh || 0, mm || 0, ss || 0, 0);
     return cutoffDate;
@@ -485,10 +545,11 @@ export class ConfirmarComponent implements OnInit {
       return `No hay stock suficiente para:\n${details}`;
     }
     if (body?.error === 'MIN_PACKS_PER_LINE' && Array.isArray(body.offending)) {
+      const minUnits = body.offending[0]?.minRequiredUnits ?? 5;
       const details = body.offending.map((it: any) =>
-        `${it.productName ?? it.productId}: ${it.requestedPacks}/${it.minRequiredPacks} packs`
+        `${it.productName ?? it.productId}: ${it.requestedUnits}/${minUnits} u. (${it.requestedPacks} packs)`
       ).join('\n');
-      return `Cada línea debe tener al menos ${body.offending[0]?.minRequiredPacks ?? 5} packs:\n${details}`;
+      return `Cada línea debe tener al menos ${minUnits} unidades físicas:\n${details}`;
     }
     if (body?.error === 'MIN_ORDER_AMOUNT' && body.minAmount) {
       return `El subtotal del pedido debe ser al menos $${body.minAmount}. Subtotal actual: $${body.currentAmount}.`;

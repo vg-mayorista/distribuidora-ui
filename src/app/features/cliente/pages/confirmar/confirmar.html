@@ -55,8 +55,8 @@
                   [attr.aria-pressed]="selectedDeliveryMethodId() === m.id"
                   (click)="selectDeliveryMethod(m)">
             <span class="method-name">{{ m.name }}</span>
-            <span *ngIf="m.cost > 0" class="method-price">+${{ formatPrice(m.cost) }}</span>
-            <span *ngIf="m.cost === 0" class="method-price method-price--free">Gratis</span>
+            <span class="method-price"
+                  [class.method-price--free]="methodCardCost(m) === 'Gratis'">{{ methodCardCost(m) }}</span>
           </button>
           <p *ngIf="availableDeliveryMethods().length === 0" class="muted">
             No hay métodos de entrega habilitados para este flujo.
@@ -65,7 +65,7 @@
       </section>
 
       <section *ngIf="isWholesale()" class="card-section">
-        <h2 class="section-title">{{ sectionNumber(2) }}. Día de entrega</h2>
+        <h2 class="section-title">{{ sectionNumber(2) }}. {{ requiresAddress ? 'Día de entrega' : 'Día de retiro' }}</h2>
         <div class="methods-grid" *ngIf="availableDeliveryDates().length > 0; else noDates">
           <button *ngFor="let d of availableDeliveryDates(); trackBy: trackByDate"
                   type="button"
@@ -103,7 +103,7 @@
                    [ngModel]="deliveryPhone()"
                    (ngModelChange)="deliveryPhone.set($event)"
                    (blur)="onPhoneBlur()"
-                   placeholder="Ej: +54 9 370 451-6054">
+                   placeholder="Ej: 3704516054">
           </div>
         </div>
         <div class="delivery-notice-info" *ngIf="isWholesale()">
@@ -140,8 +140,8 @@
         <div class="summary-row"><span>Subtotal</span><span>${{ formatPrice(activeSubtotal()) }}</span></div>
         <div *ngIf="selectedDeliveryMethod() as dm" class="summary-row">
           <span>Envío</span>
-          <span *ngIf="dm.cost === 0" class="summary-value--free">Gratis</span>
-          <span *ngIf="dm.cost > 0">${{ formatPrice(dm.cost) }}</span>
+          <span *ngIf="computedDeliveryCost() === 0" class="summary-value--free">Gratis</span>
+          <span *ngIf="computedDeliveryCost() > 0">${{ formatPrice(computedDeliveryCost()) }}</span>
         </div>
         <div class="summary-row summary-row--total"><span>Total</span><span>${{ formatPrice(computeTotal()) }}</span></div>
       </div>

@@ -80,7 +80,12 @@ export class AuthService {
       email: response.email,
       firstName: response.firstName,
       lastName: response.lastName,
-      role: response.role
+      role: response.role,
+      address: response.address,
+      phone: response.phone,
+      zone: response.zone,
+      latitude: response.latitude,
+      longitude: response.longitude,
     };
     localStorage.setItem(TOKEN_KEY, response.token);
     localStorage.setItem(USER_KEY, JSON.stringify(user));

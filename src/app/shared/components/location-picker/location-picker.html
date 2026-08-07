@@ -1,0 +1,94 @@
+<div class="lp-shell">
+  <header class="lp-header">
+    <p class="lp-subtitle">Tocá el mapa o arrastrá el pin hasta la puerta de tu negocio.</p>
+  </header>
+
+  <div class="lp-search">
+    <span class="lp-search-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </span>
+    <input
+      type="text"
+      class="lp-search-input"
+      placeholder="Buscar por calle y ciudad, ej: Av. San Martín 123, Formosa"
+      [ngModel]="searchQuery()"
+      (ngModelChange)="searchQuery.set($event)"
+      (keydown)="onSearchKey($event)"
+      [disabled]="searching()"
+    />
+    <button
+      type="button"
+      class="lp-search-btn"
+      (click)="search()"
+      [disabled]="searching() || !searchQuery().trim()"
+    >
+      <span *ngIf="!searching()">Buscar</span>
+      <span *ngIf="searching()" class="lp-search-btn-loading">
+        <span class="lp-search-spinner" aria-hidden="true"></span>
+        Buscando
+      </span>
+    </button>
+  </div>
+
+  <p *ngIf="searchError()" class="lp-error lp-error--inline" role="alert">{{ searchError() }}</p>
+
+  <div class="lp-map" #mapContainer>
+    <svg
+      #pinElement
+      class="lp-pin"
+      viewBox="0 0 32 40"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label="Pin de ubicación"
+    >
+      <path
+        d="M16 1 C8.27 1 2 7.27 2 15 C2 25 16 40 16 40 C16 40 30 25 30 15 C30 7.27 23.73 1 16 1 Z"
+        class="lp-pin-body"
+      />
+      <circle cx="16" cy="15" r="5.5" class="lp-pin-head"/>
+      <circle cx="16" cy="15" r="2.5" class="lp-pin-dot"/>
+    </svg>
+    <div class="lp-map-loading" *ngIf="!mapReady()">
+      <span class="lp-map-loading-spinner" aria-hidden="true"></span>
+      <span>Cargando mapa…</span>
+    </div>
+  </div>
+
+  <div class="lp-result" [class.lp-result--filled]="currentAddress().trim()">
+    <div class="lp-result-icon" aria-hidden="true">
+      <svg *ngIf="currentAddress().trim()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 6 9 17l-5-5"/>
+      </svg>
+      <svg *ngIf="!currentAddress().trim()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12Z"/>
+        <circle cx="12" cy="9" r="2.5"/>
+      </svg>
+    </div>
+    <div class="lp-result-body">
+      <div class="lp-result-label">{{ resolving() ? 'Buscando dirección…' : 'Ubicación seleccionada' }}</div>
+      <div class="lp-result-address" *ngIf="currentAddress().trim()">{{ currentAddress() }}</div>
+      <div class="lp-result-address lp-result-address--empty" *ngIf="!currentAddress().trim()">
+        Tocá el mapa o usá el buscador para fijar una ubicación.
+      </div>
+      <div class="lp-result-meta" *ngIf="currentAddress().trim()">
+        <span *ngIf="currentZone()" class="lp-result-chip">Zona: {{ currentZone() }}</span>
+        <span class="lp-result-coords">{{ currentLat() | number:'1.5-5' }}, {{ currentLng() | number:'1.5-5' }}</span>
+      </div>
+    </div>
+    <p *ngIf="resolveError()" class="lp-error lp-error--inline" role="alert">{{ resolveError() }}</p>
+  </div>
+
+  <footer class="lp-actions">
+    <button type="button" class="lp-btn lp-btn--ghost" (click)="onCancel()">Cancelar</button>
+    <button
+      type="button"
+      class="lp-btn lp-btn--primary"
+      (click)="confirm()"
+      [disabled]="resolving() || !currentAddress().trim()"
+    >
+      Confirmar ubicación
+    </button>
+  </footer>
+</div>
