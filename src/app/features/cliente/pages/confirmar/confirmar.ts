@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -19,7 +19,7 @@ type FlowMode = 'wholesale' | 'stock';
   templateUrl: './confirmar.html',
   styleUrl: './confirmar.css',
 })
-export class ConfirmarComponent implements OnInit {
+export class ConfirmarComponent implements OnInit, OnDestroy {
   private cart = inject(CartStore);
   private deliveryMethodService = inject(DeliveryMethodService);
   private orderService = inject(OrderService);
@@ -51,6 +51,13 @@ export class ConfirmarComponent implements OnInit {
   selectedDeliveryMethod = signal<DeliveryMethodSummary | null>(null);
   deliveryWindows = computed<DeliveryWindow[]>(() => this.configService.config()?.deliveryWindows ?? []);
 
+  /** Tick reactivo que se actualiza cada 30s. Lo consume `availableDeliveryDates`
+   *  para que la disponibilidad de fechas (cutoffs) se reevalúe sin recargar la
+   *  página: si el cliente abrió la pantalla a las 17:50, el `computed` cacheaba
+   *  miércoles como disponible aunque a las 18:01 ya no lo sea. */
+  private nowTick = signal(Date.now());
+  private tickHandle: ReturnType<typeof setInterval> | null = null;
+
   /** Wholesale: SOLO miércoles y viernes como días de entrega. Esto es una
    *  regla de negocio hardcoded — no depende del config de delivery windows.
    *  El cutoff sigue viniendo del config (la ventana de pedido cierra a las
@@ -58,6 +65,7 @@ export class ConfirmarComponent implements OnInit {
    *  queda vacío y el cliente no puede confirmar. */
   availableDeliveryDates = computed<{ date: string; label: string }[]>(() => {
     if (this.mode !== 'wholesale') return [];
+    const nowMs = this.nowTick(); // dependencia reactiva: reevalúa cada 30s
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const dates: { date: string; label: string }[] = [];
@@ -72,7 +80,7 @@ export class ConfirmarComponent implements OnInit {
         .filter((d): d is Date => !!d)
         .sort((a, b) => a.getTime() - b.getTime());
       const cutoff = cuts[0];
-      if (cutoff && cutoff.getTime() <= Date.now()) continue;
+      if (cutoff && cutoff.getTime() <= nowMs) continue;
       dates.push({
         date: iso,
         label: this.formatHumanDate(iso),
@@ -164,6 +172,10 @@ export class ConfirmarComponent implements OnInit {
     this.mode = fromData === 'stock' ? 'stock' : 'wholesale';
     this.configService.loadConfig();
 
+    // Tick cada 30s: hace que `availableDeliveryDates` reevalúe cutoffs sin
+    // necesidad de recargar la página.
+    this.tickHandle = setInterval(() => this.nowTick.set(Date.now()), 30_000);
+
     this.deliveryMethodService.listActive().subscribe({
       next: (methods) => {
         this.allDeliveryMethods.set(methods);
@@ -217,6 +229,13 @@ export class ConfirmarComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    if (this.tickHandle !== null) {
+      clearInterval(this.tickHandle);
+      this.tickHandle = null;
+    }
+  }
+
   private syncEditingOrderDeliveryMethod(): void {
     const editingId = this.currentEditingOrderId();
     if (!editingId) return;
@@ -248,6 +267,7 @@ export class ConfirmarComponent implements OnInit {
   selectDeliveryMethod(method: DeliveryMethodSummary): void {
     this.selectedDeliveryMethodId.set(method.id);
     this.selectedDeliveryMethod.set(method);
+    this.error.set(null); // limpiamos error stale al cambiar método
 
     // Para pickup, autoseleccionamos la fecha más cercana disponible.
     if (!this.requiresAddress) {
@@ -255,6 +275,15 @@ export class ConfirmarComponent implements OnInit {
       if (dates.length > 0) {
         this.deliveryDate.set(dates[0].date);
       }
+    }
+  }
+
+  /** Limpia errores visibles cuando el cliente corrige un input. Sin esto,
+   *  un 500 stale quedaba en pantalla aunque el usuario ya hubiera cambiado
+   *  la fecha o la dirección. */
+  clearError(): void {
+    if (this.error() !== null) {
+      this.error.set(null);
     }
   }
 
@@ -556,6 +585,11 @@ export class ConfirmarComponent implements OnInit {
     }
     if (body?.error === 'DELIVERY_WINDOW_EXPIRED') {
       return `La fecha ${body.deliveryDate} ya no está disponible. Elegí otra.`;
+    }
+    // 5xx: el body.detail viene del GlobalExceptionHandler ("Error interno del servidor").
+    // Mostrar eso al usuario es hostil — lo traducimos a un mensaje accionable.
+    if (err?.status >= 500 && err?.status < 600) {
+      return 'Tuvimos un problema procesando tu pedido. Por favor reintentá en unos minutos.';
     }
     return body?.detail || fallback;
   }
