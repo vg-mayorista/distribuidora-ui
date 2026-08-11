@@ -134,7 +134,7 @@ export class LocationPickerComponent implements AfterViewInit, OnDestroy {
     this.map.addOverlay(this.pinOverlay);
     this.pinOverlay.setPosition(fromLonLat([startLng, startLat]));
 
-    this.map.on('click', (evt) => {
+    this.map.on('click', (evt: any) => {
       const coord = evt.coordinate;
       this.pinOverlay!.setPosition(coord);
       this.updateCoordsFromPin(coord);

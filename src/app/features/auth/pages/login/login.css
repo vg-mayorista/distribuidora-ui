@@ -37,6 +37,15 @@
   text-align: center;
   margin: 0 0 0.5rem;
   letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.auth-brand-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
 }
 .auth-brand .accent { color: var(--orange-base); }
 .auth-subtitle {

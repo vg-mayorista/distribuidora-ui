@@ -1,10 +1,11 @@
 .header {
-  background-color: var(--color-green, #22C55E);
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 1rem 2rem;
-  color: white;
+  color: var(--color-text-strong);
 }
 
 .header-brand {

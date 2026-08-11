@@ -18,7 +18,13 @@
   text-decoration: none;
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: 0.5rem;
+}
+.brand-logo {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
 }
 .brand .accent { color: var(--orange-base); }
 

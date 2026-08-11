@@ -9,13 +9,14 @@ import { AuthService } from '../../../../services/auth.service';
 import { BusinessConfigService } from '../../../../services/business-config.service';
 import { DeliveryWindow } from '../../../../models/delivery-window.model';
 import { ButtonComponent } from '../../../../shared/ui/button/button';
+import { BadgeComponent } from '../../../../shared/ui/badge/badge';
 
 type FlowMode = 'wholesale' | 'stock';
 
 @Component({
   selector: 'app-confirmar',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent],
+  imports: [CommonModule, FormsModule, ButtonComponent, BadgeComponent],
   templateUrl: './confirmar.html',
   styleUrl: './confirmar.css',
 })
@@ -342,19 +343,12 @@ export class ConfirmarComponent implements OnInit {
   /**
    * Costo del envío tal como lo verá el cliente. Refleja la misma regla
    * que el backend (computeDeliveryCost): "Envío a Domicilio" es gratis
-   * cuando la entrega cae en miércoles o viernes.
+   * en pedidos mayoristas (flujo wholesale).
    */
   computedDeliveryCost = computed<number>(() => {
+    if (this.mode === 'wholesale') return 0;
     const m = this.selectedDeliveryMethod();
     if (!m) return 0;
-    if (this.mode === 'wholesale'
-        && m.name.toLowerCase().includes('domicilio')
-        && this.deliveryDate()) {
-      const [y, m, d] = this.deliveryDate().split('-').map(n => parseInt(n, 10));
-      const date = new Date(y, (m ?? 1) - 1, d ?? 1);
-      const dow = date.getDay();
-      if (dow === 3 || dow === 5) return 0;  // miércoles o viernes
-    }
     return m.cost;
   });
 
@@ -363,16 +357,32 @@ export class ConfirmarComponent implements OnInit {
    * computedDeliveryCost pero aplicado a cualquier método.
    */
   methodCardCost(method: DeliveryMethodSummary): string {
-    if (method.cost === 0) return 'Gratis';
-    if (this.mode === 'wholesale'
-        && method.name.toLowerCase().includes('domicilio')
-        && this.deliveryDate()) {
-      const [y, m, d] = this.deliveryDate().split('-').map(n => parseInt(n, 10));
-      const date = new Date(y, (m ?? 1) - 1, d ?? 1);
-      const dow = date.getDay();
-      if (dow === 3 || dow === 5) return 'Gratis';
-    }
+    if (this.mode === 'wholesale' || method.cost === 0) return 'Gratis';
     return `+$${this.formatPrice(method.cost)}`;
+  }
+
+  methodIcon(name: string): string {
+    const n = (name || '').toLowerCase();
+    if (n.includes('retiro') || n.includes('local')) return '🏬';
+    if (n.includes('express')) return '⚡';
+    if (n.includes('domicilio')) return '🚚';
+    return '📦';
+  }
+
+  methodDescription(name: string): string {
+    const n = (name || '').toLowerCase();
+    if (n.includes('retiro') || n.includes('local')) {
+      return this.isWholesale()
+        ? 'Retiro por sucursal el día seleccionado.'
+        : 'Retirá hoy mismo por nuestra sucursal.';
+    }
+    if (n.includes('express')) return 'Despacho prioritario en el día.';
+    if (n.includes('domicilio')) {
+      return this.isWholesale()
+        ? 'Envío sin cargo los días de reparto (Mié/Vie).'
+        : 'Entrega en tu dirección habitual.';
+    }
+    return 'Opción de entrega disponible.';
   }
 
   computeTotal(): number {
@@ -537,26 +547,33 @@ export class ConfirmarComponent implements OnInit {
   }
 
   private mapError(err: any, fallback: string): string {
-    const body = err?.error;
+    let body = err?.error;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch {
+        return body || fallback;
+      }
+    }
     if (body?.error === 'INSUFFICIENT_STOCK' && Array.isArray(body.items) && body.items.length > 0) {
       const details = body.items.map((it: any) =>
-        `${it.productName}: pediste ${it.requested} unid., disponibles ${it.available} unid.`
+        `• ${it.productName || 'Producto'}: pediste ${it.requested} u., hay ${it.available} u. disponibles`
       ).join('\n');
-      return `No hay stock suficiente para:\n${details}`;
+      return `Stock insuficiente para:\n${details}`;
     }
     if (body?.error === 'MIN_PACKS_PER_LINE' && Array.isArray(body.offending)) {
       const minUnits = body.offending[0]?.minRequiredUnits ?? 5;
       const details = body.offending.map((it: any) =>
-        `${it.productName ?? it.productId}: ${it.requestedUnits}/${minUnits} u. (${it.requestedPacks} packs)`
+        `• ${it.productName ?? it.productId}: ${it.requestedUnits}/${minUnits} u. (${it.requestedPacks} packs)`
       ).join('\n');
-      return `Cada línea debe tener al menos ${minUnits} unidades físicas:\n${details}`;
+      return `Cada línea debe alcanzar al menos ${minUnits} unidades físicas:\n${details}`;
     }
     if (body?.error === 'MIN_ORDER_AMOUNT' && body.minAmount) {
-      return `El subtotal del pedido debe ser al menos $${body.minAmount}. Subtotal actual: $${body.currentAmount}.`;
+      return `El subtotal del pedido debe ser al menos $${this.formatPrice(body.minAmount)}. Subtotal actual: $${this.formatPrice(body.currentAmount)}.`;
     }
     if (body?.error === 'DELIVERY_WINDOW_EXPIRED') {
-      return `La fecha ${body.deliveryDate} ya no está disponible. Elegí otra.`;
+      return `La fecha ${body.deliveryDate} ya no está disponible. Por favor elegí otra fecha.`;
     }
-    return body?.detail || fallback;
+    return body?.detail || body?.message || fallback;
   }
 }

@@ -744,6 +744,9 @@ button, input, select, textarea { font-family: inherit; }
   border-bottom: 1px solid var(--color-border);
   gap: 0.125rem;
 }
+.brand-v { color: var(--green-base); }
+.brand-g { color: var(--orange-base); }
+
 .sidebar-brand-name {
   font-family: var(--font-display);
   font-size: var(--font-size-md);

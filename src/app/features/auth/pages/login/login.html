@@ -2,7 +2,10 @@
   <a class="auth-back" routerLink="/">← Inicio</a>
 
   <div class="auth-card">
-    <h1 class="auth-brand"><span class="accent">VG</span> Mayorista</h1>
+    <h1 class="auth-brand">
+      <img src="favicon.png" alt="VG Logo" class="auth-brand-logo" />
+      <span><span class="brand-v">V</span><span class="brand-g">G</span> <span>Mayorista</span></span>
+    </h1>
     <p class="auth-subtitle">Iniciá sesión para gestionar tus pedidos</p>
 
     <div *ngIf="errorMsg" class="auth-error">{{ errorMsg }}</div>

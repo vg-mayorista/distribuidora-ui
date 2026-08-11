@@ -173,6 +173,11 @@ export class PedidoDetalleClienteComponent implements OnInit {
     return this.deliveryMethods().find(m => m.id === id) ?? null;
   }
 
+  editMethodCostLabel(m: DeliveryMethodSummary): string {
+    if (this.order()?.type === 'WHOLESALE' || m.cost === 0) return 'Gratis';
+    return `+$${this.formatPrice(m.cost)}`;
+  }
+
   editRequiresAddress(): boolean {
     const name = (this.selectedDeliveryMethod()?.name ?? '').toLowerCase();
     return !name.includes('retiro') && !name.includes('local');

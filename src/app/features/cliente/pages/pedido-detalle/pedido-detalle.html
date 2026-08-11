@@ -100,8 +100,7 @@
                   [class.method-card--selected]="editDeliveryMethodId() === m.id"
                   (click)="editDeliveryMethodId.set(m.id)">
             <span class="method-name">{{ m.name }}</span>
-            <span *ngIf="m.cost > 0" class="method-price">+${{ formatPrice(m.cost) }}</span>
-            <span *ngIf="m.cost === 0" class="method-price method-price--free">Gratis</span>
+            <span class="method-price" [class.method-price--free]="editMethodCostLabel(m) === 'Gratis'">{{ editMethodCostLabel(m) }}</span>
           </button>
         </div>
       </div>
