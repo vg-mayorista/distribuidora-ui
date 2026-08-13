@@ -606,7 +606,7 @@ export class ConfirmarComponent implements OnInit, OnDestroy {
     // 5xx: el body.detail viene del GlobalExceptionHandler ("Error interno del servidor").
     // Mostrar eso al usuario es hostil — lo traducimos a un mensaje accionable.
     if (err?.status >= 500 && err?.status < 600) {
-      return 'Tuvimos un problema procesando tu pedido. Por favor reintentá en unos minutos.';
+      return body?.detail || body?.message || 'Tuvimos un problema procesando tu pedido. Por favor reintentá en unos minutos.';
     }
     return body?.detail || body?.message || fallback;
   }
