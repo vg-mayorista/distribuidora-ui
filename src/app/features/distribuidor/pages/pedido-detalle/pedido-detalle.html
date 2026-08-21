@@ -129,6 +129,33 @@
         <h2 class="section-title">Pedido {{ statusLabel(o.status).toLowerCase() }}</h2>
         <p class="muted">Este pedido está en estado terminal y no se puede modificar.</p>
       </section>
+
+      <section class="card-section" *ngIf="remitos().length > 0 || (o.status === 'ARMADO' && o.type === 'WHOLESALE')">
+        <h2 class="section-title">Remitos</h2>
+        <div *ngIf="remitos().length === 0 && o.status === 'ARMADO' && o.type === 'WHOLESALE'" class="action-stack">
+          <app-button variant="primary" (onClick)="generateRemito()" [loading]="generating()" [disabled]="generating()" [block]="true">
+            Generar remito
+          </app-button>
+          <div *ngIf="generateError()" class="form-error">{{ generateError() }}</div>
+        </div>
+        <div *ngIf="remitos().length > 0" class="remitos-list">
+          <div *ngFor="let remito of remitos()" class="remito-row">
+            <div class="remito-info">
+              <strong>Remito {{ remito.deliveryNoteNumber }}</strong>
+              <span class="muted">Creado: {{ remito.issueDate }}</span>
+            </div>
+            <div class="remito-actions">
+              <a [routerLink]="['/distribuidor/remitos', remito.id]" class="btn btn-secondary">Ver</a>
+              <button class="btn btn-primary" (click)="downloadRemito(remito)">Descargar DOCX</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card-section" *ngIf="o.status === 'ARMADO' && o.type !== 'WHOLESALE'">
+        <h2 class="section-title">Remitos</h2>
+        <p class="muted">Los remitos solo se generan para pedidos mayoristas. Este pedido es de tipo {{ typeBadgeLabel(o.type) }}.</p>
+      </section>
     </aside>
   </div>
 

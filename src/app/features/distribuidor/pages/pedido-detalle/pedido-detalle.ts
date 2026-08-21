@@ -3,8 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { OrderService } from '../../../../services/order.service';
+import { DeliveryNoteService } from '../../../../services/delivery-note.service';
 import { Order, OrderStatus, ORDER_STATUS_LABELS, nextStatusOptions } from '../../../../models/order.model';
 import { OrderType, ORDER_TYPE_SHORT_LABELS } from '../../../../models/order-type.model';
+import { DeliveryNote } from '../../../../models/delivery-note.model';
 import { ModalComponent } from '../../../../shared/components/modal/modal';
 import { BadgeComponent } from '../../../../shared/ui/badge/badge';
 import { ButtonComponent } from '../../../../shared/ui/button/button';
@@ -28,11 +30,16 @@ export class DistribuidorPedidoDetalleComponent implements OnInit {
   savingDate = signal(false);
   saveDateError = signal<string | null>(null);
   saveDateSuccess = signal(false);
+  remitos = signal<DeliveryNote[]>([]);
+  remitosLoading = signal(false);
+  generating = signal(false);
+  generateError = signal<string | null>(null);
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private orderService: OrderService,
+    private deliveryNoteService: DeliveryNoteService,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -53,10 +60,42 @@ export class DistribuidorPedidoDetalleComponent implements OnInit {
           this.tempDeliveryDate.set('');
         }
         this.loading.set(false);
+        this.loadRemitos(id);
       },
       error: () => {
         this.error.set('No se pudo cargar el pedido.');
         this.loading.set(false);
+      }
+    });
+  }
+
+  loadRemitos(orderId: string): void {
+    this.remitosLoading.set(true);
+    this.deliveryNoteService.listByOrder(orderId, 0, 20).subscribe({
+      next: (page) => {
+        this.remitos.set(page.content);
+        this.remitosLoading.set(false);
+      },
+      error: () => {
+        this.remitos.set([]);
+        this.remitosLoading.set(false);
+      }
+    });
+  }
+
+  generateRemito(): void {
+    const o = this.order();
+    if (!o?.id || this.generating()) return;
+    this.generating.set(true);
+    this.generateError.set(null);
+    this.deliveryNoteService.generateFromOrder(o.id).subscribe({
+      next: (remito) => {
+        this.remitos.update(list => [remito, ...list]);
+        this.generating.set(false);
+      },
+      error: (err) => {
+        this.generateError.set(err?.error?.detail || 'No se pudo generar el remito.');
+        this.generating.set(false);
       }
     });
   }
@@ -157,6 +196,7 @@ export class DistribuidorPedidoDetalleComponent implements OnInit {
         this.order.set(updated);
         this.transitioning.set(false);
         this.showCancelModal.set(false);
+        this.loadRemitos(updated.id!);
       },
       error: (err) => {
         this.transitioning.set(false);
@@ -182,6 +222,25 @@ export class DistribuidorPedidoDetalleComponent implements OnInit {
       error: (err) => {
         this.savingDate.set(false);
         this.saveDateError.set(err?.error?.detail || 'No se pudo guardar la fecha de reparto.');
+      }
+    });
+  }
+
+  downloadRemito(remito: DeliveryNote): void {
+    if (!remito.id) return;
+    this.deliveryNoteService.download(remito.id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `remito-${remito.deliveryNoteNumber}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        alert('No se pudo descargar el remito.');
       }
     });
   }

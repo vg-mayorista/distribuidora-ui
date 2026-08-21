@@ -1,0 +1,71 @@
+<div class="admin-page-container" *ngIf="!loading(); else loadingTpl">
+  <div class="transition-header" *ngIf="remito()">
+    <button class="btn-back" routerLink="../../" aria-label="Volver">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </button>
+    <div class="transition-header-text">
+      <h1 class="page-header-title">Cambiar estado</h1>
+      <p class="page-header-subtitle">
+        Remito {{ remito()!.deliveryNoteNumber }}
+        <app-badge [variant]="statusVariant(remito()!.status)" style="margin-left: var(--space-sm);">
+          {{ statusLabel(remito()!.status) }}
+        </app-badge>
+      </p>
+    </div>
+  </div>
+
+  <div *ngIf="remito() && !success()" class="transition-card">
+    <form (ngSubmit)="onSubmit()" class="transition-form">
+      <div class="form-group">
+        <label class="form-label" for="targetStatus">Estado destino</label>
+        <select id="targetStatus"
+                class="form-select"
+                [(ngModel)]="targetStatus"
+                name="targetStatus"
+                required>
+          <option value="" disabled>Seleccioná un estado</option>
+          <option *ngFor="let status of nextOptions()" [value]="status">
+            {{ statusLabel(status) }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="notes">Notas (opcional)</label>
+        <textarea id="notes"
+                  class="form-textarea"
+                  [(ngModel)]="notes"
+                  name="notes"
+                  rows="3"
+                  placeholder="Agregá notas adicionales si es necesario…"></textarea>
+      </div>
+
+      <div class="transition-actions">
+        <app-button variant="secondary" type="button" routerLink="../">
+          Cancelar
+        </app-button>
+        <app-button variant="primary" type="submit" [loading]="saving()" [disabled]="!targetStatus">
+          Confirmar
+        </app-button>
+      </div>
+
+      <div *ngIf="error()" class="error-message">
+        {{ error() }}
+      </div>
+    </form>
+  </div>
+
+  <div *ngIf="success()" class="success-card">
+    <p>Estado actualizado correctamente.</p>
+    <p class="text-muted">Redirigiendo…</p>
+  </div>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p class="text-muted" style="margin-top: var(--space-md);">Cargando…</p>
+  </div>
+</ng-template>
