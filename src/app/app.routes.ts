@@ -8,6 +8,9 @@ import { AdminUsersComponent } from './features/admin/pages/users/users';
 import { AdminReportesComponent } from './features/admin/pages/reportes/reportes';
 import { AdminMetodosEntregaComponent } from './features/admin/pages/metodos-entrega/metodos-entrega';
 import { AdminDeliveryWindowsComponent } from './features/admin/pages/delivery-windows/delivery-windows';
+import { RemitosComponent } from './features/descargar-remitos/pages/remitos/remitos';
+import { RemitoDetalleComponent } from './features/descargar-remitos/pages/remito-detalle/remito-detalle';
+import { RemitoTransicionComponent } from './features/descargar-remitos/pages/remito-transicion/remito-transicion';
 import { LoginComponent } from './features/auth/pages/login/login';
 import { RegisterComponent } from './features/auth/pages/register/register';
 import { adminGuard } from './core/guards/admin.guard';
@@ -67,6 +70,9 @@ export const routes: Routes = [
           { path: 'categorias', component: CategoriesComponent },
           { path: 'metodos-entrega', component: AdminMetodosEntregaComponent },
           { path: 'reportes', component: DueñoReportesComponent },
+          { path: 'remitos', component: RemitosComponent },
+          { path: 'remitos/:id', component: RemitoDetalleComponent },
+          { path: 'remitos/:id/transicion', component: RemitoTransicionComponent },
         ],
       },
       {
@@ -77,6 +83,9 @@ export const routes: Routes = [
           { path: 'usuarios', component: AdminUsersComponent },
           { path: 'reportes', component: AdminReportesComponent },
           { path: 'delivery-windows', component: AdminDeliveryWindowsComponent },
+          { path: 'remitos', component: RemitosComponent },
+          { path: 'remitos/:id', component: RemitoDetalleComponent },
+          { path: 'remitos/:id/transicion', component: RemitoTransicionComponent },
         ],
       },
     ],

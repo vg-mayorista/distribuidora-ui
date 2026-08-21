@@ -1,0 +1,85 @@
+<div class="admin-page-container" *ngIf="!loading(); else loadingTpl">
+  <div class="detail-header" *ngIf="remito()">
+    <div class="detail-header-text">
+      <div class="detail-header-top">
+        <button class="btn-back" routerLink="../" aria-label="Volver">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
+        <div>
+          <h1 class="page-header-title">Remito {{ remito()!.deliveryNoteNumber }}</h1>
+          <p class="page-header-subtitle">Pedido {{ remito()!.orderId | slice:0:8 }}…</p>
+        </div>
+      </div>
+      <div class="detail-meta">
+        <app-badge [variant]="statusVariant(remito()!.status)">
+          {{ statusLabel(remito()!.status) }}
+        </app-badge>
+        <span class="detail-meta-item" *ngIf="remito()!.issueDate">
+          Emisión: {{ remito()!.issueDate }}
+        </span>
+        <span class="detail-meta-item" *ngIf="remito()!.deliveryDate">
+          Entrega: {{ remito()!.deliveryDate }}
+        </span>
+      </div>
+    </div>
+    <div class="detail-actions">
+      <app-button variant="secondary" (onClick)="download()" [loading]="downloading()">
+        Descargar DOCX
+      </app-button>
+      <app-button *ngIf="canTransition()" variant="primary" (onClick)="openTransition()">
+        Cambiar estado
+      </app-button>
+    </div>
+  </div>
+
+  <div *ngIf="remito()" class="detail-body">
+    <div class="detail-section">
+      <h2 class="detail-section-title">Items del remito</h2>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th class="text-right">Precio unit.</th>
+              <th class="text-right">Cantidad</th>
+              <th class="text-right">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of remito()!.items">
+              <td>
+                <div class="item-name">{{ item.productName }}</div>
+                <div class="item-id">{{ item.productId | slice:0:8 }}…</div>
+              </td>
+              <td class="text-right">{{ formatCurrency(item.unitPrice) }}</td>
+              <td class="text-right">{{ item.quantityDelivered }}</td>
+              <td class="text-right">{{ formatCurrency(item.unitPrice * item.quantityDelivered) }}</td>
+            </tr>
+            <tr class="detail-total-row">
+              <td colspan="3" class="text-right"><strong>Total</strong></td>
+              <td class="text-right"><strong>{{ formatCurrency(totalAmount()) }}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="detail-section" *ngIf="remito()!.notes">
+      <h2 class="detail-section-title">Observaciones</h2>
+      <p class="detail-notes">{{ remito()!.notes }}</p>
+    </div>
+  </div>
+
+  <div *ngIf="error()" class="card error-card">
+    <p>{{ error() }}</p>
+  </div>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p class="text-muted" style="margin-top: var(--space-md);">Cargando remito…</p>
+  </div>
+</ng-template>

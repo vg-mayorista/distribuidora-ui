@@ -42,6 +42,15 @@
       <li *ngIf="user.role === 'ROLE_ADMIN'">
         <a class="nav-link" routerLink="/admin/reportes" routerLinkActive="nav-link--active">Reportes IT</a>
       </li>
+      <li *ngIf="user.role === 'ROLE_ADMIN'">
+        <a class="nav-link" routerLink="/admin/remitos" routerLinkActive="nav-link--active">Remitos</a>
+      </li>
+      <li *ngIf="user.role === 'ROLE_DISTRIBUTOR'">
+        <a class="nav-link" routerLink="/distribuidor/reportes" routerLinkActive="nav-link--active">Reportes</a>
+      </li>
+      <li *ngIf="user.role === 'ROLE_DISTRIBUTOR'">
+        <a class="nav-link" routerLink="/distribuidor/remitos" routerLinkActive="nav-link--active">Remitos</a>
+      </li>
     </ng-container>
     <ng-template #guestNav>
       <!-- Sin links públicos: el catálogo requiere login -->

@@ -1,0 +1,95 @@
+<div class="admin-page-container">
+  <div class="page-header">
+    <div class="page-header-text">
+      <h1 class="page-header-title">Remitos</h1>
+      <p class="page-header-subtitle">
+        Generación y gestión de remitos de entrega
+        <span *ngIf="totalElements() > 0">({{ totalElements() }} en total)</span>
+      </p>
+    </div>
+    <div class="page-header-actions">
+      <div class="stock-search">
+        <svg class="stock-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text"
+               class="stock-search-input"
+               placeholder="Buscar por número, ID…"
+               [ngModel]="searchTerm()"
+               (ngModelChange)="searchTerm.set($event); onSearch()"
+               aria-label="Buscar remitos">
+      </div>
+      <select class="form-select"
+              [ngModel]="statusFilter()"
+              (ngModelChange)="statusFilter.set($event); onStatusFilter()"
+              aria-label="Filtrar por estado">
+        <option value="">Todos los estados</option>
+        <option *ngFor="let status of statusOptions" [value]="status">
+          {{ statusLabels[status] }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p class="text-muted" style="margin-top: var(--space-md);">Cargando remitos…</p>
+  </div>
+
+  <div *ngIf="error && !loading" class="card" style="padding: var(--space-lg); border-color: var(--status-inactive-bg);">
+    <p style="color: var(--status-inactive-text); margin: 0;">{{ error }}</p>
+  </div>
+
+  <div *ngIf="!loading && !error" class="data-table-wrapper">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="col-remito-num">N° Remito</th>
+            <th class="col-remito-order">Pedido</th>
+            <th class="col-hide-sm col-remito-date">Fecha</th>
+            <th class="col-remito-status">Estado</th>
+            <th class="text-right col-remito-action">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let remito of paginatedRemitos()" class="data-table-row" (click)="openDetail(remito)">
+            <td class="col-remito-num">{{ remito.deliveryNoteNumber }}</td>
+            <td class="col-remito-order">{{ remito.orderId | slice:0:8 }}…</td>
+            <td class="col-hide-sm col-remito-date">{{ remito.issueDate }}</td>
+            <td class="col-remito-status">
+              <app-badge [variant]="statusVariants[remito.status]">
+                {{ statusLabels[remito.status] }}
+              </app-badge>
+            </td>
+            <td class="text-right col-remito-action" (click)="$event.stopPropagation()">
+              <div class="action-buttons">
+                <app-button variant="secondary" size="sm" (onClick)="download(remito)">
+                  Descargar
+                </app-button>
+                <app-button *ngIf="canTransition(remito)" variant="primary" size="sm" (onClick)="openTransition(remito)">
+                  Cambiar estado
+                </app-button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="paginatedRemitos().length === 0">
+            <td colspan="5">
+              <app-empty-state
+                title="Sin remitos"
+                description="No se encontraron remitos con los filtros aplicados.">
+              </app-empty-state>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="totalPages() > 1" class="pagination-container">
+      <button class="pagination-btn" (click)="prevPage()" [disabled]="currentPage() === 1">Anterior</button>
+      <span class="pagination-info">Página {{ currentPage() }} de {{ totalPages() }}</span>
+      <button class="pagination-btn" (click)="nextPage()" [disabled]="currentPage() === totalPages()">Siguiente</button>
+    </div>
+  </div>
+</div>
