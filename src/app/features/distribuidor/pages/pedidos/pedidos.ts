@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, signal, computed } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -11,6 +11,8 @@ import { CustomerSummary } from '../../../../models/customer.model';
 import { BadgeComponent } from '../../../../shared/ui/badge/badge';
 import { ButtonComponent } from '../../../../shared/ui/button/button';
 import { EmptyStateComponent } from '../../../../shared/ui/empty-state/empty-state';
+
+export type SimpleStatusFilter = 'ALL' | 'PENDIENTE' | 'ENTREGADO';
 
 @Component({
   selector: 'app-distribuidor-pedidos',
@@ -28,19 +30,17 @@ export class DistribuidorPedidosComponent implements OnInit {
   downloadingRemitoOrderId = signal<string | null>(null);
 
   searchTerm = signal('');
-  activeStatuses = signal<OrderStatus[]>([]);
+  selectedStatusFilter = signal<SimpleStatusFilter>('ALL');
   deliveryDate = signal<string>('');
   customerId = signal<string>('');
   typeFilter = signal<'ALL' | OrderType>('ALL');
 
   customers = signal<CustomerSummary[]>([]);
 
-  statusOptions: { key: OrderStatus; label: string }[] = [
+  statusOptions: { key: SimpleStatusFilter; label: string }[] = [
+    { key: 'ALL', label: 'Todos' },
     { key: 'PENDIENTE', label: 'Pendientes' },
-    { key: 'ARMADO', label: 'Armados' },
-    { key: 'ENVIADO', label: 'Enviados' },
     { key: 'ENTREGADO', label: 'Entregados' },
-    { key: 'CANCELADO', label: 'Cancelados' },
   ];
 
   typeOptions: { key: 'ALL' | OrderType; label: string }[] = [
@@ -68,9 +68,18 @@ export class DistribuidorPedidosComponent implements OnInit {
   load(): void {
     this.loading.set(true);
     this.error.set(null);
+
+    let statuses: OrderStatus[] | undefined;
+    const filter = this.selectedStatusFilter();
+    if (filter === 'PENDIENTE') {
+      statuses = ['PENDIENTE', 'ARMADO', 'ENVIADO'];
+    } else if (filter === 'ENTREGADO') {
+      statuses = ['ENTREGADO'];
+    }
+
     const tf = this.typeFilter();
     this.orderService.listAll({
-      statuses: this.activeStatuses().length > 0 ? this.activeStatuses() : undefined,
+      statuses,
       deliveryDate: this.deliveryDate() || undefined,
       type: tf === 'ALL' ? undefined : tf,
       customerId: this.customerId() || undefined,
@@ -89,13 +98,9 @@ export class DistribuidorPedidosComponent implements OnInit {
     });
   }
 
-  toggleStatus(s: OrderStatus): void {
-    this.activeStatuses.update(list => list.includes(s) ? list.filter(x => x !== s) : [...list, s]);
+  setStatusFilter(filter: SimpleStatusFilter): void {
+    this.selectedStatusFilter.set(filter);
     this.load();
-  }
-
-  isStatusActive(s: OrderStatus): boolean {
-    return this.activeStatuses().includes(s);
   }
 
   setType(t: 'ALL' | OrderType): void {
@@ -104,7 +109,7 @@ export class DistribuidorPedidosComponent implements OnInit {
   }
 
   clearFilters(): void {
-    this.activeStatuses.set([]);
+    this.selectedStatusFilter.set('ALL');
     this.deliveryDate.set('');
     this.customerId.set('');
     this.searchTerm.set('');
@@ -134,16 +139,16 @@ export class DistribuidorPedidosComponent implements OnInit {
   }
 
   statusLabel(s: OrderStatus): string {
-    return ORDER_STATUS_LABELS[s];
+    if (s === 'ENTREGADO') return 'Entregado';
+    if (s === 'CANCELADO') return 'Cancelado';
+    return 'Pendiente';
   }
 
   statusVariant(s: OrderStatus): 'warning' | 'info' | 'active' | 'inactive' | 'neutral' {
     switch (s) {
-      case 'PENDIENTE': return 'warning';
-      case 'ARMADO': return 'warning';
-      case 'ENVIADO': return 'info';
       case 'ENTREGADO': return 'active';
       case 'CANCELADO': return 'inactive';
+      default: return 'warning';
     }
   }
 
@@ -169,35 +174,60 @@ export class DistribuidorPedidosComponent implements OnInit {
   }
 
   hasActiveFilters(): boolean {
-    return this.activeStatuses().length > 0
+    return this.selectedStatusFilter() !== 'ALL'
       || !!this.deliveryDate()
       || !!this.customerId()
       || !!this.searchTerm()
       || this.typeFilter() !== 'ALL';
   }
 
-  transitionOrder(order: Order, targetStatus: OrderStatus, event: MouseEvent): void {
+  markAsDelivered(order: Order, event: MouseEvent): void {
     event.stopPropagation();
     if (!order.id || this.actionLoadingOrderId() === order.id) return;
     const orderId = order.id;
     this.actionLoadingOrderId.set(orderId);
 
+    const steps: OrderStatus[] = [];
+    if (order.status === 'PENDIENTE') {
+      steps.push('ARMADO', 'ENVIADO', 'ENTREGADO');
+    } else if (order.status === 'ARMADO') {
+      steps.push('ENVIADO', 'ENTREGADO');
+    } else if (order.status === 'ENVIADO') {
+      steps.push('ENTREGADO');
+    }
+
+    if (steps.length === 0) {
+      this.actionLoadingOrderId.set(null);
+      return;
+    }
+
+    this.executeTransitionSteps(orderId, steps, 0);
+  }
+
+  private executeTransitionSteps(orderId: string, steps: OrderStatus[], index: number): void {
+    if (index >= steps.length) {
+      this.actionLoadingOrderId.set(null);
+      this.orders.update(list => list.map(o => o.id === orderId ? { ...o, status: 'ENTREGADO' } : o));
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const targetStatus = steps[index];
     this.orderService.transitionStatus(orderId, { targetStatus }).subscribe({
       next: (updatedOrder) => {
-        this.orders.update(list => list.map(o => o.id === updatedOrder.id ? { ...o, status: updatedOrder.status } : o));
-        this.actionLoadingOrderId.set(null);
-        this.cdr.markForCheck();
+        this.orders.update(list => list.map(o => o.id === orderId ? { ...o, status: updatedOrder.status } : o));
+        this.executeTransitionSteps(orderId, steps, index + 1);
       },
       error: (err) => {
-        console.error('Error al cambiar estado del pedido:', err);
+        console.error(`Error al pasar a ${targetStatus}:`, err);
         this.actionLoadingOrderId.set(null);
-        alert('No se pudo actualizar el estado del pedido.');
+        alert('No se pudo completar el cambio a Entregado.');
       }
     });
   }
 
   canDownloadRemito(order: Order): boolean {
-    return order.type === 'WHOLESALE' && ['ARMADO', 'ENVIADO', 'ENTREGADO'].includes(order.status);
+    return order.type === 'WHOLESALE';
   }
 
   downloadRemito(order: Order, event: MouseEvent): void {
@@ -211,39 +241,57 @@ export class DistribuidorPedidosComponent implements OnInit {
         if (res.content && res.content.length > 0) {
           const remito = res.content[0];
           if (remito.id) {
-            this.performDownload(remito.id, remito.deliveryNoteNumber ?? orderId, orderId);
+            this.performDownload(remito.id, remito.deliveryNoteNumber ?? orderId);
           } else {
             this.downloadingRemitoOrderId.set(null);
           }
-        } else if (order.status === 'ARMADO' && order.type === 'WHOLESALE') {
-          this.deliveryNoteService.generateFromOrder(orderId).subscribe({
-            next: (newRemito) => {
-              if (newRemito.id) {
-                this.performDownload(newRemito.id, newRemito.deliveryNoteNumber ?? orderId, orderId);
-              } else {
-                this.downloadingRemitoOrderId.set(null);
-              }
-            },
-            error: (err) => {
-              console.error('Error al generar remito:', err);
-              this.downloadingRemitoOrderId.set(null);
-              alert('No se pudo generar el remito para este pedido.');
-            }
-          });
         } else {
-          this.downloadingRemitoOrderId.set(null);
-          alert('No hay un remito generado para este pedido.');
+          // Si no existe remito aun, avanzamos secuencialmente a ARMADO para generarlo y luego descargarlo
+          this.ensureArmadoAndGenerateRemito(order, orderId);
         }
       },
-      error: (err) => {
-        console.error('Error al buscar remito:', err);
-        this.downloadingRemitoOrderId.set(null);
-        alert('Error al obtener remito.');
+      error: () => {
+        this.ensureArmadoAndGenerateRemito(order, orderId);
       }
     });
   }
 
-  private performDownload(remitoId: string, number: string, _orderId: string): void {
+  private ensureArmadoAndGenerateRemito(order: Order, orderId: string): void {
+    if (order.status === 'PENDIENTE') {
+      this.orderService.transitionStatus(orderId, { targetStatus: 'ARMADO' }).subscribe({
+        next: (updated) => {
+          this.orders.update(list => list.map(o => o.id === orderId ? { ...o, status: updated.status } : o));
+          this.generateAndDownloadRemito(orderId);
+        },
+        error: (err) => {
+          console.error('Error al armar pedido para remito:', err);
+          this.downloadingRemitoOrderId.set(null);
+          alert('No se pudo armar el pedido para generar remito.');
+        }
+      });
+    } else {
+      this.generateAndDownloadRemito(orderId);
+    }
+  }
+
+  private generateAndDownloadRemito(orderId: string): void {
+    this.deliveryNoteService.generateFromOrder(orderId).subscribe({
+      next: (newRemito) => {
+        if (newRemito.id) {
+          this.performDownload(newRemito.id, newRemito.deliveryNoteNumber ?? orderId);
+        } else {
+          this.downloadingRemitoOrderId.set(null);
+        }
+      },
+      error: (err) => {
+        console.error('Error al generar remito:', err);
+        this.downloadingRemitoOrderId.set(null);
+        alert('No se pudo generar el remito para este pedido.');
+      }
+    });
+  }
+
+  private performDownload(remitoId: string, number: string): void {
     this.deliveryNoteService.download(remitoId).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);

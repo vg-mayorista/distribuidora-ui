@@ -7,7 +7,7 @@
       </p>
     </div>
     <div class="dp-actions">
-      <button class="btn btn-secondary" type="button" (click)="clearFilters()" *ngIf="hasActiveFilters()">
+      <button class="btn btn-action-ver" type="button" (click)="clearFilters()" *ngIf="hasActiveFilters()">
         Limpiar filtros
       </button>
     </div>
@@ -28,8 +28,8 @@
           <button *ngFor="let s of statusOptions"
                   type="button"
                   class="chip"
-                  [class.chip--active]="isStatusActive(s.key)"
-                  (click)="toggleStatus(s.key)">
+                  [class.chip--active]="selectedStatusFilter() === s.key"
+                  (click)="setStatusFilter(s.key)">
             {{ s.label }}
           </button>
         </div>
@@ -110,27 +110,21 @@
             <td class="text-right font-semibold">${{ formatPrice(o.total) }}</td>
             <td class="text-right">
               <div class="row-actions" (click)="$event.stopPropagation()">
-                <button class="btn btn-secondary btn-sm" (click)="view(o); $event.stopPropagation()">Ver</button>
+                <button class="btn-action-ver" (click)="view(o); $event.stopPropagation()">
+                  Ver
+                </button>
                 <button *ngIf="canDownloadRemito(o)"
-                        class="btn btn-outline-remito btn-sm"
+                        class="btn-action-remito"
                         [disabled]="downloadingRemitoOrderId() === o.id"
                         (click)="downloadRemito(o, $event)"
                         title="Descargar Remito DOCX">
-                  <span *ngIf="downloadingRemitoOrderId() === o.id" class="btn-spinner"></span>
+                  <span *ngIf="downloadingRemitoOrderId() === o.id" class="btn-spinner-blue"></span>
                   <span *ngIf="downloadingRemitoOrderId() !== o.id">📄 Remito</span>
                 </button>
-                <button *ngIf="o.status === 'ARMADO'"
-                        class="btn btn-action-enviar btn-sm"
+                <button *ngIf="o.status !== 'ENTREGADO' && o.status !== 'CANCELADO'"
+                        class="btn-action-entregar"
                         [disabled]="actionLoadingOrderId() === o.id"
-                        (click)="transitionOrder(o, 'ENVIADO', $event)"
-                        title="Marcar como Enviado">
-                  <span *ngIf="actionLoadingOrderId() === o.id" class="btn-spinner"></span>
-                  <span *ngIf="actionLoadingOrderId() !== o.id">🚚 Enviar</span>
-                </button>
-                <button *ngIf="o.status === 'ENVIADO'"
-                        class="btn btn-action-entregar btn-sm"
-                        [disabled]="actionLoadingOrderId() === o.id"
-                        (click)="transitionOrder(o, 'ENTREGADO', $event)"
+                        (click)="markAsDelivered(o, $event)"
                         title="Marcar como Entregado">
                   <span *ngIf="actionLoadingOrderId() === o.id" class="btn-spinner"></span>
                   <span *ngIf="actionLoadingOrderId() !== o.id">✓ Entregar</span>
