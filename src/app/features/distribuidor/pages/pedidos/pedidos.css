@@ -173,9 +173,9 @@
 .col-dist-order-items { width: 70px; min-width: 70px; max-width: 70px; }
 .col-dist-order-delivery { width: 140px; min-width: 140px; max-width: 140px; }
 .col-dist-order-date { width: 110px; min-width: 110px; max-width: 110px; }
-.col-dist-order-status { width: 95px; min-width: 95px; max-width: 95px; }
+.col-dist-order-status { width: 100px; min-width: 100px; max-width: 100px; }
 .col-dist-order-total { width: 105px; min-width: 105px; max-width: 105px; }
-.col-dist-order-action { width: 250px; min-width: 220px; text-align: right; }
+.col-dist-order-action { width: 260px; min-width: 220px; text-align: right; }
 
 .row-actions {
   display: inline-flex;
@@ -185,7 +185,7 @@
   flex-wrap: nowrap;
 }
 
-/* Uniform action button base */
+/* Action button base */
 .btn-action-ver,
 .btn-action-remito,
 .btn-action-entregar {
@@ -204,7 +204,7 @@
   box-sizing: border-box;
 }
 
-/* Ver button: subtle neutral */
+/* Ver button: clean neutral secondary */
 .btn-action-ver {
   background-color: var(--color-surface, #ffffff);
   color: var(--color-text, #374151);
@@ -217,9 +217,9 @@
   transform: translateY(-1px);
 }
 
-/* Remito button: refined soft blue button */
+/* Remito button: refined soft blue action */
 .btn-action-remito {
-  background-color: #eff6ff;
+  background-color: #f0f7ff;
   color: #1d4ed8;
   border: 1px solid #bfdbfe;
 }
@@ -230,41 +230,17 @@
   transform: translateY(-1px);
 }
 
-/* Marcar Entregado button: vibrant emerald green action */
+/* Marcar Entregado button: solid emerald green action */
 .btn-action-entregar {
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  background-color: #16a34a;
   color: #ffffff;
   border: 1px solid #15803d;
-  box-shadow: 0 1px 3px rgba(22, 163, 74, 0.25);
+  box-shadow: 0 1px 2px rgba(22, 163, 74, 0.2);
 }
 .btn-action-entregar:hover:not(:disabled) {
-  background: linear-gradient(135deg, #15803d 0%, #166534 100%);
-  box-shadow: 0 3px 6px rgba(22, 163, 74, 0.35);
+  background-color: #15803d;
+  box-shadow: 0 3px 6px rgba(22, 163, 74, 0.3);
   transform: translateY(-1px);
-}
-
-/* Completed Entregado pill badge */
-.badge-entregado-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
-  height: 32px;
-  padding: 0 0.875rem;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: #15803d;
-  background-color: #dcfce7;
-  border: 1px solid #bbf7d0;
-  border-radius: 9999px;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6);
-  letter-spacing: 0.01em;
-  animation: fadeInPill 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes fadeInPill {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
 }
 
 .btn-spinner {

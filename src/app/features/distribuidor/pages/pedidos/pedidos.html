@@ -7,7 +7,7 @@
       </p>
     </div>
     <div class="dp-actions">
-      <button class="btn btn-action-ver" type="button" (click)="clearFilters()" *ngIf="hasActiveFilters()">
+      <button class="btn-action-ver" type="button" (click)="clearFilters()" *ngIf="hasActiveFilters()">
         Limpiar filtros
       </button>
     </div>
@@ -125,13 +125,10 @@
                         class="btn-action-entregar"
                         [disabled]="actionLoadingOrderId() === o.id"
                         (click)="markAsDelivered(o, $event)"
-                        title="Marcar como Entregado">
+                        title="Marcar pedido como Entregado">
                   <span *ngIf="actionLoadingOrderId() === o.id" class="btn-spinner"></span>
-                  <span *ngIf="actionLoadingOrderId() !== o.id">✓ Entregar</span>
+                  <span *ngIf="actionLoadingOrderId() !== o.id">✓ Marcar entregado</span>
                 </button>
-                <span *ngIf="o.status === 'ENTREGADO'" class="badge-entregado-pill">
-                  ✓ Entregado
-                </span>
               </div>
             </td>
           </tr>
