@@ -126,7 +126,42 @@
       </section>
 
       <section class="card-section">
-        <h2 class="section-title">{{ sectionNumber(4) }}. Notas (opcional)</h2>
+        <h2 class="section-title">{{ sectionNumber(4) }}. Método de pago</h2>
+        <div class="methods-grid">
+          <button type="button"
+                  class="method-card"
+                  [class.method-card--selected]="paymentMethod() === 'EFECTIVO'"
+                  [attr.aria-pressed]="paymentMethod() === 'EFECTIVO'"
+                  (click)="paymentMethod.set('EFECTIVO'); clearError()">
+            <div class="method-card-header">
+              <span class="method-icon-title">
+                <span class="method-icon" aria-hidden="true">💵</span>
+                <span class="method-name">Efectivo</span>
+              </span>
+              <app-badge variant="active" *ngIf="paymentMethod() === 'EFECTIVO'">Seleccionado</app-badge>
+            </div>
+            <span class="method-desc">Aboná en efectivo al momento de la entrega o retiro en sucursal.</span>
+          </button>
+
+          <button type="button"
+                  class="method-card"
+                  [class.method-card--selected]="paymentMethod() === 'TRANSFERENCIA'"
+                  [attr.aria-pressed]="paymentMethod() === 'TRANSFERENCIA'"
+                  (click)="paymentMethod.set('TRANSFERENCIA'); clearError()">
+            <div class="method-card-header">
+              <span class="method-icon-title">
+                <span class="method-icon" aria-hidden="true">🏦</span>
+                <span class="method-name">Transferencia bancaria</span>
+              </span>
+              <app-badge variant="active" *ngIf="paymentMethod() === 'TRANSFERENCIA'">Seleccionado</app-badge>
+            </div>
+            <span class="method-desc">Transferencia al Alias: vyg.distribucion</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="card-section">
+        <h2 class="section-title">{{ sectionNumber(5) }}. Notas (opcional)</h2>
         <div class="form-group">
           <textarea class="form-input" rows="3"
                     placeholder="Algo que tengamos que saber sobre tu pedido…"
@@ -158,6 +193,10 @@
           <span>Envío</span>
           <span *ngIf="computedDeliveryCost() === 0" class="summary-value--free">Gratis</span>
           <span *ngIf="computedDeliveryCost() > 0">${{ formatPrice(computedDeliveryCost()) }}</span>
+        </div>
+        <div class="summary-row">
+          <span>Método de pago</span>
+          <span>{{ paymentMethod() === 'TRANSFERENCIA' ? '🏦 Transferencia' : '💵 Efectivo' }}</span>
         </div>
         <div class="summary-row summary-row--total"><span>Total</span><span>${{ formatPrice(computeTotal()) }}</span></div>
       </div>

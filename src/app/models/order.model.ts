@@ -1,6 +1,7 @@
 import { OrderType } from './order-type.model';
 
 export type OrderStatus = 'PENDIENTE' | 'ARMADO' | 'ENVIADO' | 'ENTREGADO' | 'CANCELADO';
+export type PaymentMethod = 'EFECTIVO' | 'TRANSFERENCIA';
 
 export interface OrderItem {
   id?: string;
@@ -29,6 +30,7 @@ export interface Order {
   deliveryAddress?: string;
   deliveryPhone?: string;
   notes?: string;
+  paymentMethod?: PaymentMethod;
   deliveryDate?: string;
   editable?: boolean;
   itemCount?: number;
@@ -44,6 +46,7 @@ export interface CreateOrderRequest {
   deliveryAddress?: string;
   deliveryPhone?: string;
   notes?: string;
+  paymentMethod?: PaymentMethod;
   items: { productId: string; quantity: number }[];
 }
 
@@ -53,6 +56,7 @@ export interface UpdateOrderRequest {
   deliveryAddress?: string;
   deliveryPhone?: string;
   notes?: string;
+  paymentMethod?: PaymentMethod;
   items: { productId: string; quantity: number }[];
 }
 

@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CartStore } from '../../services/cart.store';
 import { DeliveryMethodService, DeliveryMethodSummary } from '../../../../services/delivery-method.service';
 import { OrderService } from '../../../../services/order.service';
+import { PaymentMethod } from '../../../../models/order.model';
 import { AuthService } from '../../../../services/auth.service';
 import { BusinessConfigService } from '../../../../services/business-config.service';
 import { DeliveryWindow } from '../../../../models/delivery-window.model';
@@ -40,6 +41,7 @@ export class ConfirmarComponent implements OnInit, OnDestroy {
 
   allDeliveryMethods = signal<DeliveryMethodSummary[]>([]);
   selectedDeliveryMethodId = signal<string>('');
+  paymentMethod = signal<PaymentMethod>('EFECTIVO');
   deliveryAddress = signal('');
   deliveryPhone = signal('');
   notes = signal('');
@@ -237,6 +239,7 @@ export class ConfirmarComponent implements OnInit, OnDestroy {
       next: (o) => {
         if (o?.deliveryMethodId) {
           const match = this.availableDeliveryMethods().find(m => m.id === o.deliveryMethodId);
+          if (o.paymentMethod) { this.paymentMethod.set(o.paymentMethod); }
           if (match) {
             this.selectedDeliveryMethodId.set(match.id);
             this.selectedDeliveryMethod.set(match);
@@ -430,6 +433,7 @@ export class ConfirmarComponent implements OnInit, OnDestroy {
 
     const base: any = {
       deliveryMethodId: this.selectedDeliveryMethodId(),
+      paymentMethod: this.paymentMethod(),
       deliveryAddress: this.requiresAddress ? this.deliveryAddress().trim() : undefined,
       deliveryPhone: this.requiresAddress ? this.deliveryPhone().trim() : undefined,
       notes: this.notes().trim() || undefined,
@@ -500,15 +504,16 @@ export class ConfirmarComponent implements OnInit, OnDestroy {
    * Numeración auto-incrementada de secciones, omitiendo las que no aplican al flujo.
    * Útil para que el título "3." no quede en blanco si `requiresAddress` es false.
    */
-  sectionNumber(currentSection: 1 | 2 | 3 | 4): number {
-    const sectionsVisible: Record<1 | 2 | 3 | 4, boolean> = {
+  sectionNumber(currentSection: 1 | 2 | 3 | 4 | 5): number {
+    const sectionsVisible: Record<1 | 2 | 3 | 4 | 5, boolean> = {
       1: true,
       2: this.isWholesale(),
       3: this.requiresAddress,
       4: true,
+      5: true,
     };
     let n = 0;
-    for (const k of [1, 2, 3, 4] as const) {
+    for (const k of [1, 2, 3, 4, 5] as const) {
       if (sectionsVisible[k]) n++;
       if (k === currentSection) return n;
     }

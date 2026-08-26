@@ -1,3 +1,4 @@
+import { PaymentMethod } from './order.model';
 export type DeliveryNoteStatus = 'PENDING' | 'GENERATED' | 'DELIVERED' | 'CANCELED';
 
 export interface DeliveryNoteItem {
@@ -16,6 +17,7 @@ export interface DeliveryNote {
   issueDate?: string;
   deliveryDate?: string;
   notes?: string;
+  paymentMethod?: PaymentMethod;
   items: DeliveryNoteItem[];
   createdAt?: string;
   updatedAt?: string;
