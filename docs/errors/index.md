@@ -3,6 +3,7 @@
 | Error | Archivo |
 |-------|---------|
 | No aparecen remitos ni descarga en el dashboard del distribuidor | `missing-remitos-frontend.md` |
+| Opción "Reportes" duplicada en la barra de navegación | `duplicate-navbar-reportes.md` |
 
 ## Añadir nuevo error
 
