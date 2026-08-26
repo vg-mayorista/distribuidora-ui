@@ -187,11 +187,21 @@ export class DistribuidorPedidosComponent implements OnInit {
     const orderId = order.id;
     this.actionLoadingOrderId.set(orderId);
 
+    const isRetiro = order.deliveryMethodName?.toLowerCase().includes('retiro') ?? false;
     const steps: OrderStatus[] = [];
+
     if (order.status === 'PENDIENTE') {
-      steps.push('ARMADO', 'ENVIADO', 'ENTREGADO');
+      if (isRetiro) {
+        steps.push('ARMADO', 'ENTREGADO');
+      } else {
+        steps.push('ARMADO', 'ENVIADO', 'ENTREGADO');
+      }
     } else if (order.status === 'ARMADO') {
-      steps.push('ENVIADO', 'ENTREGADO');
+      if (isRetiro) {
+        steps.push('ENTREGADO');
+      } else {
+        steps.push('ENVIADO', 'ENTREGADO');
+      }
     } else if (order.status === 'ENVIADO') {
       steps.push('ENTREGADO');
     }
@@ -246,7 +256,6 @@ export class DistribuidorPedidosComponent implements OnInit {
             this.downloadingRemitoOrderId.set(null);
           }
         } else {
-          // Si no existe remito aun, avanzamos secuencialmente a ARMADO para generarlo y luego descargarlo
           this.ensureArmadoAndGenerateRemito(order, orderId);
         }
       },
