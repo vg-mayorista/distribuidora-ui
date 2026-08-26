@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { OrderService } from '../../../../services/order.service';
+import { DeliveryNoteService } from '../../../../services/delivery-note.service';
 import { DistributorCustomerService } from '../../../../services/distributor-customer.service';
 import { Order, OrderStatus, ORDER_STATUS_LABELS } from '../../../../models/order.model';
 import { OrderType, ORDER_TYPE_SHORT_LABELS } from '../../../../models/order-type.model';
@@ -22,6 +23,9 @@ export class DistribuidorPedidosComponent implements OnInit {
   orders = signal<Order[]>([]);
   loading = signal(false);
   error = signal<string | null>(null);
+
+  actionLoadingOrderId = signal<string | null>(null);
+  downloadingRemitoOrderId = signal<string | null>(null);
 
   searchTerm = signal('');
   activeStatuses = signal<OrderStatus[]>([]);
@@ -47,6 +51,7 @@ export class DistribuidorPedidosComponent implements OnInit {
 
   constructor(
     private orderService: OrderService,
+    private deliveryNoteService: DeliveryNoteService,
     private customerService: DistributorCustomerService,
     private router: Router,
     private cdr: ChangeDetectorRef,
@@ -169,5 +174,91 @@ export class DistribuidorPedidosComponent implements OnInit {
       || !!this.customerId()
       || !!this.searchTerm()
       || this.typeFilter() !== 'ALL';
+  }
+
+  transitionOrder(order: Order, targetStatus: OrderStatus, event: MouseEvent): void {
+    event.stopPropagation();
+    if (!order.id || this.actionLoadingOrderId() === order.id) return;
+    const orderId = order.id;
+    this.actionLoadingOrderId.set(orderId);
+
+    this.orderService.transitionStatus(orderId, { targetStatus }).subscribe({
+      next: (updatedOrder) => {
+        this.orders.update(list => list.map(o => o.id === updatedOrder.id ? { ...o, status: updatedOrder.status } : o));
+        this.actionLoadingOrderId.set(null);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error al cambiar estado del pedido:', err);
+        this.actionLoadingOrderId.set(null);
+        alert('No se pudo actualizar el estado del pedido.');
+      }
+    });
+  }
+
+  canDownloadRemito(order: Order): boolean {
+    return order.type === 'WHOLESALE' && ['ARMADO', 'ENVIADO', 'ENTREGADO'].includes(order.status);
+  }
+
+  downloadRemito(order: Order, event: MouseEvent): void {
+    event.stopPropagation();
+    if (!order.id || this.downloadingRemitoOrderId() === order.id) return;
+    const orderId = order.id;
+    this.downloadingRemitoOrderId.set(orderId);
+
+    this.deliveryNoteService.listByOrder(orderId).subscribe({
+      next: (res) => {
+        if (res.content && res.content.length > 0) {
+          const remito = res.content[0];
+          if (remito.id) {
+            this.performDownload(remito.id, remito.deliveryNoteNumber ?? orderId, orderId);
+          } else {
+            this.downloadingRemitoOrderId.set(null);
+          }
+        } else if (order.status === 'ARMADO' && order.type === 'WHOLESALE') {
+          this.deliveryNoteService.generateFromOrder(orderId).subscribe({
+            next: (newRemito) => {
+              if (newRemito.id) {
+                this.performDownload(newRemito.id, newRemito.deliveryNoteNumber ?? orderId, orderId);
+              } else {
+                this.downloadingRemitoOrderId.set(null);
+              }
+            },
+            error: (err) => {
+              console.error('Error al generar remito:', err);
+              this.downloadingRemitoOrderId.set(null);
+              alert('No se pudo generar el remito para este pedido.');
+            }
+          });
+        } else {
+          this.downloadingRemitoOrderId.set(null);
+          alert('No hay un remito generado para este pedido.');
+        }
+      },
+      error: (err) => {
+        console.error('Error al buscar remito:', err);
+        this.downloadingRemitoOrderId.set(null);
+        alert('Error al obtener remito.');
+      }
+    });
+  }
+
+  private performDownload(remitoId: string, number: string, _orderId: string): void {
+    this.deliveryNoteService.download(remitoId).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `remito-${number}.docx`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.downloadingRemitoOrderId.set(null);
+      },
+      error: (err) => {
+        console.error('Error al descargar remito:', err);
+        this.downloadingRemitoOrderId.set(null);
+        alert('No se pudo descargar el archivo del remito.');
+      }
+    });
   }
 }

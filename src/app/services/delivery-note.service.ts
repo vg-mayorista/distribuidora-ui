@@ -14,13 +14,15 @@ import {
   providedIn: 'root',
 })
 export class DeliveryNoteService {
-  private apiUrl: string;
+  private apiBase = inject(API_BASE);
 
-  constructor(private http: HttpClient, private authService: AuthService) {
+  private get apiUrl(): string {
     const role = this.authService.getCurrentUser()?.role;
     const prefix = role === 'ROLE_DISTRIBUTOR' ? 'distributor' : 'admin';
-    this.apiUrl = inject(API_BASE) + `/api/${prefix}/delivery-notes`;
+    return `${this.apiBase}/api/${prefix}/delivery-notes`;
   }
+
+  constructor(private http: HttpClient, private authService: AuthService) {}
 
   generateFromOrder(orderId: string): Observable<DeliveryNote> {
     return this.http.post<DeliveryNote>(`${this.apiUrl}/generate/${orderId}`, {});

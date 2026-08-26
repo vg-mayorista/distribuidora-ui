@@ -4,6 +4,7 @@
 |-------|---------|
 | No aparecen remitos ni descarga en el dashboard del distribuidor | `missing-remitos-frontend.md` |
 | Opción "Reportes" duplicada en la barra de navegación | `duplicate-navbar-reportes.md` |
+| Rediseño de acciones rápidas en la lista de pedidos del distribuidor | `pedidos-table-quick-actions-redesign.md` |
 
 ## Añadir nuevo error
 
