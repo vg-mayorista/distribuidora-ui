@@ -5,7 +5,7 @@
     <div class="dp-title-row">
       <h1 class="dp-title">Pedido #{{ shortId(o.id) }}</h1>
       <div class="dp-title-badges">
-        <app-badge [variant]="typeBadgeVariant(o.type)">{{ typeBadgeLabel(o.type) }}</app-badge>
+        
         <app-badge [variant]="statusVariant(o.status)">{{ statusLabel(o.status) }}</app-badge>
       </div>
     </div>
@@ -130,9 +130,9 @@
         <p class="muted">Este pedido está en estado terminal y no se puede modificar.</p>
       </section>
 
-      <section class="card-section" *ngIf="remitos().length > 0 || (o.status === 'ARMADO' && o.type === 'WHOLESALE')">
+      <section class="card-section" *ngIf="remitos().length > 0 || (o.status === 'ARMADO' && true)">
         <h2 class="section-title">Remitos</h2>
-        <div *ngIf="remitos().length === 0 && o.status === 'ARMADO' && o.type === 'WHOLESALE'" class="action-stack">
+        <div *ngIf="remitos().length === 0 && o.status === 'ARMADO' && true" class="action-stack">
           <app-button variant="primary" (onClick)="generateRemito()" [loading]="generating()" [disabled]="generating()" [block]="true">
             Generar remito
           </app-button>
@@ -152,7 +152,7 @@
         </div>
       </section>
 
-      <section class="card-section" *ngIf="o.status === 'ARMADO' && o.type !== 'WHOLESALE'">
+      <section class="card-section" *ngIf="o.status === 'ARMADO' && false">
         <h2 class="section-title">Remitos</h2>
         <p class="muted">Los remitos solo se generan para pedidos mayoristas. Este pedido es de tipo {{ typeBadgeLabel(o.type) }}.</p>
       </section>

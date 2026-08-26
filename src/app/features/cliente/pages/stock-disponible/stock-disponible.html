@@ -1,7 +1,7 @@
 <section class="page">
   <header class="page-header">
     <div>
-      <h1 class="page-header-title">Stock disponible</h1>
+      <h1 class="page-header-title">Productos</h1>
       <p class="page-header-subtitle" *ngIf="filteredProducts().length > 0">
         {{ filteredProducts().length }} productos en sucursal. Retirá hoy o pedilo con envío a domicilio.
       </p>
@@ -28,14 +28,8 @@
     </div>
   </header>
 
-  <div class="stock-info-banner">
-    <div class="stock-info-icon" aria-hidden="true">📦</div>
-    <div class="stock-info-text">
-      <strong>Stock en sucursal.</strong>
-      <span>Comprá y retirá hoy mismo, o coordiná el envío a domicilio.</span>
-    </div>
-    <a routerLink="/cliente/catalogo" class="stock-info-link" aria-label="Ir al flujo de pedido mayorista para envío programado">¿Querés ver el pedido mayorista? →</a>
-  </div>
+  
+    
 
   <!-- Minimum Order Status Banner (mismas reglas que mayorista) -->
   <div class="min-order-banner"
@@ -178,7 +172,7 @@
     </div>
 
     <div *ngIf="filteredProducts().length === 0" class="product-grid-empty">
-      <p>No hay stock disponible por ahora. Probá volver más tarde o hace tu <a routerLink="/cliente/catalogo">pedido mayorista</a>.</p>
+      <p>No hay productos disponibles por ahora. Probá volver más tarde.</p>
     </div>
   </ng-container>
 

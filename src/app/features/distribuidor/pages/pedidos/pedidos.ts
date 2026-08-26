@@ -237,7 +237,7 @@ export class DistribuidorPedidosComponent implements OnInit {
   }
 
   canDownloadRemito(order: Order): boolean {
-    return order.type === 'WHOLESALE';
+    return true;
   }
 
   downloadRemito(order: Order, event: MouseEvent): void {

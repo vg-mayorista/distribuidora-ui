@@ -11,8 +11,8 @@
 
     <ng-container *ngIf="(currentUser$ | async) as user; else guestCta">
       <div class="home-hero-cta">
-        <a *ngIf="user.role === 'ROLE_CUSTOMER'" routerLink="/cliente/catalogo" class="btn btn-primary btn-lg">
-          Ir al catálogo
+        <a *ngIf="user.role === 'ROLE_CUSTOMER'" routerLink="/productos" class="btn btn-primary btn-lg">
+          Ver productos
         </a>
         <a *ngIf="user.role === 'ROLE_DISTRIBUTOR'" routerLink="/distribuidor" class="btn btn-primary btn-lg">
           Ver pedidos
@@ -25,8 +25,8 @@
     </ng-container>
     <ng-template #guestCta>
       <div class="home-hero-cta">
-        <a routerLink="/cliente/catalogo" class="btn btn-primary btn-lg">
-          Ver catálogo
+        <a routerLink="/productos" class="btn btn-primary btn-lg">
+          Ver productos
         </a>
         <a routerLink="/login" class="btn btn-secondary btn-lg">
           Iniciar sesión
@@ -63,7 +63,7 @@
   </div>
 
   <div class="home-section-cta">
-    <a routerLink="/cliente/catalogo" class="btn btn-primary">Ver catálogo</a>
+    <a routerLink="/productos" class="btn btn-primary">Ver catálogo</a>
   </div>
 </section>
 
@@ -98,7 +98,7 @@
       <h3>Empezá hoy. Sin papel, sin llamadas.</h3>
       <p>Tu catálogo, tus pedidos y tu historial, todo en un lugar.</p>
     </div>
-    <a routerLink="/cliente/catalogo" class="btn btn-primary">Comenzar pedido</a>
+    <a routerLink="/productos" class="btn btn-primary">Comenzar pedido</a>
   </div>
 </section>
 

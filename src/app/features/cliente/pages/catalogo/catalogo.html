@@ -1,7 +1,7 @@
 <section class="page">
   <header class="page-header">
     <div>
-      <h1 class="page-header-title">Pedido mayorista</h1>
+      <h1 class="page-header-title">Productos</h1>
       <p class="page-header-subtitle">
         Sumá lo que necesitás. Al confirmar elegís cuándo recibirlo.
         <span *ngIf="filteredProducts().length > 0"> · {{ filteredProducts().length }} productos disponibles</span>
@@ -48,15 +48,6 @@
     </div>
   </header>
 
-  <!-- Banner informativo del flujo mayorista -->
-  <div class="wholesale-info-banner">
-    <div class="wholesale-info-icon" aria-hidden="true">🛍️</div>
-    <div class="wholesale-info-text">
-      <strong>Estás haciendo un pedido mayorista.</strong>
-      <span>¿Necesitás pocas unidades para hoy? Probá el flujo de stock disponible y retiralas en el día sin mínimo de packs.</span>
-    </div>
-    <a routerLink="/cliente/stock-disponible" class="wholesale-info-link" aria-label="Ir al flujo de stock disponible para retiro en sucursal">¿Querés ver el stock disponible? →</a>
-  </div>
 
   <!-- Minimum Order Status Banner -->
   <div class="min-order-banner"
