@@ -1,16 +1,16 @@
-# Rediseño de Acciones Rápidas en la Lista de Pedidos del Distribuidor
+# Rediseño Impeccable: Simplificación a 2 Estados y Alineación de Acciones Rápidas
 
 **Módulo**: Frontend (`distribuidora-ui`)  
 **Patrón**:  
-- La sección de cambiar estado dentro de cada detalle de pedido (`pedido-detalle`) ocupaba espacio excesivo y requería entrar a cada pedido para avanzar el flujo o descargar el remito.
-- La tabla principal de pedidos (`pedidos.html`) solo contaba con un botón "Ver".
+- Múltiples botones con anchos, colores y alturas dispares en la fila de pedidos causaban desalineación visual.
+- Existían demasiados filtros de estados intermedios en el flujo operativo del distribuidor.
 
-**Diagnóstico / Fix**:  
-- **Causa raíz**: Falta de acciones directas en la vista tabular del dashboard de distribuidor.
-- **Solución**: 
-  1. Se ocultó la tarjeta de "Cambiar estado" dentro de `pedido-detalle.html`.
-  2. Se integraron botones de acción directa en la columna `Acción` de la tabla de pedidos (`pedidos.html`):
-     - **Botón `📄 Remito`**: Permite la descarga directa del archivo DOCX del remito para pedidos mayoristas armados o entregados.
-     - **Botones de transición (`🚚 Enviar`, `✓ Entregar`)**: Permiten cambiar el estado del pedido directamente desde la fila.
-     - **Badge `✓ Entregado`**: Cuando el pedido pasa a estado `ENTREGADO`, el botón se transforma en una píldora verde brillante fija con animación suave.
-  3. Se hizo dinámica la propiedad `apiUrl` en `DeliveryNoteService` para resolver correctamente el rol activo (`ROLE_DISTRIBUTOR` vs `ROLE_ADMIN`).
+**Diagnóstico / Fix (Impeccable Style)**:  
+1. **Modelo Simplificado de 2 Estados Operativos**:
+   - En la vista principal se simplificaron las opciones de filtro a **`Todos`**, **`Pendientes`** y **`Entregados`**.
+   - Para pedidos no entregados (`Pendiente`), se ofrece un único botón de acción destacado: **`✓ Entregar`**.
+   - Al ejecutarse la acción, el sistema resuelve secuencialmente cualquier estado intermedio hasta llegar a `ENTREGADO`.
+   - Cuando un pedido se encuentra en `ENTREGADO`, la acción se transforma suavemente en un badge esmeralda (`#dcfce7` / `#15803d`): **`✓ Entregado`**.
+2. **Disposición Visual Uniforme Impeccable**:
+   - Todos los botones de acción (`Ver`, `📄 Remito`, `✓ Entregar`, `✓ Entregado`) poseen una altura uniforme fija (`32px`), alineación vertical centrada y espaciado consistente (`gap: 0.5rem`).
+   - El botón de remito adoptó un estilo azul suave armonioso (`#eff6ff`), mientras que `Ver` mantiene un estilo neutro sutil y limpio.
