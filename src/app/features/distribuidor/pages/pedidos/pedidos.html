@@ -77,6 +77,7 @@
             <th class="col-dist-order-items">Items</th>
             
             <th class="col-hide-sm col-dist-order-delivery">Entrega</th>
+            <th class="col-hide-sm col-dist-order-payment">Pago</th>
             <th class="col-hide-sm col-dist-order-date">Día</th>
             <th class="col-dist-order-status">Estado</th>
             <th class="text-right col-dist-order-total">Total</th>
@@ -90,6 +91,14 @@
             <td>{{ o.itemCount ?? o.items.length }}</td>
             
             <td class="col-hide-sm">{{ o.deliveryMethodName ?? '—' }}</td>
+            <td class="col-hide-sm">
+              <span *ngIf="o.paymentMethod === 'TRANSFERENCIA'" style="font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 4px;" [style.background]="o.paymentReceiptUrl ? '#dcfce7' : '#fef3c7'" [style.color]="o.paymentReceiptUrl ? '#15803d' : '#b45309'">
+                🏦 Transf. {{ o.paymentReceiptUrl ? '📷' : '⚠️' }}
+              </span>
+              <span *ngIf="o.paymentMethod !== 'TRANSFERENCIA'" style="font-size: 0.75rem; color: #475569;">
+                💵 Efectivo
+              </span>
+            </td>
             <td class="col-hide-sm">{{ formatDate(o.deliveryDate) }}</td>
             <td>
               <app-badge [variant]="statusVariant(o.status)">{{ statusLabel(o.status) }}</app-badge>

@@ -44,6 +44,18 @@ export class PedidoDetalleClienteComponent implements OnInit {
   deliveryMethods = signal<DeliveryMethodSummary[]>([]);
 
     uploadingReceipt = signal(false);
+  showImageModal = signal(false);
+  selectedImage = signal<string | null>(null);
+
+  openImageModal(url: string): void {
+    this.selectedImage.set(url);
+    this.showImageModal.set(true);
+  }
+
+  closeImageModal(): void {
+    this.showImageModal.set(false);
+    this.selectedImage.set(null);
+  }
 
   onReceiptFileSelected(event: Event): void {
     const o = this.order();

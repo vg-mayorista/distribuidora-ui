@@ -33,6 +33,18 @@ export class DistribuidorPedidoDetalleComponent implements OnInit {
   remitos = signal<DeliveryNote[]>([]);
   remitosLoading = signal(false);
   generating = signal(false);
+  showImageModal = signal(false);
+  selectedImage = signal<string | null>(null);
+
+  openImageModal(url: string): void {
+    this.selectedImage.set(url);
+    this.showImageModal.set(true);
+  }
+
+  closeImageModal(): void {
+    this.showImageModal.set(false);
+    this.selectedImage.set(null);
+  }
   generateError = signal<string | null>(null);
 
   constructor(
