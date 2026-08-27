@@ -51,27 +51,67 @@ export class PedidoDetalleClienteComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
     const file = input.files[0];
-    if (file.size > 8 * 1024 * 1024) {
-      this.error.set('El comprobante debe pesar menos de 8MB.');
+    if (file.size > 15 * 1024 * 1024) {
+      this.error.set('El comprobante debe pesar menos de 15MB.');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const receiptUrl = reader.result as string;
-      this.uploadingReceipt.set(true);
+    this.uploadingReceipt.set(true);
+    this.error.set(null);
+    this.compressAndReadImage(file, (receiptUrl) => {
       this.orderService.uploadReceipt(o.id!, receiptUrl).subscribe({
         next: (updated) => {
           this.order.set(updated);
           this.uploadingReceipt.set(false);
         },
-        error: () => {
+        error: (err) => {
           this.uploadingReceipt.set(false);
-          this.error.set('No se pudo subir el comprobante. Por favor reintentá.');
+          const msg = err?.error?.detail || err?.error?.message || 'No se pudo subir el comprobante. Reintentá.';
+          this.error.set(msg);
         }
       });
+    });
+  }
+
+  private compressAndReadImage(file: File, callback: (base64: string) => void): void {
+    if (file.type === 'application/pdf') {
+      const reader = new FileReader();
+      reader.onload = () => callback(reader.result as string);
+      reader.readAsDataURL(file);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1200;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          callback(canvas.toDataURL('image/jpeg', 0.82));
+        } else {
+          callback(e.target?.result as string);
+        }
+      };
+      img.onerror = () => callback(e.target?.result as string);
+      img.src = e.target?.result as string;
     };
     reader.readAsDataURL(file);
   }
+
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
