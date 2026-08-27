@@ -1,3 +1,4 @@
+import { getUpcomingDeliveryDates, DeliveryDayOption, isWednesdayOrFriday } from '../../../../utils/delivery-date.utils';
 import { Component, OnInit, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -20,6 +21,11 @@ import { ButtonComponent } from '../../../../shared/ui/button/button';
 })
 export class DistribuidorPedidoDetalleComponent implements OnInit {
   order = signal<Order | null>(null);
+  deliveryDayOptions: DeliveryDayOption[] = getUpcomingDeliveryDates(12);
+
+  isValidDeliveryDay(dateStr: string): boolean {
+    return isWednesdayOrFriday(dateStr);
+  }
   loading = signal(false);
   error = signal<string | null>(null);
   transitioning = signal(false);

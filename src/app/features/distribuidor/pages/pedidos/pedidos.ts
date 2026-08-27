@@ -1,3 +1,4 @@
+import { getUpcomingDeliveryDates, DeliveryDayOption } from '../../../../utils/delivery-date.utils';
 import { Component, OnInit, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -23,6 +24,7 @@ export type SimpleStatusFilter = 'ALL' | 'PENDIENTE' | 'ENTREGADO';
 })
 export class DistribuidorPedidosComponent implements OnInit {
   orders = signal<Order[]>([]);
+  deliveryDayOptions: DeliveryDayOption[] = getUpcomingDeliveryDates(12);
   loading = signal(false);
   error = signal<string | null>(null);
 

@@ -35,10 +35,15 @@
         </div>
       </div>
       <div class="filter-group">
-        <label class="filter-label" for="delivery-date">Día de reparto</label>
-        <input id="delivery-date" type="date" class="form-input"
-               [ngModel]="deliveryDate()"
-               (ngModelChange)="deliveryDate.set($event); load()">
+        <label class="filter-label" for="delivery-date">Día de reparto (Miércoles/Viernes)</label>
+        <select id="delivery-date" class="form-input"
+                [ngModel]="deliveryDate()"
+                (ngModelChange)="deliveryDate.set($event); load()">
+          <option value="">Todos los días</option>
+          <option *ngFor="let opt of deliveryDayOptions" [value]="opt.value">
+            📅 {{ opt.label }}
+          </option>
+        </select>
       </div>
       
       <div class="filter-group">

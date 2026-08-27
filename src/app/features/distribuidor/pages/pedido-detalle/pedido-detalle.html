@@ -121,22 +121,46 @@
             </p>
           </div>
 
-          <!-- Asignación para ARMADO -->
+          <!-- Asignación para ARMADO (Solo Miércoles o Viernes) -->
           <div class="date-assign-box" *ngIf="o.status === 'ARMADO'">
-            <label class="date-assign-label" for="assign-date">Asignar día de reparto</label>
+            <label class="date-assign-label">Asignar día de reparto (Miércoles o Viernes)</label>
+            
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.75rem;">
+              <button *ngFor="let opt of deliveryDayOptions.slice(0, 4)"
+                      type="button"
+                      class="btn btn-sm"
+                      [style.background]="tempDeliveryDate() === opt.value ? '#e0f2fe' : '#ffffff'"
+                      [style.border]="tempDeliveryDate() === opt.value ? '1px solid #0284c7' : '1px solid #cbd5e1'"
+                      [style.color]="tempDeliveryDate() === opt.value ? '#0369a1' : '#334155'"
+                      [style.fontWeight]="tempDeliveryDate() === opt.value ? '600' : 'normal'"
+                      (click)="tempDeliveryDate.set(opt.value)">
+                📅 {{ opt.label }}
+              </button>
+            </div>
+
             <div class="date-assign-row">
-              <input id="assign-date" type="date" class="form-input date-assign-input"
-                     [ngModel]="tempDeliveryDate()"
-                     (ngModelChange)="tempDeliveryDate.set($event)">
-              <app-button variant="primary" (onClick)="saveDeliveryDate()" [loading]="savingDate()" [disabled]="savingDate()">
+              <select class="form-input date-assign-input"
+                      [ngModel]="tempDeliveryDate()"
+                      (ngModelChange)="tempDeliveryDate.set($event)">
+                <option value="">Seleccionar día de reparto...</option>
+                <option *ngFor="let opt of deliveryDayOptions" [value]="opt.value">
+                  {{ opt.label }}
+                </option>
+              </select>
+              <app-button variant="primary" (onClick)="saveDeliveryDate()" [loading]="savingDate()" [disabled]="savingDate() || !tempDeliveryDate()">
                 Guardar
               </app-button>
             </div>
+
+            <div *ngIf="tempDeliveryDate() && !isValidDeliveryDay(tempDeliveryDate())" class="form-error" style="margin-top: 0.5rem; font-size: 0.75rem;">
+              ⚠️ Los repartos se realizan únicamente los días Miércoles y Viernes.
+            </div>
+
             <div *ngIf="saveDateError()" class="form-error" style="margin-top: 0.5rem; font-size: 0.75rem; padding: 0.25rem 0.5rem;">
               {{ saveDateError() }}
             </div>
             <div *ngIf="saveDateSuccess()" class="date-assign-success">
-              ✓ Fecha guardada correctamente
+              ✓ Día de reparto guardado correctamente
             </div>
           </div>
         </ng-container>
