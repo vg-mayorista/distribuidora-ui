@@ -241,3 +241,70 @@
 }
 
 
+
+/* Banner de información de Retiro en Local */
+.pickup-policy-banner {
+  margin-top: var(--space-md, 1rem);
+  padding: 1rem 1.25rem;
+  background: #fffdf5;
+  border: 1px solid #fce8b3;
+  border-left: 4px solid var(--brand-accent, #c85a00);
+  border-radius: var(--radius-md, 8px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-size: var(--font-size-sm, 0.875rem);
+  color: #4a3800;
+}
+
+.pickup-banner-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.pickup-banner-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.pickup-banner-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2b1f00;
+}
+
+.pickup-banner-hours {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.875rem;
+  color: #665000;
+}
+
+.pickup-banner-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed #f5db99;
+}
+
+.pickup-notice-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  line-height: 1.4;
+}
+
+.pickup-notice-bullet {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.pickup-notice-item code {
+  background: #f7e4b5;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: 600;
+}

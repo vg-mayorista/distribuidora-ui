@@ -291,6 +291,10 @@ export class ConfirmarComponent implements OnInit, OnDestroy {
     }
   }
 
+  get isPickup(): boolean {
+    return !this.requiresAddress;
+  }
+
   get requiresAddress(): boolean {
     const name = (this.selectedDeliveryMethod()?.name ?? '').toLowerCase();
     return !name.includes('retiro') && !name.includes('local');

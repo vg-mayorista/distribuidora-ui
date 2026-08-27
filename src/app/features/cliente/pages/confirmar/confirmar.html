@@ -158,6 +158,30 @@
             <span class="method-desc">Transferencia al Alias: vyg.distribucion</span>
           </button>
         </div>
+        <!-- Aviso de retiro en local -->
+        <div *ngIf="isPickup" class="pickup-policy-banner">
+          <div class="pickup-banner-header">
+            <span class="pickup-banner-icon">🏬</span>
+            <div>
+              <h3 class="pickup-banner-title">Condiciones para Retiro en Local</h3>
+              <p class="pickup-banner-hours">⏰ <strong>Horarios de retiro:</strong> Lunes a Sábado de 16:00 a 22:00 hs.</p>
+            </div>
+          </div>
+          <div class="pickup-banner-details">
+            <div class="pickup-notice-item">
+              <span class="pickup-notice-bullet">⏳</span>
+              <span><strong>Plazo límite de 24 hs:</strong> Debés pasar a retirar tu pedido dentro de las <strong>24 horas posteriores</strong> a la confirmación. Transcurrido ese plazo sin retirar, el pedido se desintegra y se cancela automáticamente.</span>
+            </div>
+            <div class="pickup-notice-item" *ngIf="paymentMethod() === 'EFECTIVO'">
+              <span class="pickup-notice-bullet">💵</span>
+              <span><strong>Pago en Efectivo:</strong> Acercate a nuestra sucursal dentro de las 24 hs para abonar y retirar tus productos.</span>
+            </div>
+            <div class="pickup-notice-item" *ngIf="paymentMethod() === 'TRANSFERENCIA'">
+              <span class="pickup-notice-bullet">📲</span>
+              <span><strong>Pago por Transferencia:</strong> Debés adjuntar/enviar el comprobante de transferencia al <strong>3704-708031</strong> (Alias: <code>vyg.distribucion</code>) <em>antes de ir a buscarlo</em> dentro del plazo de 24 hs.</span>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="card-section">
