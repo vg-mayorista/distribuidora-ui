@@ -86,7 +86,7 @@ export class PedidoDetalleClienteComponent implements OnInit {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
-        const maxDim = 1200;
+        const maxDim = 900;
         if (width > maxDim || height > maxDim) {
           if (width > height) {
             height = Math.round((height * maxDim) / width);
@@ -101,7 +101,7 @@ export class PedidoDetalleClienteComponent implements OnInit {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          callback(canvas.toDataURL('image/jpeg', 0.82));
+          callback(canvas.toDataURL('image/jpeg', 0.75));
         } else {
           callback(e.target?.result as string);
         }
