@@ -60,6 +60,10 @@ export class OrderService {
     return this.http.post<Order>(`${this.apiUrl}/${id}/receipt`, { receiptUrl });
   }
 
+  cancelExpiredPickups(): Observable<{ cancelledCount: number; message: string }> {
+    return this.http.post<{ cancelledCount: number; message: string }>(`${this.apiUrl}/distributor/orders/cancel-expired-pickups`, {});
+  }
+
   cancelMine(id: string): Observable<Order> {
     return this.http.delete<Order>(`${this.apiUrl}/${id}`);
   }

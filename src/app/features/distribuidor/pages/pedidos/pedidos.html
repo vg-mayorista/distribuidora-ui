@@ -6,7 +6,10 @@
         {{ orders().length }} pedido{{ orders().length === 1 ? '' : 's' }} encontrado{{ orders().length === 1 ? '' : 's' }}
       </p>
     </div>
-    <div class="dp-actions">
+    <div class="dp-actions" style="display: flex; gap: 0.5rem; align-items: center;">
+      <button class="btn btn-secondary btn-sm" type="button" (click)="cancelExpiredPickups()" [disabled]="clearingExpired()" title="Cancela pedidos de retiro en local que superaron las 24hs y devuelve el stock">
+        ⚡ {{ clearingExpired() ? 'Desintegrando...' : 'Desintegrar retirados vencidos (24h)' }}
+      </button>
       <button class="btn-action-ver" type="button" (click)="clearFilters()" *ngIf="hasActiveFilters()">
         Limpiar filtros
       </button>

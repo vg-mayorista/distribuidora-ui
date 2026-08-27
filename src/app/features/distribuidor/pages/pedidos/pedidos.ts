@@ -24,6 +24,7 @@ export type SimpleStatusFilter = 'ALL' | 'PENDIENTE' | 'ENTREGADO';
 })
 export class DistribuidorPedidosComponent implements OnInit {
   orders = signal<Order[]>([]);
+  clearingExpired = signal(false);
   deliveryDayOptions: DeliveryDayOption[] = getUpcomingDeliveryDates(12);
   loading = signal(false);
   error = signal<string | null>(null);
@@ -96,6 +97,25 @@ export class DistribuidorPedidosComponent implements OnInit {
       error: () => {
         this.error.set('No se pudieron cargar los pedidos.');
         this.loading.set(false);
+      }
+    });
+  }
+
+    cancelExpiredPickups(): void {
+    if (this.clearingExpired()) return;
+    if (!confirm('¿Desintegrar / Cancelar todos los pedidos de retiro en local que hayan superado las 24 hs sin ser retirados? El stock reservado se devolverá automáticamente.')) {
+      return;
+    }
+    this.clearingExpired.set(true);
+    this.orderService.cancelExpiredPickups().subscribe({
+      next: (res) => {
+        this.clearingExpired.set(false);
+        alert(res.message || 'Proceso completado.');
+        this.load();
+      },
+      error: () => {
+        this.clearingExpired.set(false);
+        alert('No se pudieron desintegrar los pedidos vencidos.');
       }
     });
   }
