@@ -78,9 +78,21 @@
       <section class="card-section">
         <h2 class="section-title">Entrega</h2>
         <p class="info-line"><strong>Método:</strong> {{ o.deliveryMethodName ?? '—' }}</p>
-        <p class="info-line"><strong>Entrega estimada:</strong> 24-48 hs hábiles</p>
-        <p *ngIf="o.deliveryAddress" class="info-line"><strong>Dirección:</strong> {{ o.deliveryAddress }}</p>
-        <p *ngIf="o.deliveryPhone" class="info-line"><strong>Teléfono:</strong> {{ o.deliveryPhone }}</p>
+
+        <!-- Caso Retiro en Local -->
+        <ng-container *ngIf="(o.deliveryMethodName || '').toLowerCase().includes('retiro') || (o.deliveryMethodName || '').toLowerCase().includes('local')">
+          <p class="info-line"><strong>Plazo:</strong> Retirar en las 24 hs posteriores</p>
+          <div class="pickup-side-badge">
+            ⏰ <strong>Horario local:</strong> Lunes a Sábado de 16:00 a 22:00 hs.
+          </div>
+        </ng-container>
+
+        <!-- Caso Envío a Domicilio / Express -->
+        <ng-container *ngIf="!((o.deliveryMethodName || '').toLowerCase().includes('retiro') || (o.deliveryMethodName || '').toLowerCase().includes('local'))">
+          <p *ngIf="o.deliveryDate" class="info-line"><strong>Fecha programada:</strong> {{ formatDate(o.deliveryDate) }}</p>
+          <p *ngIf="o.deliveryAddress" class="info-line"><strong>Dirección:</strong> {{ o.deliveryAddress }}</p>
+          <p *ngIf="o.deliveryPhone" class="info-line"><strong>Teléfono:</strong> {{ o.deliveryPhone }}</p>
+        </ng-container>
       </section>
 
       <section *ngIf="o.editable" class="card-section">
