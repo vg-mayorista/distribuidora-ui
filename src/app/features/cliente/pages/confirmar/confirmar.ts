@@ -42,6 +42,7 @@ export class ConfirmarComponent implements OnInit, OnDestroy {
   allDeliveryMethods = signal<DeliveryMethodSummary[]>([]);
   selectedDeliveryMethodId = signal<string>('');
   paymentMethod = signal<PaymentMethod>('EFECTIVO');
+  paymentReceiptUrl = signal<string | null>(null);
   deliveryAddress = signal('');
   deliveryPhone = signal('');
   notes = signal('');
@@ -240,6 +241,7 @@ export class ConfirmarComponent implements OnInit, OnDestroy {
         if (o?.deliveryMethodId) {
           const match = this.availableDeliveryMethods().find(m => m.id === o.deliveryMethodId);
           if (o.paymentMethod) { this.paymentMethod.set(o.paymentMethod); }
+          if (o.paymentReceiptUrl) { this.paymentReceiptUrl.set(o.paymentReceiptUrl); }
           if (match) {
             this.selectedDeliveryMethodId.set(match.id);
             this.selectedDeliveryMethod.set(match);
@@ -259,6 +261,26 @@ export class ConfirmarComponent implements OnInit, OnDestroy {
   /** Limpia errores visibles cuando el cliente corrige un input. Sin esto,
    *  un 500 stale quedaba en pantalla aunque el usuario ya hubiera cambiado
    *  la fecha o la dirección. */
+    onReceiptFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    if (file.size > 8 * 1024 * 1024) {
+      this.error.set('El archivo del comprobante debe pesar menos de 8MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.paymentReceiptUrl.set(reader.result as string);
+      this.clearError();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeReceipt(): void {
+    this.paymentReceiptUrl.set(null);
+  }
+
   clearError(): void {
     if (this.error() !== null) {
       this.error.set(null);
@@ -438,6 +460,7 @@ export class ConfirmarComponent implements OnInit, OnDestroy {
     const base: any = {
       deliveryMethodId: this.selectedDeliveryMethodId(),
       paymentMethod: this.paymentMethod(),
+      paymentReceiptUrl: this.paymentReceiptUrl() || undefined,
       deliveryAddress: this.requiresAddress ? this.deliveryAddress().trim() : undefined,
       deliveryPhone: this.requiresAddress ? this.deliveryPhone().trim() : undefined,
       notes: this.notes().trim() || undefined,

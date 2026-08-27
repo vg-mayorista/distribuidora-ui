@@ -56,6 +56,10 @@ export class OrderService {
     return this.http.patch<Order>(`${this.apiUrl}/${id}`, req);
   }
 
+  uploadReceipt(id: string, receiptUrl: string): Observable<Order> {
+    return this.http.post<Order>(`${this.apiUrl}/${id}/receipt`, { receiptUrl });
+  }
+
   cancelMine(id: string): Observable<Order> {
     return this.http.delete<Order>(`${this.apiUrl}/${id}`);
   }

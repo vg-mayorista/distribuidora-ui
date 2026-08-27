@@ -308,3 +308,95 @@
   font-family: monospace;
   font-weight: 600;
 }
+
+/* Estilos para carga de comprobante de transferencia */
+.receipt-upload-box {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--neutral-50, #f8fafc);
+  border: 1px dashed var(--neutral-300, #cbd5e1);
+  border-radius: var(--radius-md, 8px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.receipt-upload-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--neutral-800, #1e293b);
+}
+
+.muted-text {
+  font-size: 0.8rem;
+  color: var(--neutral-500, #64748b);
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+.file-select-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #ffffff;
+  border: 1px solid var(--brand-accent, #c85a00);
+  color: var(--brand-accent, #c85a00);
+  border-radius: var(--radius-sm, 6px);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.file-select-btn:hover {
+  background: #fff8f0;
+}
+
+.receipt-preview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #ffffff;
+  border: 1px solid var(--green-200, #bbf7d0);
+  border-radius: var(--radius-sm, 6px);
+}
+
+.receipt-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.receipt-preview-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #166534;
+}
+
+.btn-remove-receipt {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.btn-remove-receipt:hover {
+  background: #fee2e2;
+}
+
+.receipt-thumbnail {
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}

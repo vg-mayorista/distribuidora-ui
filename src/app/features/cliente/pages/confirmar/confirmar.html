@@ -87,6 +87,27 @@
             <span class="method-name">{{ d.label }}</span>
           </button>
         </div>
+
+          <!-- Upload Comprobante para Transferencia -->
+          <div *ngIf="paymentMethod() === 'TRANSFERENCIA'" class="receipt-upload-box">
+            <div class="receipt-upload-label">
+              <span>📷 <strong>Comprobante de transferencia:</strong></span>
+              <span class="muted-text">Podés adjuntar la foto/comprobante ahora o subirlo luego desde <em>Mis pedidos</em>.</span>
+            </div>
+            <div *ngIf="!paymentReceiptUrl()" class="file-dropzone">
+              <input type="file" accept="image/*,.pdf" (change)="onReceiptFileSelected($event)" id="receiptFileInput" class="file-input-hidden">
+              <label for="receiptFileInput" class="file-select-btn">
+                📎 Adjuntar comprobante de transferencia
+              </label>
+            </div>
+            <div *ngIf="paymentReceiptUrl() as receipt" class="receipt-preview-card">
+              <div class="receipt-preview-header">
+                <span class="receipt-preview-title">✅ Comprobante listo para enviar</span>
+                <button type="button" class="btn-remove-receipt" (click)="removeReceipt()">✕ Quitar</button>
+              </div>
+              <img *ngIf="receipt.startsWith('data:image')" [src]="receipt" alt="Comprobante de transferencia" class="receipt-thumbnail">
+            </div>
+          </div>
         <ng-template #noDates>
           <p class="muted">
             No hay fechas de entrega disponibles ahora.

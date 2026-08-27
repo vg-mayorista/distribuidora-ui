@@ -31,6 +31,7 @@ export interface Order {
   deliveryPhone?: string;
   notes?: string;
   paymentMethod?: PaymentMethod;
+  paymentReceiptUrl?: string;
   deliveryDate?: string;
   editable?: boolean;
   itemCount?: number;
@@ -47,6 +48,7 @@ export interface CreateOrderRequest {
   deliveryPhone?: string;
   notes?: string;
   paymentMethod?: PaymentMethod;
+  paymentReceiptUrl?: string;
   items: { productId: string; quantity: number }[];
 }
 
@@ -57,6 +59,7 @@ export interface UpdateOrderRequest {
   deliveryPhone?: string;
   notes?: string;
   paymentMethod?: PaymentMethod;
+  paymentReceiptUrl?: string;
   items: { productId: string; quantity: number }[];
 }
 

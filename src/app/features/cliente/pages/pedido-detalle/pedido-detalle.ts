@@ -43,6 +43,36 @@ export class PedidoDetalleClienteComponent implements OnInit {
 
   deliveryMethods = signal<DeliveryMethodSummary[]>([]);
 
+    uploadingReceipt = signal(false);
+
+  onReceiptFileSelected(event: Event): void {
+    const o = this.order();
+    if (!o?.id) return;
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    if (file.size > 8 * 1024 * 1024) {
+      this.error.set('El comprobante debe pesar menos de 8MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const receiptUrl = reader.result as string;
+      this.uploadingReceipt.set(true);
+      this.orderService.uploadReceipt(o.id!, receiptUrl).subscribe({
+        next: (updated) => {
+          this.order.set(updated);
+          this.uploadingReceipt.set(false);
+        },
+        error: () => {
+          this.uploadingReceipt.set(false);
+          this.error.set('No se pudo subir el comprobante. Por favor reintentá.');
+        }
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) this.load(id);
